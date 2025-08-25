@@ -1,0 +1,82 @@
+name: Sync to Open Source Nix Repo using pull requests
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  sync-to-public-repo-nixos-config:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout NixOS-OCB repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Git identity
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Install GitHub CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gh
+
+      - name: Set up SSH for git command
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORG_NIXOS_CONFIG_PUBLIC_COMMIT_KEY}}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+      - name: Clone public repo
+        run: |
+          git clone git@github.com:MSF-OCB/org-nixos-config-public.git public-repo
+          git -C public-repo remote -v
+          git -C public-repo branch -a
+
+      - name: Sync files using .syncignore
+        run: |
+          # Build rsync args
+          RSYNC_ARGS=(-av --delete --chmod=Du=rwx,Dgo=rx,Fu=rw,Fgo=r --exclude '.git/' --exclude '.gitmodules')
+          # If .syncignore exists, pass it directly to rsync
+          if [[ -f ".syncignore" ]]; then
+            RSYNC_ARGS+=(--exclude-from='.syncignore')
+          fi
+          rsync "${RSYNC_ARGS[@]}" ./ public-repo/
+          # Optional: ensure the public repo keeps its own .github if you don't want to overwrite workflows
+          # rsync -av --delete --exclude '.git/' --exclude '.gitmodules' --exclude '.github/' ./ public-repo/
+
+      - name: Commit and create pull request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          cd public-repo
+
+          # Ensure we start from the public repo's main
+          git fetch origin +refs/heads/*:refs/remotes/origin/* --prune
+          git checkout -B main origin/main
+
+          TIMESTAMP=$(date +'%Y-%m-%d-%H%M%S')
+          BRANCH="sync-update-$TIMESTAMP"
+
+          git switch -c "$BRANCH"
+
+          # Stage only real changes
+          if [[ -n "$(git status --porcelain)" ]]; then
+            git add -A
+            git commit -m "Sync: update from private repo at $TIMESTAMP"
+            git push -u origin "$BRANCH"
+
+            gh pr create \
+              --title "Sync update from private repo ($TIMESTAMP)" \
+              --body "This PR contains a synced update from the private repo on $TIMESTAMP." \
+              --head "$BRANCH" \
+              --base main
+          else
+            echo "No changes to commit"
+          fi

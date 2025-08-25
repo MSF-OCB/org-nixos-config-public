@@ -1,0 +1,11 @@
+{
+  "hq_outgoing_ips": ["myhq-outgoing-ips.my.company.org"],
+  "env_var_prefix": "MYCOMENV",
+  "github_org": "MYCOM-SEC",
+  "iso": {
+    "menu_label": "MYCOM MYSEC rescue system",
+    "file_label": "mycom-rescue"
+  },
+  "config_repo": "NixOS-MYCOM",
+  "acme_email_address": "contact@.my.company.org"
+}
