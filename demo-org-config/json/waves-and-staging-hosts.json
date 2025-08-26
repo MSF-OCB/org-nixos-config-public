@@ -1,0 +1,6 @@
+{
+  "firstWave": ["demo-host"],
+  "finalWave": ["demo-host"],
+  "latestWave": ["demo-host"],
+  "stagingHosts": ["demo-host"]
+}
