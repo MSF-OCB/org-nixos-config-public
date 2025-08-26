@@ -1,0 +1,138 @@
+name:  Sync to Public Repo - NixOS
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  sync-to-public-repo-nixos-config:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout private repo (source)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git author
+        run: |
+          git config --global user.name  "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: MSF-OCB
+          repositories: org-nixos-config-public
+
+      - name: Ensure gh is installed
+        run: |
+          if ! command -v gh >/dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y gh
+          fi
+
+      - name: Define paths (env)
+        run: |
+          echo "PUB_DIR=$RUNNER_TEMP/org-nixos-config-public" >> "$GITHUB_ENV"
+          echo "STAGE=$RUNNER_TEMP/stage" >> "$GITHUB_ENV"
+
+      - name: Clone public repo outside the workspace
+        run: |
+          git clone "https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/MSF-OCB/org-nixos-config-public.git" "$PUB_DIR"
+          git -C "$PUB_DIR" remote -v
+
+      - name: Export source tree
+        run: |
+          mkdir -p "$STAGE"
+          git archive --format=tar HEAD \
+          | tar -x -C "$STAGE" \
+              --exclude='public-repo/*' \
+              --exclude='public-repo/**'
+
+      - name: Sync files to public repo
+        run: |
+          set -euo pipefail
+
+          # Build exclude list from .syncignore (strip comments/blank lines)
+          EXCL=""
+          if [[ -f ".syncignore" ]]; then
+            grep -vE '^\s*(#|$)' .syncignore > "$RUNNER_TEMP/.syncignore.effective" || true
+            EXCL="--exclude-from=$RUNNER_TEMP/.syncignore.effective"
+          fi
+
+          rsync -av \
+            --delete \
+            --delete-excluded \
+            --filter='P .git/' \
+            --filter='P .git/**' \
+            --chmod=Du=rwx,Dgo=rx,Fu=rw,Fgo=r \
+            --exclude '.git/' \
+            --exclude '.gitmodules' \
+            --exclude 'public-repo/' \
+            $EXCL \
+            "$STAGE/" "$PUB_DIR/"
+
+          # Belt & suspenders: explicitly remove stray source-tracked folder if it ever appears
+          rm -rf "$PUB_DIR/public-repo" || true
+
+      - name: Commit & push branch, then create PR (or initialize repo)
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+
+          git -C "$PUB_DIR" rev-parse --git-dir >/dev/null 2>&1 || {
+            echo "::error::Not a git repo: $PUB_DIR"; exit 1;
+          }
+
+          # Detect default branch of the public repo (fallback to main)
+          DEFAULT_BRANCH="$(git -C "$PUB_DIR" remote show origin | sed -n '/HEAD branch/s/.*: //p' || true)"
+          [[ -z "${DEFAULT_BRANCH:-}" || "${DEFAULT_BRANCH}" == "(unknown)" ]] && DEFAULT_BRANCH=main
+
+          # Does default branch exist remotely?
+          if git ls-remote --exit-code --heads origin "$DEFAULT_BRANCH" >/dev/null 2>&1; then
+            BASE_PRESENT=1
+            git -C "$PUB_DIR" fetch origin --prune
+            git -C "$PUB_DIR" checkout -B "$DEFAULT_BRANCH" "origin/$DEFAULT_BRANCH"
+          else
+            BASE_PRESENT=0
+            git -C "$PUB_DIR" checkout --orphan "$DEFAULT_BRANCH"
+          fi
+
+          # Any changes to commit?
+          if [[ -z "$(git -C "$PUB_DIR" status --porcelain)" ]]; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          TIMESTAMP="$(date +'%Y-%m-%d-%H%M%S')"
+
+          if [[ "$BASE_PRESENT" -eq 0 ]]; then
+            git -C "$PUB_DIR" add -A
+            git -C "$PUB_DIR" commit -m "Initial sync from private repo at ${TIMESTAMP}"
+            git -C "$PUB_DIR" push -u origin "$DEFAULT_BRANCH"
+            echo "Initialized public repo on '$DEFAULT_BRANCH'. No PR created (no base existed)."
+            exit 0
+          fi
+
+          BRANCH="sync-update-${TIMESTAMP}"
+          git -C "$PUB_DIR" switch -c "$BRANCH"
+          git -C "$PUB_DIR" add -A
+          git -C "$PUB_DIR" commit -m "Sync: update from private repo at ${TIMESTAMP}"
+          git -C "$PUB_DIR" push -u origin "$BRANCH"
+
+          gh pr create \
+            --repo MSF-OCB/org-nixos-config-public \
+            --title "Sync update from private repo (${TIMESTAMP})" \
+            --body "This PR syncs the latest files from the private repo." \
+            --head "$BRANCH" \
+            --base "$DEFAULT_BRANCH"

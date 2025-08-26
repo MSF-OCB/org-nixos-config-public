@@ -1,0 +1,22 @@
+{
+  "tunnels": {
+    "per-host": {
+      "demo-host-1": {
+        "remote_forward_port": 0,
+        "public_key": ""
+      },
+      "demo-host-2": {
+        "remote_forward_port": 0,
+        "public_key": ""
+      },
+      "demo-host": {
+        "remote_forward_port": 0,
+        "public_key": ""
+      },
+      "msf-wsl": {
+        "remote_forward_port": 0,
+        "public_key": ""
+      }
+    }
+  }
+}

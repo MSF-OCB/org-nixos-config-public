@@ -1,0 +1,8 @@
+{
+  "public_key": "<public key of your relay server>",
+  "relay_servers": {
+    "demo-host": {
+      "addresses": ["mysshrelay1.my.company.org", "192.200.xxx.xx"]
+    }
+  }
+}
