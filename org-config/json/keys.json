@@ -1,0 +1,17 @@
+{
+  "_comment": "Comments can be added with key _comment, which will be filtered out automatically.",
+  "keys": {
+    "global_admin_1": {
+      "public_keys": ["<public key of global_admin_1 user>"]
+    },
+    "global_admin_2": {
+      "public_keys": ["<public key of global_admin_2 user>"]
+    },
+    "global_admin_3": {
+      "public_keys": ["<public key of global_admin_3 user>"]
+    },
+    "doctor_fictional": {
+      "public_keys": ["<public key of doctor_fictional user>"]
+    }
+  }
+}
