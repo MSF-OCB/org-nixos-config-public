@@ -1,0 +1,17 @@
+{
+  "public_key": "<public key of your relay server>",
+  "relay_servers": {
+    "demo-relay-1": {
+      "addresses": [
+        "<dns name of relay server>",
+        "<ip address of relay server>"
+      ]
+    },
+    "demo-relay-2": {
+      "addresses": [
+        "<dns name of relay server>",
+        "<ip address of relay server>"
+      ]
+    }
+  }
+}
