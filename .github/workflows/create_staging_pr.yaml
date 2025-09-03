@@ -1,0 +1,44 @@
+name: auto-create-sync-pr
+on:
+  workflow_dispatch:
+  schedule:
+    # runs daily at 02:40 UTC
+    - cron: "40 2 * * *"
+  push:
+    branches:
+      - main
+      - staging
+
+jobs:
+  staging_into_main:
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: Checkout the repo
+        uses: "actions/checkout@v4"
+        with:
+          ref: main
+          # fetch the full history, otherwise rev-list gets confused
+          fetch-depth: 0
+      - name: Create PR
+        run: |
+          set -eou pipefail
+
+          # Check if we have an open PR already
+          has_pr=$(gh pr list --repo "${OWNER}/${REPO}" \
+            --head staging --base main --state open --json id --jq 'if . == [] then false else true end')
+
+          # Fetch the remote staging branch
+          git fetch origin +staging:staging
+          commit_difference_count="$(git rev-list --left-right --count staging...main -- | cut --fields 1 --only-delimited)"
+          echo "Found commit difference: ${commit_difference_count}"
+
+          if [ "${has_pr}" == "false" ] && [ "${commit_difference_count}" != "0" ]; then
+            pr_url=$(gh pr create --repo "${OWNER}/${REPO}" --head staging --base main \
+              --title "Merge staging into main" --body "")
+            # Enable auto-merge
+            gh pr merge --repo "${OWNER}/${REPO}" --auto --merge "${pr_url}"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.NIXOS_OCB_AUTO_CREATE_PR_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
