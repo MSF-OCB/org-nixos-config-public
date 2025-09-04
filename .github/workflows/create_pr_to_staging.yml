@@ -1,0 +1,63 @@
+name: Auto Create Staging PR - OSP
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - staging
+
+# These affect only the default GITHUB_TOKEN, but it's fine to keep them tight.
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  staging_into_main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+
+      - name: Checkout the repo (main)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Create PR
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
+        run: |
+          set -euo pipefail
+
+          # Ensure we have the remote staging branch locally
+          git fetch origin +refs/heads/staging:refs/heads/staging
+
+          # Any open PR from staging -> main?
+          has_pr=$(gh pr list --repo "${OWNER}/${REPO}" \
+            --head staging --base main --state open --json id --jq 'if . == [] then false else true end')
+
+          # Count commits in staging not in main
+          commit_difference_count="$(git rev-list --left-right --count staging...main -- | cut -f1)"
+
+          echo "Found commit difference (staging ahead of main): ${commit_difference_count}"
+
+          if [ "${has_pr}" = "false" ] && [ "${commit_difference_count}" != "0" ]; then
+            pr_url=$(gh pr create --repo "${OWNER}/${REPO}" --head staging --base main \
+              --title "Merge staging into main" --body "")
+            # Enable auto-merge (merge commit). Use --squash/--rebase if preferred.
+            gh pr merge --repo "${OWNER}/${REPO}" --auto --merge "${pr_url}"
+          else
+            echo "No action: existing PR or no new commits."
+          fi
