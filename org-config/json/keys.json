@@ -1,0 +1,25 @@
+{
+  "_comment": "Comments can be added with key _comment, which will be filtered out automatically.",
+  "keys": {
+    "global_admin_1": {
+      "public_keys": [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICC8KJT5hqQEuhwQOK6zFa8mmzzx00qKtVyYtXPOEXP1"
+      ]
+    },
+    "global_admin_2": {
+      "public_keys": [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIA9d3f8kO3Tj3w7F6q9lB2k8mH7oD3r5yK8zV4q9uT1"
+      ]
+    },
+    "global_admin_3": {
+      "public_keys": [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB7xP9l4aC8q9zL2hM1rV6yT8jK3mQ9wR5oN4uF6tV9"
+      ]
+    },
+    "doctor_fictional": {
+      "public_keys": [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIC6yR4n8vK3h7dM2jB9qW1tR5pL8zE7yU6nH3kQ2mW8"
+      ]
+    }
+  }
+}
