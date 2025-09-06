@@ -1,0 +1,50 @@
+{
+  "global_admins": ["global_admin_1"],
+  "users": {
+    "per-host": {
+      "demo-test-host": {
+        "enable_roles": ["devops"]
+      },
+      "demo-prod-host": {
+        "enable_roles": ["devops_common", "emr_support"]
+      },
+      "demo-uat-host": {
+        "enable_roles": ["devops", "emr_support"]
+      },
+      "demo-relay-1": {
+        "enable_roles": ["extra_relay_access"]
+      }
+    },
+    "roles": {
+      "emr_support": {
+        "enable": {
+          "doctor_fictional": "dockerAdmin"
+        }
+      },
+      "fieldSupport": {
+        "enable": {
+          "doctor_fictional": "admin"
+        }
+      },
+      "extra_relay_access": {
+        "enable": {
+          "doctor_fictional": "dockerAdmin"
+        }
+      },
+      "devops": {
+        "enable_roles": ["devops_common"]
+      },
+      "devops_common": {
+        "enable": {
+          "global_admin_1": "admin"
+        }
+      },
+      "devops_docker_hq": {
+        "enable_roles": ["devops_common"]
+      },
+      "dhis2_support": {
+        "enable_roles": ["devops"]
+      }
+    }
+  }
+}
