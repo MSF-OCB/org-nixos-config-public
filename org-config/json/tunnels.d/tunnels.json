@@ -1,0 +1,30 @@
+{
+  "tunnels": {
+    "per-host": {
+      "demo-prod-host": {
+        "remote_forward_port": 1000,
+        "public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAGJd/ETmK811QuKNSAnH48lXJiQ+n31VwdZVJx55F67"
+      },
+      "demo-test-host": {
+        "remote_forward_port": 1001,
+        "public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJUtomv3FZQSCJT7kg9u2CvfMquCa5KYqU68mHGs9+ZG"
+      },
+      "demo-uat-host": {
+        "remote_forward_port": 1002,
+        "public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAII55eJOhTt7mcPpv/091oPV1wkBuyBfw87ctUbNUe6Kj"
+      },
+      "wsl": {
+        "remote_forward_port": 1003,
+        "public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICbDPPYysi0Nq6fS3ovoD8LDd1SU1Jvnn5S3yzPvRURR"
+      },
+      "demo-relay-1": {
+        "remote_forward_port": 0,
+        "public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJRL7SVxwJQPYGFVOVl1+AdB4MVFEIepkDI4FOgvfqZG"
+      },
+      "demo-relay-2": {
+        "remote_forward_port": 0,
+        "public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJJZuU3LchBuc1A3S1Pk5FFk9ipW0lAtCLrrYiQ1CajU"
+      }
+    }
+  }
+}
