@@ -1,0 +1,15 @@
+{
+  "_comment": "Comments can be added with key _comment, which will be filtered out automatically.",
+  "keys": {
+    "global_admin_1": {
+      "public_keys": [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICC8KJT5hqQEuhwQOK6zFa8mmzzx00qKtVyYtXPOEXP1"
+      ]
+    },
+    "doctor_fictional": {
+      "public_keys": [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEDQWS17VwntcxZlNDm5rA+ty7g8L8yIGcrqmh/oqp53"
+      ]
+    }
+  }
+}
