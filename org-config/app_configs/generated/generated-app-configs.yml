@@ -1,0 +1,18 @@
+demo-prod-host:
+  tests_configs:
+    content: 'FOO=BARS
+
+      '
+    path: test_configs
+demo-test-host:
+  tests_configs:
+    content: 'FOO=BARS
+
+      '
+    path: test_configs
+demo-uat-host:
+  tests_configs:
+    content: 'FOO=BARS
+
+      '
+    path: test_configs
