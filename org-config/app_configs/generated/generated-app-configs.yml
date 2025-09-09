@@ -1,0 +1,29 @@
+demo-prod-host:
+  dhis2_global_configs:
+    content: |
+      JAVA_OPTS="-XX:+UseG1GC -XX:+UseStringDeduplication -Xms512m -Xmx4096m -XX:-UseGCOverheadLimit -XX:MaxHeapFreeRatio=30 -XX:MinHeapFreeRatio=10 -Dlog4j2.formatMsgNoLookups=true"
+      LDAP_SEARCH_FILTER='(cn={0})'
+      LDAP_MANAGER_DN=LDAPS_OCB_DHIS2
+      LDAP_URL="ldaps://ldaps.msf.org:636"
+      DBBK_MAX_BACKUPS_L2=70
+      DBBK_MAX_BACKUPS_L3=31
+      DBBK_MAX_BACKUPS_L4=12
+      BACKUP_PATH=./backups
+    path: dhis2_global_configs
+  tests_configs:
+    content: 'FOO=BARS
+
+      '
+    path: test_configs
+demo-test-host:
+  tests_configs:
+    content: 'FOO=BARS
+
+      '
+    path: test_configs
+demo-uat-host:
+  tests_configs:
+    content: 'FOO=BARS
+
+      '
+    path: test_configs
