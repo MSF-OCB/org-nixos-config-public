@@ -6,6 +6,11 @@
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICC8KJT5hqQEuhwQOK6zFa8mmzzx00qKtVyYtXPOEXP1"
       ]
     },
+    "global_admin_2": {
+      "public_keys": [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDkn+PBXpcLPlo2lHT53lRHc0cF+5dJsUXesEOBIrmhn"
+      ]
+    },
     "doctor_fictional": {
       "public_keys": [
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEDQWS17VwntcxZlNDm5rA+ty7g8L8yIGcrqmh/oqp53"
