@@ -1,5 +1,5 @@
 {
-  "global_admins": ["global_admin_1"],
+  "global_admins": ["global_admin_1", "global_admin_2"],
   "users": {
     "per-host": {
       "demo-test-host": {

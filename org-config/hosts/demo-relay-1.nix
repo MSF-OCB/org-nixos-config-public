@@ -2,7 +2,7 @@
   time.timeZone = "Europe/Brussels";
 
   settings = {
-    disko.diskDevice = "<disk device path>"; # Replace with actual disk device path
+    disko.diskDevice = "/dev/disk/by-path/pci-0000:00:10.0-scsi-0:0:0:0"; # Replace with actual disk device path
     system.isMbr = false;
     boot.mode = "uefi";
     vmware = {
@@ -13,9 +13,9 @@
     network = {
       host_name = "demo-relay-1";
       static_ifaces.ens160 = {
-        address = "<IP address>"; # Replace with actual IP address
+        address = "192.168.50.5";
         prefix_length = 24;
-        gateway = "<gateway IP>"; # Replace with actual gateway IP
+        gateway = "192.168.50.1";
         fallback = false;
       };
     };
