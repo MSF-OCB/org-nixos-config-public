@@ -2,7 +2,7 @@
   time.timeZone = "Europe/Brussels";
 
   settings = {
-    disko.diskDevice = "/dev/disk/by-path/pci-0000:00:10.0-scsi-0:0:0:0"; # Replace with actual disk device path
+    disko.diskDevice = "/dev/disk/by-path/pci-0000:03:00.0-scsi-0:0:0:0"; # Replace with actual disk device path
     system.isMbr = false;
     boot.mode = "uefi";
     vmware = {
