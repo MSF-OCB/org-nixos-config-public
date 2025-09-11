@@ -1,28 +1,82 @@
+{ config, pkgs, ... }:
 {
-  time.timeZone = "Europe/Brussels";
+  imports = [
+    ../../modules/azure.nix
+  ];
 
+  time.timeZone = "Europe/Brussels";
+  boot.kernelPackages = pkgs.linuxPackages_latest;
   settings = {
-    disko.diskDevice = "/dev/disk/by-path/pci-0000:03:00.0-scsi-0:0:0:0"; # Replace with actual disk device path
-    system.isMbr = false;
-    boot.mode = "uefi";
-    vmware = {
-      enable = true;
-      inDMZ = true;
-    };
+    network.host_name = "demo-relay-1";
+    disko.diskDevice = "/dev/disk/by-id/scsi-360022480017cb9e6477c4bc84920b19c";
     reverse_tunnel.relay.enable = true;
-    network = {
-      host_name = "demo-relay-1";
-      static_ifaces.ens160 = {
-        address = "192.168.50.5";
-        prefix_length = 24;
-        gateway = "192.168.50.1";
-        fallback = false;
+    crypto.encrypted_opt.enable = true;
+  };
+
+  disko.devices = {
+    # encrypted data disk
+    disk.data = {
+      device = "/dev/disk/by-id/scsi-360022480978f31128ae09f3375f42a71";
+      type = "disk";
+      content = {
+        type = "gpt";
+        partitions = {
+          nixos_lvm = {
+            priority = 4;
+            label = "nixos_lvm";
+            size = "100%";
+            # Linux LVM
+            type = "E6D6D379-F507-44C2-A23C-238F2A3DF928";
+            content = {
+              type = "lvm_pv";
+              vg = "LVMVolGroup";
+            };
+          };
+        };
+      };
+    };
+    lvm_vg."LVMVolGroup" = {
+      type = "lvm_vg";
+      lvs = {
+        nixos_data = {
+          size = "100%FREE";
+          content = {
+            type = "luks";
+            name = "decrypted";
+            initrdUnlock = false;
+            extraFormatArgs = [ "--type luks2" ];
+            settings = {
+              keyFile = "${config.settings.system.secrets.dest_directory}/keyfile";
+              allowDiscards = true;
+              bypassWorkqueues = true;
+            };
+            additionalKeyFiles = [
+              # This file is generated at install time and added to the disk by disko.
+              # It should never end up on the actual system, it is there only for recovery
+              # purposes.
+              "${config.settings.system.secrets.dest_directory}/rescue-keyfile"
+            ];
+            content = {
+              type = "filesystem";
+              format = "ext4";
+              extraArgs = [
+                "-L"
+                "nixos_data"
+              ];
+              # We mount this partition using a systemd mount unit, so we don't
+              # add it to fstab. Otherwise it will get mounted too early.
+              #mountpoint = "/opt";
+              mountOptions = [
+                "defaults"
+                "noatime"
+                "nosuid"
+                "nodev"
+                "noexec"
+              ];
+            };
+          };
+        };
       };
     };
   };
 }
-# Note: Replace <disk device path>, <IP address>, and <gateway IP> with actual values for your setup.
-# This configuration sets up a demo relay host with specific network and system settings.
-# Ensure that the disk device path, IP address, and gateway IP are correctly specified for your environment.
-# The time zone is set to Europe/Brussels, and the boot mode is configured for UEFI.
-# The VMware settings indicate that this host is intended to run in a DMZ environment.

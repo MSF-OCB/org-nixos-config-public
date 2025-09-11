@@ -1,6 +1,6 @@
 {
-  "firstWave": ["demo-test-host"],
+  "firstWave": ["demo-relay-1"],
   "finalWave": ["demo-prod-host"],
   "latestWave": ["demo-uat-host"],
-  "stagingHosts": ["demo-relay-1"]
+  "stagingHosts": ["demo-test-host"]
 }
