@@ -1,5 +1,5 @@
 {
-  "public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFL0tkc3FcMetOHRubWvzgBTuF//EzKihHTFS5pf6GjQ",
+  "public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKF33l7qzSEdzXMmH/PvlHgGjS71w8q7e5QKIKrZKprr",
   "relay_servers": {
     "demo-relay-1": {
       "addresses": ["demo-relay-1.ocb.msf.org", "108.143.32.245"]
