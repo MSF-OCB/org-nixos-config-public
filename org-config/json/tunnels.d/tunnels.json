@@ -19,7 +19,7 @@
       },
       "nixos-test": {
         "remote_forward_port": 2004,
-        "public_key": ""
+        "public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGS/lM3LLIJCPI4irtU0ltFk06zntlwL2gu/CDzTcgD1"
       },
       "demo-relay-1": {
         "remote_forward_port": 0,
