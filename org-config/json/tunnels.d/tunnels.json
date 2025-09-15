@@ -6,24 +6,28 @@
         "public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAGJd/ETmK811QuKNSAnH48lXJiQ+n31VwdZVJx55F67"
       },
       "demo-test-host": {
-        "remote_forward_port": 2001,
+        "remote_forward_port": 3001,
         "public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJUtomv3FZQSCJT7kg9u2CvfMquCa5KYqU68mHGs9+ZG"
       },
       "demo-uat-host": {
-        "remote_forward_port": 2002,
+        "remote_forward_port": 3002,
         "public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAII55eJOhTt7mcPpv/091oPV1wkBuyBfw87ctUbNUe6Kj"
       },
       "wsl": {
-        "remote_forward_port": 2003,
+        "remote_forward_port": 3003,
         "public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICbDPPYysi0Nq6fS3ovoD8LDd1SU1Jvnn5S3yzPvRURR"
       },
       "nixos-test": {
-        "remote_forward_port": 2004,
+        "remote_forward_port": 3004,
         "public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGS/lM3LLIJCPI4irtU0ltFk06zntlwL2gu/CDzTcgD1"
       },
       "demo-nuc-001": {
-        "remote_forward_port": 2005,
+        "remote_forward_port": 2001,
         "public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIC/y7jKO4z7y0cqqhTw3AT3aRtCHFq8dcfTUWLXN8G1D"
+      },
+      "demo-nuc-002": {
+        "remote_forward_port": 2002,
+        "public_key": ""
       },
       "demo-relay-1": {
         "remote_forward_port": 0,
