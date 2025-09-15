@@ -11,6 +11,9 @@
       "demo-uat-host": {
         "enable_roles": ["devops", "emr_support"]
       },
+      "nixos-test": {
+        "enable_roles": ["devops", "emr_support"]
+      },
       "demo-relay-1": {
         "enable_roles": ["extra_relay_access"]
       }
