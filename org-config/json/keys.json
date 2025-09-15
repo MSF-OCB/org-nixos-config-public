@@ -11,6 +11,11 @@
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDkn+PBXpcLPlo2lHT53lRHc0cF+5dJsUXesEOBIrmhn"
       ]
     },
+    "sohel_sarder": {
+      "public_keys": [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMiEiudd6Z478rjdgMJPayVZZOkvC1eMFeqvBb7iscgr"
+      ]
+    },
     "doctor_fictional": {
       "public_keys": [
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEDQWS17VwntcxZlNDm5rA+ty7g8L8yIGcrqmh/oqp53"
