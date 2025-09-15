@@ -3,7 +3,7 @@
   time.timeZone = "Europe/Brussels";
   settings = {
     hardwarePlatform = config.settings.hardwarePlatforms.nuc;
-    disko.diskDevice = "/dev/disk/by-id/";
+    disko.diskDevice = "/dev/disk/by-id/nvme-TS512GMTE510T_F145120155";
     network.host_name = "demo-nuc-001";
     boot.mode = "uefi";
     reverse_tunnel.enable = true;
