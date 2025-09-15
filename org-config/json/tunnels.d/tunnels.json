@@ -27,7 +27,7 @@
       },
       "demo-nuc-002": {
         "remote_forward_port": 2002,
-        "public_key": ""
+        "public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGoiSUiqjuEvgLEkd9a12Xjm8m7CzVGlf2U5TIRhXmAV"
       },
       "demo-relay-1": {
         "remote_forward_port": 0,
