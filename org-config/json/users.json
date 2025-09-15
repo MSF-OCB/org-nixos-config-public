@@ -20,6 +20,9 @@
       "demo-nuc-002": {
         "enable_roles": ["devops", "emr_support"]
       },
+      "demo-nuc-003": {
+        "enable_roles": ["devops", "emr_support"]
+      },
       "demo-relay-1": {
         "enable_roles": ["extra_relay_access"]
       }
@@ -45,7 +48,8 @@
       },
       "devops_common": {
         "enable": {
-          "global_admin_1": "admin"
+          "global_admin_1": "admin",
+          "sohel_sarder": "admin"
         }
       },
       "devops_docker_hq": {
