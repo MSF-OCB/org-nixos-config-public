@@ -3,6 +3,7 @@
 
   settings = {
     boot.mode = "uefi";
+    disko.diskDevice = "/dev/disk/by-path/pci-0000:03:00.0-scsi-0:0:0:0";
     reverse_tunnel.enable = true;
     crypto.encrypted_opt.enable = true;
     vmware.enable = true;
