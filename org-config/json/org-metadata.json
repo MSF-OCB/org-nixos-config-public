@@ -6,6 +6,6 @@
     "menu_label": "Generic Rescue System",
     "file_label": "msfocb-rescue"
   },
-  "config_repo": "org-nix-config-public",
+  "config_repo": "org-nixos-config-public",
   "acme_email_address": "noReply@example.org"
 }
