@@ -20,7 +20,7 @@ That said, we’re grateful for contributions and will review them when possible
 
 - **Report bugs** via GitHub issues. Please include as much detail as possible.
 - **Submit pull requests** for fixes or improvements. Smaller, focused PRs are easiest for us to review.
-- **Fork the project** if you’d like to experiment or take it in new directions. At present, anyone who wants to use this code will first need to fork it, and we encourate this.
+- **Fork the project** if you’d like to experiment or take it in new directions. At present, anyone who wants to use this code will first need to fork it, and we encourage this.
 
 ## Contribution guidelines
 
