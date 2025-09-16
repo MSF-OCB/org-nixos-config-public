@@ -1,5 +1,5 @@
 {
-  "global_admins": ["global_admin_1", "global_admin_2"],
+  "global_admins": ["ibrahim_balla", "yves_de_voghel"],
   "users": {
     "per-host": {
       "demo-test-host": {
@@ -51,7 +51,7 @@
       },
       "devops_common": {
         "enable": {
-          "global_admin_1": "admin",
+          "ibrahim_balla": "admin",
           "sohel_sarder": "admin"
         }
       },
