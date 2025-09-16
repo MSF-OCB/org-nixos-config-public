@@ -16,12 +16,12 @@ If you can boot a K8S cluster in the cloud for all your stuff, that's great! Thi
 
 This code is designed for managing a large fleet of servers:
 
-* Distributed across non-standard environments
-* With low, unstable or fragile Internet connectivity 
-* With few local staff on hand to support
-* Who may be a long way away (hardware that is difficult to get to)
-* Distributed along a 'remote-managed appliance' model
-* Operating in complicated, delicate or sensitive political enviroments.
+- Distributed across non-standard environments
+- With low, unstable or fragile Internet connectivity
+- With few local staff on hand to support
+- Who may be a long way away (hardware that is difficult to get to)
+- Distributed along a 'remote-managed appliance' model
+- Operating in complicated, delicate or sensitive political enviroments.
 
 # Documentation & getting started
 
@@ -33,14 +33,14 @@ More documentation is available on the wiki.
 
 At present, to make use of the code you need to fork the entire codebase, including the modules. The modules could in theory be made external to the organisation-specific code, and then pulled in from separate repo(s).
 
-This would require a large refactoring, but it would make it much easier for end users. It would also make collaborating on module evolution more organic. However, it would also 
+This would require a large refactoring, but it would make it much easier for end users. It would also make collaborating on module evolution more organic. However, it would also
 
 # Security
 
 We take the security of this project seriously. If you believe you have found a security vulnerability, **please do not create a public GitHub issue**. Instead, report it responsibly through one of the following channels:
 
-* Email: cybersecurity@brussels.msf.org
-* HackerOne:
+- Email: cybersecurity@brussels.msf.org
+- HackerOne:
 
 We will do our best to acknowledge your report promptly, investigate, and take the necessary actions.
 
@@ -81,4 +81,3 @@ We rely entirely on donations from individuals. **98 per cent of our 2023 income
 Here at Operational Centre Brussels, our team helps support MSF operations in 35+ countries including Afghanistan, Haiti, the Occupied Palestinian territories, and Ukraine.
 
 For more information, please see [msf-azg.be](https://msf-azg.be) for MSF Belgium and [msf.org](https://msf.org) for MSF worldwide.
-
