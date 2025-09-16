@@ -27,7 +27,7 @@ This code is designed for managing a large fleet of servers:
 
 To get started, you will need to fork this repo and then adapt the code under `org-config/.` Some examples have been provided. If you want to administer your servers remotely, you will need to configure and install an SSH relay.
 
-More documentation is available on the wiki.
+[More documentation is available on the wiki](https://github.com/MSF-OCB/org-nixos-config-public/wiki).
 
 # Roadmap
 
