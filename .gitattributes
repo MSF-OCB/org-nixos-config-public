@@ -1,0 +1,4 @@
+# .gitattributes
+# For general usage reference on this Git configuration file, see e.g.: <https://git-scm.com/docs/gitattributes>.
+#
+org-config/secrets/** binary
