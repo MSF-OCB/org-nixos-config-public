@@ -33,7 +33,7 @@ To get started, you will need to fork this repo and then adapt the code under `o
 
 At present, to make use of the code you need to fork the entire codebase, including the modules. The modules could in theory be made external to the organisation-specific code, and then pulled in from separate repo(s).
 
-This would require a large refactoring, but it would make it much easier for end users. It would also make collaborating on module evolution more organic. However, it would also
+This would require a large refactoring, but it would make it much easier for end users.
 
 # Security
 
