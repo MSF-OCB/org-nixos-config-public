@@ -60,7 +60,7 @@ We would like to extend our sincere thanks to the volunteers who have given free
 
 # License
 
-This code is released under the [BSD 3 clause license](LICENSE.md).
+This code is released under the [BSD 3 clause license](LICENSE).
 
 # Credits
 
