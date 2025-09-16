@@ -64,7 +64,7 @@ This code is released under the [BSD 3 clause license](LICENSE).
 
 # Credits
 
-The original code was written by [@r-vdp](https://github.com/r-vdp) while working at MSF Belgium. Since then the code has been maintained and evolved by various members of MSF BE IT unit, with continued input and advice from Ramses and other members of the NixOS community, including [@zimbatm](http://github.com/zimbatm) and [@jfroche](https://github.com/jfroche).
+The original code was written by [@r-vdp](https://github.com/r-vdp) while working at MSF Belgium. Since then the code has been maintained and evolved by various members of MSF BE IT unit, with continued input and advice from @r-vdp and other members of the NixOS community, including [@zimbatm](http://github.com/zimbatm) and [@jfroche](https://github.com/jfroche).
 
 # About Médecins Sans Frontières
 
