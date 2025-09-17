@@ -267,25 +267,44 @@ jobs:
 
       - name: Build the NixOS configurations
         run: nix build ".#checks.x86_64-linux.builder-${{ matrix.builder_id }}"
-
   # Run NixOS VM tests after the build step, but only if no new secrets or app_configs were pushed.
-  # test:
-  #   name: "test"
-  #   runs-on: "ubuntu-latest"
-  #   needs:
-  #     - pre_build
-  #   # Only run this step if no new secrets or app_configs were pushed,
-  #   # when either secrets or app_configs were pushed, this action will be
-  #   # triggered again anyway because we added a new commit to the PR.
-  #   if: needs.pre_build.outputs.files_pushed_outcome == 'skipped'
-  #   steps:
-  #     - name: Checkout the repo
-  #       uses: "actions/checkout@v4"
-  #
-  #     - name: Install the Nix package manager
-  #       uses: "cachix/install-nix-action@master"
-  #       with:
-  #         github_access_token: ${{ secrets.GITHUB_TOKEN }}
-  #
-  #     - name: Build the NixOS VM tests
-  #       run: nix build ".#checks.x86_64-linux.vmTests"
+  test:
+    name: "test"
+    runs-on: "ubuntu-latest"
+    needs:
+      - pre_build
+    # Only run this step if no new secrets or app_configs were pushed,
+    # when either secrets or app_configs were pushed, this action will be
+    # triggered again anyway because we added a new commit to the PR.
+    if: needs.pre_build.outputs.files_pushed_outcome == 'skipped'
+    steps:
+      - name: Checkout the repo
+        uses: "actions/checkout@v4"
+
+      - name: Install the Nix package manager
+        uses: "cachix/install-nix-action@master"
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build the NixOS VM tests
+        run: nix build ".#checks.x86_64-linux.vmTests"
+  deploy:
+    runs-on: "ubuntu-latest"
+    needs:
+      - build
+    # We only want to deploy when commits have been pushed to main or staging.
+    # The deployment simply triggers the nixos-upgrade service, so any server
+    # that is being deployed will still pull it's config from the branch that's
+    # configured in its config.
+    if: |-
+      ( github.event_name == 'push' ||
+        github.event_name == 'workflow_dispatch' ) &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging')
+    steps:
+      - name: Auto-deploy the NixOS config to the requested servers
+        uses: "MSF-OCB/Demo-NixOS-Deploy@main"
+        with:
+          nixos_robot_key: "${{ secrets.DEMO_ROBOT_KEY }}"
+          nixos_deploy_fixed_hosts: >-
+            demo-relay-1.ocb.msf.org
+          nixos_deploy_service: "nixos-upgrade.service"
