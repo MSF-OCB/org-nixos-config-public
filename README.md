@@ -21,11 +21,11 @@ This code is designed for managing a large fleet of servers:
 - With few local staff on hand to support
 - Who may be a long way away (hardware that is difficult to get to)
 - Distributed along a 'remote-managed appliance' model
-- Operating in complicated, delicate or sensitive political enviroments.
+- Operating in complicated, delicate or sensitive political environments.
 
 # Documentation & getting started
 
-To get started, you will need to fork this repo and then adapt the code under `org-config/.` Some examples have been provided. If you want to administer your servers remotely, you will need to configure and install an SSH relay.
+To get started, you will need to fork this repo and then adapt the code under `org-config/`. Some examples have been provided. If you want to administer your servers remotely, you will need to configure and install an SSH relay.
 
 [More documentation is available on the wiki](https://github.com/MSF-OCB/org-nixos-config-public/wiki).
 
@@ -52,7 +52,7 @@ For more information on how to contribute and some notes on our constraints, ple
 
 # Why publish?
 
-Following our presentation in January 2025, many members of the NixOS community reached out to us, volunteering their time and expertise. This public version of our code contains no secrets, configuration or data concerning MSFs operations and is designed to make it easier to accept volunteer contributions.
+Following our presentation in January 2025, many members of the NixOS community reached out to us, volunteering their time and expertise. This public version of our code contains no secrets, configuration or data concerning MSF's operations and is designed to make it easier to accept volunteer contributions.
 
 At the same time, our hope is that this code will serve as a starting point for other organisations engaged in humanitarian work who have similar needs.
 
