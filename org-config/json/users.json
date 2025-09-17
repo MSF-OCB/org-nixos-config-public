@@ -1,5 +1,5 @@
 {
-  "global_admins": ["global_admin_1", "global_admin_2"],
+  "global_admins": ["ibrahim_balla", "yves_de_voghel"],
   "users": {
     "per-host": {
       "demo-test-host": {
@@ -21,6 +21,12 @@
         "enable_roles": ["devops", "emr_support"]
       },
       "demo-nuc-003": {
+        "enable_roles": ["devops", "emr_support"]
+      },
+      "demo-nuc-004": {
+        "enable_roles": ["devops", "emr_support"]
+      },
+      "demo-nuc-005": {
         "enable_roles": ["devops", "emr_support"]
       },
       "demo-relay-1": {
@@ -48,7 +54,7 @@
       },
       "devops_common": {
         "enable": {
-          "global_admin_1": "admin",
+          "ibrahim_balla": "admin",
           "sohel_sarder": "admin"
         }
       },
