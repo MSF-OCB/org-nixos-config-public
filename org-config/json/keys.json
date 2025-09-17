@@ -1,6 +1,11 @@
 {
   "_comment": "Comments can be added with key _comment, which will be filtered out automatically.",
   "keys": {
+    "robot": {
+      "public_keys": [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKBmpPrG/ol/NQ0Sf55gWbbpu9GEljbIhuqRwf71RQem"
+      ]
+    },
     "ibrahim_balla": {
       "public_keys": [
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICC8KJT5hqQEuhwQOK6zFa8mmzzx00qKtVyYtXPOEXP1"
