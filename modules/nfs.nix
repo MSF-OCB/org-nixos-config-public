@@ -1,58 +1,58 @@
 { config, pkgs, lib, ... }:
 
-with lib;
+#with lib;
 
 let
   cfg = config.settings.nfs;
 
   nfsCryptoMountOpts = { name, config, ... }: {
     options = {
-      enable = mkEnableOption "the crypto mount";
+      enable = lib.mkEnableOption "the crypto mount";
 
-      name = mkOption {
-        type = types.str;
+      name = lib.mkOption {
+        type = lib.types.str;
       };
 
-      device = mkOption {
-        type = types.str;
+      device = lib.mkOption {
+        type = lib.types.str;
       };
 
-      exportTo = mkOption {
-        type = with types; listOf str;
+      exportTo = lib.mkOption {
+        type = with lib.types; listOf str;
         default = [ ];
       };
     };
 
     config = {
-      name = mkDefault name;
+      name = lib.mkDefault name;
     };
   };
 in
 {
   options.settings.nfs = {
-    nfsPorts = mkOption {
-      type = with types; listOf int;
+    nfsPorts = lib.mkOption {
+      type = with lib.types; listOf int;
       default = [ 111 2049 ];
       readOnly = true;
     };
-    nfsUserId = mkOption {
-      type = types.int;
+    nfsUserId = lib.mkOption {
+      type = lib.types.int;
       default = 20000;
       readOnly = true;
     };
-    nfsExportOptions = mkOption {
-      type = types.str;
+    nfsExportOptions = lib.mkOption {
+      type = lib.types.str;
       default = "rw,nohide,secure,no_subtree_check,all_squash,anonuid=${toString cfg.nfsUserId},anongid=65534";
       readOnly = true;
     };
     client = {
-      enable = mkEnableOption "the NFS client.";
+      enable = lib.mkEnableOption "the NFS client.";
     };
     server = {
-      enable = mkEnableOption "the NFS server.";
+      enable = lib.mkEnableOption "the NFS server.";
 
-      cryptoMounts = mkOption {
-        type = with types; attrsOf (submodule nfsCryptoMountOpts);
+      cryptoMounts = lib.mkOption {
+        type = with lib.types; attrsOf (submodule nfsCryptoMountOpts);
         default = { };
       };
     };
@@ -68,15 +68,15 @@ in
         mount_point = exported_path conf.name;
         mount_options = "acl,noatime,nosuid,nodev";
       };
-      mkNfsCryptoMounts = mapAttrs mkNfsCryptoMount;
+      mkNfsCryptoMounts = lib.mapAttrs mkNfsCryptoMount;
 
       mkClientConf = client: "${client}(${cfg.nfsExportOptions})";
-      mkExportEntry = _: conf: "${exported_path conf.name} ${concatMapStringsSep " " mkClientConf conf.exportTo}";
-      mkExports = confs: concatStringsSep "\n" (mapAttrsToList mkExportEntry confs);
+      mkExportEntry = _: conf: "${exported_path conf.name} ${lib.concatMapStringsSep " " mkClientConf conf.exportTo}";
+      mkExports = confs: lib.concatStringsSep "\n" (lib.mapAttrsToList mkExportEntry confs);
 
       enabledCryptoMounts = lib.filterEnabled cfg.server.cryptoMounts;
     in
-    mkIf cfg.server.enable {
+    lib.mkIf cfg.server.enable {
       users =
         let
           nfs = "nfs";
