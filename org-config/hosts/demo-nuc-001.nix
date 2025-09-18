@@ -1,4 +1,4 @@
-{ config, ... }:
+{ config, pkgs, ... }:
 {
   time.timeZone = "Europe/Brussels";
   environment.systemPackages = [
