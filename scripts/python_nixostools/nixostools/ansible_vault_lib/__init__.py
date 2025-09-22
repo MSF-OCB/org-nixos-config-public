@@ -19,7 +19,6 @@ def print_vault_banner() -> None:
     print(
         "\n\nYou will need the password for the Ansible Vault storing the encryption keys."
     )
-    print("Choose a strong password for your vault and reuse it in your actions and when encrypting your secrets:")
 
 
 def get_ansible_passwd(args_passwd: str) -> str:
