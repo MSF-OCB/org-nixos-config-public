@@ -37,10 +37,7 @@ This would require a large refactoring, but it would make it much easier for end
 
 # Security
 
-We take the security of this project seriously. If you believe you have found a security vulnerability, **please do not create a public GitHub issue**. Instead, report it responsibly through one of the following channels:
-
-- Email: cybersecurity@brussels.msf.org
-- HackerOne:
+We take the security of this project seriously. If you believe you have found a security vulnerability, **please do not create a public GitHub issue**. Instead, report it responsibly via email at cybersecurity@brussels.msf.org.
 
 We will do our best to acknowledge your report promptly, investigate, and take the necessary actions.
 
