@@ -257,8 +257,11 @@ let
                        b64encode(b"\x00\x00\x00\x13ecdsa-sha2-nistp256")
                      For "ssh-rsa", we have 7 chars, or \x07, and we get
                        b64encode(b"\x00\x00\x00\x07ssh-rsa")
+                     For SSH hardware keys, 30 chars
+                       b64encode(b"\x00\x00\x00\x26sk-ssh-ed25519@openssh.com")
                   */
                   ed25519_prefix = "AAAAC3NzaC1lZDI1NTE5";
+                  ed25519_hw_prefix = "AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29t";
                   nistp256_prefix = "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTY";
                   rsa_prefix = "AAAAB3NzaC1yc2E";
                 in
@@ -271,6 +274,8 @@ let
                   # at some point since 2048 bit RSA is not considered very secure anymore
                   ssh-rsa =
                     "^ssh-rsa ${rsa_prefix}${key_data_pattern}{355,}={0,2}$";
+                  ssh-ed25519-hw =
+                    "^sk-ssh-ed25519@openssh.com ${ed25519_hw_prefix}${key_data_pattern}{78,}={0,2}$";
                 };
               pub_key_pattern = lib.concatStringsSep "|" (lib.attrValues key_patterns);
               description =
