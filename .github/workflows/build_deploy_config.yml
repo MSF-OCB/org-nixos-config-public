@@ -267,6 +267,11 @@ jobs:
 
       - name: Build the NixOS configurations
         run: nix build ".#checks.x86_64-linux.builder-${{ matrix.builder_id }}"
+
+      - name: Build the installation images
+        run: |
+          nix build .#rescue-iso-img .#azure-installer-img
+
   # Run NixOS VM tests after the build step, but only if no new secrets or app_configs were pushed.
   # test:
   #   name: "test"
