@@ -275,7 +275,7 @@ let
                   ssh-rsa =
                     "^ssh-rsa ${rsa_prefix}${key_data_pattern}{355,}={0,2}$";
                   ssh-ed25519-hw =
-                    "^sk-ssh-ed25519@openssh.com ${ed25519_hw_prefix}${key_data_pattern}{78,}={0,2}$";
+                    "^sk-ssh-ed25519@openssh.com ${ed25519_hw_prefix}${key_data_pattern}{60,}={0,2}$";
                 };
               pub_key_pattern = lib.concatStringsSep "|" (lib.attrValues key_patterns);
               description =
