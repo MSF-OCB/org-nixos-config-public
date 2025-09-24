@@ -65,7 +65,8 @@
           "marton": "admin",
           "yvan": "admin",
           "r-vdp": "admin",
-          "phaer": "admin"
+          "phaer": "admin",
+          "zimbatm": "admin"
         }
       },
       "devops_docker_hq": {
