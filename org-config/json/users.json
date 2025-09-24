@@ -55,7 +55,18 @@
       "devops_common": {
         "enable": {
           "ibrahim_balla": "admin",
-          "sohel_sarder": "admin"
+          "sohel_sarder": "admin",
+          "ian_sollars": "admin",
+          "xavier_kaufmann": "admin",
+          "brian": "admin",
+          "jfroche": "admin",
+          "akechishiro": "admin",
+          "felipe": "admin",
+          "marton": "admin",
+          "yvan": "admin",
+          "r-vdp": "admin",
+          "phaer": "admin"
+
         }
       },
       "devops_docker_hq": {
