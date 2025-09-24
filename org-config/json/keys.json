@@ -56,6 +56,11 @@
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFZOC3FgP/8TUK62obAW/uDENhdXkLGAjickSF53zncg"
       ]
     },
+    "yvan": {
+      "public_keys": [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIArkmq6Th79Z4klW6Urgi4phN8yq769/l/10jlE00tU9"
+      ]
+    },
     "r-vdp": {
       "public_keys": [
         {
