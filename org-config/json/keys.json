@@ -67,6 +67,11 @@
         "sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIHqRNv8hueRuN4khLUQMiPVS0NqwZfX17BNXIRZJ9yRPAAAAE3NzaDpoZWxsb0BwaGFlci5vcmc="
       ]
     },
+    "zimbatm": {
+      "public_keys": [
+        "sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIOH4yGDIDHCOFfNeXuvYwNoSVtAPOznAHfxSTSze8tMnAAAABHNzaDo="
+      ]
+    },
     "doctor_fictional": {
       "public_keys": [
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEDQWS17VwntcxZlNDm5rA+ty7g8L8yIGcrqmh/oqp53"
