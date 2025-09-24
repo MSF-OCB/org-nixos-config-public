@@ -51,6 +51,11 @@
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGj2f7bClTR5Kp3KBlWFSemyqWcBEJ/8uytDSVOQG9ma"
       ]
     },
+    "marton": {
+      "public_keys": [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFZOC3FgP/8TUK62obAW/uDENhdXkLGAjickSF53zncg"
+      ]
+    },
     "r-vdp": {
       "public_keys": [
         {
