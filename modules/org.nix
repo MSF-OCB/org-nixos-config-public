@@ -49,13 +49,11 @@ in
         url = sys_cfg.org.repo_to_url org_metadata.config_repo;
         branch =
           let
-            waves_and_staging_hosts = lib.importJSON ../org-config/json/waves-and-staging-hosts.json;
+            waves_and_staging_hosts = import ../org-config/waves-and-staging-hosts.nix;
             inherit (waves_and_staging_hosts) stagingHosts;
           in
           lib.mkDefault (
-            if lib.elem config.settings.network.host_name stagingHosts
-            then "staging"
-            else "main"
+            if lib.elem config.settings.network.host_name stagingHosts then "staging" else "main"
           );
       };
 
