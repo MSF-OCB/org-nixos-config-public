@@ -15,7 +15,6 @@ keys:
   - &user_felipe age12xl84hxcsy8whvqgagrz334l4tm6d4cwwt035ms5m24y452aud0qlshfea
   - &user_marton age1yq9a8yerv4nndh9dz6ngarnnd6t0fadncpmet8lz64xuefkw7c3scrz328
   - &user_yvan age1zdzrzuf2lltujld6ke8m9n9qlrql2a5vef8l73zsp9mt55nmw3qsjmhdfe
-  - &user_r-vdp age19l80um48d64al0j4sp58s4x33ypf5u89d5pldm88xqu7ynvkpy5s74fsvv
   - &user_doctor_fictional age1zgat52777uqslp4hyx3ckxwk95wy83andp7s6083ul79dngtjp9q58h7ye
 creation_rules:
   - path_regex: ^secrets/hosts/demo-nuc-002\.yaml$
@@ -31,7 +30,6 @@ creation_rules:
           - *user_jfroche
           - *user_marton
           - *user_phaer
-          - *user_r-vdp
           - *user_robot
           - *user_sohel_sarder
           - *user_xavier_kaufmann
@@ -42,6 +40,18 @@ creation_rules:
     key_groups:
       - age:
           - *host_demo-nuc-003
+          - *user_akechishiro
+          - *user_brian
+          - *user_doctor_fictional
+          - *user_felipe
+          - *user_ian_sollars
           - *user_ibrahim
+          - *user_jfroche
+          - *user_marton
           - *user_phaer
+          - *user_robot
+          - *user_sohel_sarder
+          - *user_xavier_kaufmann
+          - *user_yvan
+          - *user_yves_de_voghel
           - *user_zimbatm
