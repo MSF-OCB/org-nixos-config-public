@@ -19,4 +19,8 @@
       };
     };
   };
+  services.tang = {
+    enable = true;
+    ipAddressAllow = [ "10.0.19.0/24" ];
+  };
 }
