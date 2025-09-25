@@ -9,8 +9,8 @@
     age.keyFile = "/var/lib/host-identity.key";
 
     # Don't use the default SSH host key files for decryption
-    ageSshKeyPaths = lib.mkForce [ ];
-    sshKeyPaths = lib.mkForce [ ];
+    age.sshKeyPaths = [ ];
+    gnupg.sshKeyPaths = [ ];
 
     # Per host
     defaultSopsFile = ../org-config/secrets/hosts/${config.networking.hostName}.yaml;
