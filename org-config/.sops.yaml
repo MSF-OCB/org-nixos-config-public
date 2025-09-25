@@ -1,7 +1,6 @@
 keys:
   - &host_demo-nuc-002 age1tt507kehguvukgkdpdepvsqlsdz0mdr9tf0q9udctyqyg56n2sqqz6crv6
   - &host_demo-nuc-003 age1p9ky2f5zzd2kxgknr0sa66efez0drfdcvuz4x8vqdn5dxg6pzpqq6ssvpn
-  - &user_ibrahim age178qepvp8rd6kt9pxrjvu92vkqeskvqp6jdxqe4tn8aze6ajfhpeq57nhm5
   - &user_phaer age1lnelufzarkmgev2epdujdrzuqym7rj4lk3ngtuup950f377la5ps9gds87
   - &user_zimbatm age1tk655t40a4zx7ry0mzj57vmw4xpr7sa0c8qnckmclj5gzjls4yzsk7weg0
   - &user_robot age135kpn5n9xk7nshv3zv3f4ka5gty3dds2mkr5rt65zh878sqd2anq9yvhws
@@ -16,6 +15,7 @@ keys:
   - &user_marton age1yq9a8yerv4nndh9dz6ngarnnd6t0fadncpmet8lz64xuefkw7c3scrz328
   - &user_yvan age1zdzrzuf2lltujld6ke8m9n9qlrql2a5vef8l73zsp9mt55nmw3qsjmhdfe
   - &user_doctor_fictional age1zgat52777uqslp4hyx3ckxwk95wy83andp7s6083ul79dngtjp9q58h7ye
+  - &user_ibrahim_balla age178qepvp8rd6kt9pxrjvu92vkqeskvqp6jdxqe4tn8aze6ajfhpeq57nhm5
 creation_rules:
   - path_regex: ^secrets/hosts/demo-nuc-002\.yaml$
     key_groups:
@@ -26,7 +26,7 @@ creation_rules:
           - *user_doctor_fictional
           - *user_felipe
           - *user_ian_sollars
-          - *user_ibrahim
+          - *user_ibrahim_balla
           - *user_jfroche
           - *user_marton
           - *user_phaer
@@ -45,7 +45,7 @@ creation_rules:
           - *user_doctor_fictional
           - *user_felipe
           - *user_ian_sollars
-          - *user_ibrahim
+          - *user_ibrahim_balla
           - *user_jfroche
           - *user_marton
           - *user_phaer
