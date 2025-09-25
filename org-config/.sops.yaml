@@ -1,5 +1,6 @@
 keys:
   - &host_demo-nuc-002 age1tt507kehguvukgkdpdepvsqlsdz0mdr9tf0q9udctyqyg56n2sqqz6crv6
+  - &host_demo-nuc-003 age1p9ky2f5zzd2kxgknr0sa66efez0drfdcvuz4x8vqdn5dxg6pzpqq6ssvpn
   - &user_ibrahim age178qepvp8rd6kt9pxrjvu92vkqeskvqp6jdxqe4tn8aze6ajfhpeq57nhm5
   - &user_phaer age1lnelufzarkmgev2epdujdrzuqym7rj4lk3ngtuup950f377la5ps9gds87
   - &user_zimbatm age1tk655t40a4zx7ry0mzj57vmw4xpr7sa0c8qnckmclj5gzjls4yzsk7weg0
@@ -40,7 +41,7 @@ creation_rules:
   - path_regex: ^secrets/hosts/demo-nuc-003\.yaml$
     key_groups:
       - age:
-          - age1p9ky2f5zzd2kxgknr0sa66efez0drfdcvuz4x8vqdn5dxg6pzpqq6ssvpn
+          - *host_demo-nuc-003
           - *user_ibrahim
           - *user_phaer
           - *user_zimbatm
