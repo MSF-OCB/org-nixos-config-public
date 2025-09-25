@@ -45,10 +45,6 @@
         "remote_forward_port": 0,
         "public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKF33l7qzSEdzXMmH/PvlHgGjS71w8q7e5QKIKrZKprr"
       },
-      "azure-template": {
-        "remote_forward_port": 8010,
-        "public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIoKWYh4yIyrxREeoXMLDPqqereEDXiFKs3jpJU80Ehe"
-      },
       "rescue-iso": {
         "remote_forward_port": 8011,
         "public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFhb8kO0waxvQHZci3kh6A8JIhalF8fvqklQVJ2ndZ31"

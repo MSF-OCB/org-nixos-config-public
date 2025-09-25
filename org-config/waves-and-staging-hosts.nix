@@ -8,7 +8,6 @@ in
   firstWave = stagingHosts ++ [
     "demo-test-host"
     "rescue-iso"
-    "azure-template"
   ];
   middleWave = [
     "demo-uat-host"

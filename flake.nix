@@ -193,7 +193,6 @@
         # Installation images
         {
           rescue-iso-img = self.nixosConfigurations.rescue-iso.config.system.build.isoImage;
-          azure-installer-img = self.nixosConfigurations.azure-template.config.system.build.azureImage;
         }
       );
 
