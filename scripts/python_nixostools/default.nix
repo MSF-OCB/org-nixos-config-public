@@ -27,8 +27,8 @@ let
     , requests
     , types-requests
     , ruff
-    # compared to PyYAML this supports preserving anchors during round-trips
-    # which is useful when updating/changing .sops.yaml 
+      # compared to PyYAML this supports preserving anchors during round-trips
+      # which is useful when updating/changing .sops.yaml 
     , ruamel-yaml
     }:
     buildPythonApplication {
