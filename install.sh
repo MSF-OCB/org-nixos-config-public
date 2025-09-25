@@ -170,6 +170,21 @@ readonly extra_files
 mkdir --parents "${extra_files}/var/lib/org-nix/"
 ssh-keygen -t ed25519 -C "" -N "" -f "${extra_files}/var/lib/org-nix/id_tunnel"
 
+
+if ! type -p "age" >&/dev/null; then
+  PATH="${PATH}:$(nix build 'nixpkgs#age.bin' --print-out-paths)/bin"
+  export PATH
+fi
+
+echo
+echo "Generating new age host identity..."
+# Generate a new age identity key and have nixos-anywhere upload it to the new root fs
+extra_files="$(mktemp --directory --tmpdir -t extra_files.XXXXXXXX)"
+readonly extra_files
+mkdir --parents "${extra_files}/var/lib/"
+age-keygen -o "${extra_files}/var/lib/host-identity.key"
+
+
 echo
 echo "Running nixos-anywhere..."
 if ((userelay)); then
@@ -196,10 +211,17 @@ fi
 # Don't leave the private key behind on this machine
 rm -rf "${extra_files}/var/lib/org-nix/id_tunnel"
 
+# Don't leave the host age key behind on this machine
+rm -rf "${extra_files}/var/lib/host-identity.key"
+
+# Check JQ is installed
+
 if ! type -p "jq" >&/dev/null; then
   PATH="${PATH}:$(nix build 'nixpkgs#jq.bin' --print-out-paths)/bin"
   export PATH
 fi
+
+# Update org-config/json/tunnels.d/tunnels.json
 jq \
   --arg hostname "${hostname}" \
   --arg pubkey "$(sed -e 's: *$::' "${extra_files}/var/lib/org-nix/id_tunnel.pub")" \
@@ -213,6 +235,30 @@ cat "${extra_files}/var/lib/org-nix/id_tunnel.pub"
 echo
 echo "This machine will not be able to update itself or to decrypt any secrets"
 echo "until you add this key to tunnels.json, and merge the commit into the main branch"
+
+# Derive the age recipient from the generated identity
+recipient="$(age-keygen -y "${extra_files}/var/lib/host-identity.key" | sed -e 's:[[:space:]]*$::')"
+
+# Update org-config/json/host-age.json
+jq \
+  --arg hostname "${hostname}" \
+  --arg recipient "${recipient}" \
+  '(.[$hostname] //= {})                                   # ensure host object
+   | (.[$hostname].age_keys //= [])                        # ensure array
+   | if (.[$hostname].age_keys | index($recipient))        # avoid duplicates
+     then .
+     else .[$hostname].age_keys += [$recipient]
+     end' \
+  <org-config/json/host-age.json >org-config/json/host-age.json.tmp
+
+mv org-config/json/host-age.json.tmp org-config/json/host-age.json
+
+echo
+echo "New age recipient, added to 'host-age.json':"
+echo "${recipient}"
+echo
+echo "This machine will not be able to decrypt any secrets until you add this recipient to host-age.json, and merge the commit into the main branch"
+
 
 echo
 if ((addsecrets)); then
