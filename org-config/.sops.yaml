@@ -1,11 +1,13 @@
 keys:
-  - &zimbatm age1tk655t40a4zx7ry0mzj57vmw4xpr7sa0c8qnckmclj5gzjls4yzsk7weg0
+  - &ibrahim age178qepvp8rd6kt9pxrjvu92vkqeskvqp6jdxqe4tn8aze6ajfhpeq57nhm5
   - &paul age1lnelufzarkmgev2epdujdrzuqym7rj4lk3ngtuup950f377la5ps9gds87
+  - &zimbatm age1tk655t40a4zx7ry0mzj57vmw4xpr7sa0c8qnckmclj5gzjls4yzsk7weg0
 
 creation_rules:
   - path_regex: ^secrets/hosts/demo-nuc-002\.yaml$
     key_groups:
       - age:
           - age1tt507kehguvukgkdpdepvsqlsdz0mdr9tf0q9udctyqyg56n2sqqz6crv6
-          - *zimbatm
+          - *ibrahim
           - *paul
+          - *zimbatm
