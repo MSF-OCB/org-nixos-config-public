@@ -11,3 +11,10 @@ creation_rules:
           - *ibrahim
           - *paul
           - *zimbatm
+  - path_regex: ^secrets/hosts/demo-nuc-003\.yaml$
+    key_groups:
+      - age:
+          - age1p9ky2f5zzd2kxgknr0sa66efez0drfdcvuz4x8vqdn5dxg6pzpqq6ssvpn
+          - *ibrahim
+          - *paul
+          - *zimbatm
