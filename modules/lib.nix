@@ -63,17 +63,17 @@ let
                     git_options = git_options ++ [ "-C" ''"${clone_dir}"'' ]; }}
     '';
 
-  mkDeploymentService =
-    { enable ? true
+  mkDeploymentUnit =
+    { enable
     , deploy_dir_name
     , github_repo
-    , git_branch ? "main"
-    , pre-compose_script ? "deploy/pre-compose.sh"
-    , extra_script ? ""
-    , restart ? false
-    , force_build ? false
-    , docker_compose_files ? [ "docker-compose.yml" ]
-    , secrets_dir ? "/run/secrets"
+    , git_branch
+    , pre-compose_script
+    , extra_script
+    , restart
+    , force_build
+    , docker_compose_files
+    , secrets_dir
     }:
     let
       app_configs_dir = config.settings.system.app_configs.dest_directory;
@@ -182,6 +182,6 @@ let
 in
 {
   config.lib.ext_lib = {
-    inherit mkSudoStartServiceCmds mkDeploymentService;
+    inherit mkSudoStartServiceCmds mkDeploymentUnit;
   };
 }
