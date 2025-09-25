@@ -15,7 +15,7 @@ extract_server_app_configs = "nixostools.extract_server_app_configs:main"
 add_encryption_key     = "nixostools.add_encryption_key:main"
 update_nixos_keys      = "nixostools.update_nixos_keys:main"
 install                = "nixostools.install:main"
-derive_age_keys = "nixostools.derive_age_keys:main"
+sync_users_to_sops_yaml = "nixostools.sync_users_to_sops_yaml:main"
 
 [tool.setuptools.packages]
 find = {}

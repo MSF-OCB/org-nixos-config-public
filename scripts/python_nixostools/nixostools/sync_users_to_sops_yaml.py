@@ -6,7 +6,7 @@ from pathlib import Path
 import ruamel.yaml
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("nixostools/derive_age_keys")
+logger = logging.getLogger("nixostools/sync_users_to_sops_yaml")
 
 
 def has_secret_access(users_json, key_name, path_regex):
