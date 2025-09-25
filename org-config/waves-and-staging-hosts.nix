@@ -1,24 +1,26 @@
 let
-  devMachines = [
-    "demo-relay-1"
+  stagingHosts = [
     "demo-nuc-001"
+    "nixos-test"
   ];
 in
 {
-  firstWave = devMachines;
-  finalWave = [ "demo-prod-host" ];
-  latestWave = [
+  firstWave = stagingHosts ++ [
+    "demo-test-host"
+  ];
+  middleWave = [
     "demo-uat-host"
-    "wsl"
-    "demo-relay-1"
     "demo-nuc-002"
     "demo-nuc-003"
     "demo-nuc-004"
+  ];
+  finalWave = [
+    "demo-prod-host"
     "demo-nuc-005"
-    "demo-test-host"
-    "nixos-test"
   ];
-  stagingHosts = [
-    "demo-test-host"
+  latestWave = [
+    "wsl"
+    "demo-relay-1"
   ];
+  inherit stagingHosts;
 }

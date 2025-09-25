@@ -22,6 +22,12 @@ let
       inherit system;
       nixpkgs = flake.legacyPackages.${system}.nixpkgs-latest;
     };
+  mkMiddleWaveConfig =
+    system:
+    lib.trace "Using middle-wave config" {
+      inherit system;
+      nixpkgs = flake.legacyPackages.${system}.nixpkgs-latest;
+    };
   mkFinalWaveConfig =
     system:
     lib.trace "Using final-wave config" {
@@ -51,6 +57,7 @@ let
       );
 
   firstWave = mkWave waves.firstWave mkFirstWaveConfig;
+  middleWave = mkWave waves.middleWave mkMiddleWaveConfig;
   finalWave = mkWave waves.finalWave mkFinalWaveConfig;
   # These hosts always use the latest nixpkgs version since they are extra security critical, like the relays
   latest = mkWave waves.latestWave mkLatestConfig;
@@ -58,6 +65,7 @@ let
   # lib.mergeDisjoint fails when there's duplicated entries in ./org-config/waves-and-staging-hosts.nix
   mergedWaves = lib.mergeDisjoint [
     firstWave
+    middleWave
     finalWave
     latest
   ];
