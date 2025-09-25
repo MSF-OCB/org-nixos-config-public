@@ -73,9 +73,9 @@ let
     , restart ? false
     , force_build ? false
     , docker_compose_files ? [ "docker-compose.yml" ]
+    , secrets_dir ? "/run/secrets"
     }:
     let
-      secrets_dir = "/run/secrets";
       app_configs_dir = config.settings.system.app_configs.dest_directory;
       deploy_dir = "/opt/${deploy_dir_name}";
       pre-compose_script_path = "${deploy_dir}/${pre-compose_script}";
