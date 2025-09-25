@@ -6,6 +6,6 @@
 
   sops = {
     age.keyFile = "/var/lib/host-identity.key";
-    defaultSopsFile = ../org-config/secrets/hosts/${config.networking.hostName}.json;
+    defaultSopsFile = ../org-config/secrets/hosts/${config.networking.hostName}.yaml;
   };
 }
