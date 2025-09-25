@@ -9,6 +9,25 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("nixostools/derive_age_keys")
 
 
+def has_secret_access(users_json, key_name, path_regex):
+    """
+    Predicate to decide whether a given user should have access to a secret files matched
+    by path_regex.
+    Currently, all global admins as well as users with the devops_common role set to "admin"
+    are considered admins on all hosts.
+    """
+    user_name = key_name.removeprefix("user_")
+    is_global_admin = user_name in users_json["global_admins"]
+    is_devops_common_admin = user_name in [
+        user
+        for user, role in users_json["users"]["roles"]["devops_common"][
+            "enable"
+        ].items()
+        if role == "admin"
+    ]
+    return is_global_admin or is_devops_common_admin
+
+
 def derive_age_keys(
     keys_json_file,
 ):
@@ -21,13 +40,13 @@ def derive_age_keys(
             suffix = "" if index == 0 else f"_{index + 1}"
             age_key_name = f"{username}{suffix}"
             if isinstance(public_key, dict):
-                logger.warn(
+                logger.warning(
                     f"WARNING: unsupported key for {age_key_name}: {public_key}, skipping"
                 )
                 continue
 
             if public_key.startswith("sk-"):
-                logger.warn(
+                logger.warning(
                     f"WARNING: unsupported key for {age_key_name}: {public_key}, skipping"
                 )
                 continue
@@ -42,7 +61,7 @@ def derive_age_keys(
             yield (age_key_name, age_key)
 
 
-def sync_sops_yaml(sops_yaml_file, age_keys):
+def sync_sops_yaml(sops_yaml_file, users_json_file, age_keys):
     """
     Sync generated age keys with those listed in .sops.yaml
     It starts by adding keys to a list of yaml anchors in "keys", if it does not exist already, before
@@ -50,6 +69,9 @@ def sync_sops_yaml(sops_yaml_file, age_keys):
     More complex access rules for individual users/keys are not yet implemented.
     Also, only age keys are supported.
     """
+    with open(users_json_file) as f:
+        users_json = json.load(f)
+
     yaml = ruamel.yaml.YAML()
     with open(sops_yaml_file) as f:
         sops_yaml = yaml.load(f.read())
@@ -71,13 +93,20 @@ def sync_sops_yaml(sops_yaml_file, age_keys):
             if "age" in key_group
         ][0]
         group = creation_rule["key_groups"][group_index]
-        # get host keys from the existing set, but replace all user keys
+        # get host keys from the existing set, but update all user keys
         # we need the exact same python object (identity) for anchors to work correctly.
         host_keys = [
             key for key in group["age"] if key.anchor.value.startswith("host_")
         ]
         user_keys = [
-            key for key in sops_yaml["keys"] if key.anchor.value.startswith("user_")
+            key
+            for key in sops_yaml["keys"]
+            if (
+                key.anchor.value.startswith("user_")
+                and has_secret_access(
+                    users_json, key.anchor.value, creation_rule["path_regex"]
+                )
+            )
         ]
         group["age"] = sorted(host_keys + user_keys, key=lambda k: k.anchor.value)
 
@@ -87,7 +116,9 @@ def sync_sops_yaml(sops_yaml_file, age_keys):
 
 def main():
     age_keys = dict(derive_age_keys(Path("org-config/json/keys.json")))
-    sync_sops_yaml(Path("org-config/.sops.yaml"), age_keys)
+    sync_sops_yaml(
+        Path("org-config/.sops.yaml"), Path("org-config/json/users.json"), age_keys
+    )
 
 
 if __name__ == "__main__":
