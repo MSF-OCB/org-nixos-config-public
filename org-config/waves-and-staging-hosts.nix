@@ -7,6 +7,7 @@ in
 {
   firstWave = stagingHosts ++ [
     "demo-test-host"
+    "rescue-iso"
   ];
   middleWave = [
     "demo-uat-host"

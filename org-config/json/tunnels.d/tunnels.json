@@ -44,6 +44,10 @@
       "demo-relay-1": {
         "remote_forward_port": 0,
         "public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKF33l7qzSEdzXMmH/PvlHgGjS71w8q7e5QKIKrZKprr"
+      },
+      "rescue-iso": {
+        "remote_forward_port": 8011,
+        "public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFhb8kO0waxvQHZci3kh6A8JIhalF8fvqklQVJ2ndZ31"
       }
     }
   }
