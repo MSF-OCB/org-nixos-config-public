@@ -2,10 +2,13 @@ import getopt
 import json
 import sys
 from pathlib import Path
+import os
 
 
 def main() -> None:
-    f = open("../../org-config/json/users.json")
+    # Open the JSON file
+    root_dir = Path(__file__).resolve().parent.parent.parent
+    f = open(root_dir / "org-config/json/users.json")
 
     # Create a list of arguments without the name of the script
     argv = sys.argv[1:]
