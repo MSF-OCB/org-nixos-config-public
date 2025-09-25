@@ -1,13 +1,12 @@
 import json
 import logging
 import subprocess
-import sys
 from pathlib import Path
 
 import ruamel.yaml
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("nixostools/derive_age_keys")
 
 
 def derive_age_keys(
@@ -46,18 +45,52 @@ def derive_age_keys(
             yield (age_key_name, age_key)
 
 
-def sync_sops_yaml(sops_yaml_file):
-    """Sync generated age keys with those listed in .sops.yaml"""
+def sync_sops_yaml(sops_yaml_file, age_keys):
+    """
+    Sync generated age keys with those listed in .sops.yaml
+    It starts by adding keys to a list of yaml anchors in "keys", if it does not exist already, before
+    adding all keys to the first age key group it finds in each creation_rules.
+    More complex access rules for individual users/keys are not yet implemented.
+    Also, only age keys are supported.
+    """
     yaml = ruamel.yaml.YAML()
     with open(sops_yaml_file) as f:
-        sops_data = yaml.load(f.read())
+        sops_yaml = yaml.load(f.read())
 
-    print(sops_data)
+    for age_key_name, age_key in age_keys.items():
+        if age_key in sops_yaml["keys"]:
+            logger.info(f"already found key {age_key} in {sops_yaml_file}, skipping")
+            continue
+        logger.info(f"adding key {age_key} to {sops_yaml_file}")
+        entry = ruamel.yaml.scalarstring.PlainScalarString(
+            age_key, anchor=f"user_{age_key_name}"
+        )
+        sops_yaml["keys"].append(entry)
+
+    for creation_rule in sops_yaml["creation_rules"]:
+        group_index = [
+            index
+            for index, key_group in enumerate(creation_rule["key_groups"])
+            if "age" in key_group
+        ][0]
+        group = creation_rule["key_groups"][group_index]
+        # get host keys from the existing set, but replace all user keys
+        # we need the exact same python object (identity) for anchors to work correctly.
+        host_keys = [
+            key for key in group["age"] if key.anchor.value.startswith("host_")
+        ]
+        user_keys = [
+            key for key in sops_yaml["keys"] if key.anchor.value.startswith("user_")
+        ]
+        group["age"] = sorted(host_keys + user_keys, key=lambda k: k.anchor.value)
+
+    with open(sops_yaml_file, "w") as f:
+        yaml.dump(sops_yaml, f)
 
 
 def main():
-    sync_sops_yaml(Path("org-config/.sops.yaml"))
     age_keys = dict(derive_age_keys(Path("org-config/json/keys.json")))
+    sync_sops_yaml(Path("org-config/.sops.yaml"), age_keys)
 
 
 if __name__ == "__main__":
