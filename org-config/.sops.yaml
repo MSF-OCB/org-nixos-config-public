@@ -16,6 +16,7 @@ keys:
   - &user_yvan age1zdzrzuf2lltujld6ke8m9n9qlrql2a5vef8l73zsp9mt55nmw3qsjmhdfe
   - &user_doctor_fictional age1zgat52777uqslp4hyx3ckxwk95wy83andp7s6083ul79dngtjp9q58h7ye
   - &user_ibrahim_balla age178qepvp8rd6kt9pxrjvu92vkqeskvqp6jdxqe4tn8aze6ajfhpeq57nhm5
+  - &host_demo-installer age1ev0z8622re0l268ysgar9frdt6yk3ufd7av39r2n0tjh083pxevqweqpds
 creation_rules:
   - path_regex: ^secrets/hosts/demo-nuc-002\.yaml$
     key_groups:
@@ -51,3 +52,7 @@ creation_rules:
           - *user_yvan
           - *user_yves_de_voghel
           - *user_zimbatm
+  - path_regex: ^secrets/hosts/demo-installer\.yaml$
+    key_groups:
+      - age:
+          - *host_demo-installer

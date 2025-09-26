@@ -43,7 +43,7 @@
       },
       "demo-installer": {
         "remote_forward_port": 2006,
-        "public_key": ""
+        "public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ3OgUXrbqGY4lPbWdQ9x2mgok3gN7O3Flm0G98xiWM/"
       },
       "demo-relay-1": {
         "remote_forward_port": 0,
