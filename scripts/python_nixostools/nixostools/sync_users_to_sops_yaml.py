@@ -3,7 +3,7 @@ import logging
 import subprocess
 from pathlib import Path
 
-import ruamel.yaml
+from nixostools import sops_yaml
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("nixostools/sync_users_to_sops_yaml")
@@ -38,7 +38,7 @@ def derive_age_keys(
     for username, data in keys_json.get("keys").items():
         for index, public_key in enumerate(data.get("public_keys")):
             suffix = "" if index == 0 else f"_{index + 1}"
-            age_key_name = f"{username}{suffix}"
+            age_key_name = f"user_{username}{suffix}"
             if isinstance(public_key, dict):
                 logger.warning(
                     f"WARNING: unsupported key for {age_key_name}: {public_key}, skipping"
@@ -71,47 +71,23 @@ def sync_sops_yaml(sops_yaml_file, users_json_file, age_keys):
     """
     with open(users_json_file) as f:
         users_json = json.load(f)
-
-    yaml = ruamel.yaml.YAML()
-    with open(sops_yaml_file) as f:
-        sops_yaml = yaml.load(f.read())
-
+    sops_config = sops_yaml.SopsYaml(sops_yaml_file)
     for age_key_name, age_key in age_keys.items():
-        if age_key in sops_yaml["keys"]:
-            logger.info(f"already found key {age_key} in {sops_yaml_file}, skipping")
-            continue
-        logger.info(f"adding key {age_key} to {sops_yaml_file}")
-        entry = ruamel.yaml.scalarstring.PlainScalarString(
-            age_key, anchor=f"user_{age_key_name}"
-        )
-        sops_yaml["keys"].append(entry)
-
-    for creation_rule in sops_yaml["creation_rules"]:
-        group_index = [
-            index
-            for index, key_group in enumerate(creation_rule["key_groups"])
-            if "age" in key_group
-        ][0]
-        group = creation_rule["key_groups"][group_index]
+        sops_config.set_key(age_key_name, age_key, replace=True)
+    for path_regex, rule_keys in sops_config.list_creation_rules().items():
         # get host keys from the existing set, but update all user keys
         # we need the exact same python object (identity) for anchors to work correctly.
         host_keys = [
-            key for key in group["age"] if key.anchor.value.startswith("host_")
+            name for name, key in rule_keys.items() if name.startswith("host_")
         ]
         user_keys = [
-            key
-            for key in sops_yaml["keys"]
-            if (
-                key.anchor.value.startswith("user_")
-                and has_secret_access(
-                    users_json, key.anchor.value, creation_rule["path_regex"]
-                )
-            )
+            name
+            for name, key in sops_config.user_keys.items()
+            if has_secret_access(users_json, name, path_regex)
         ]
-        group["age"] = sorted(host_keys + user_keys, key=lambda k: k.anchor.value)
-
-    with open(sops_yaml_file, "w") as f:
-        yaml.dump(sops_yaml, f)
+        key_names = list(sorted(host_keys + user_keys))
+        sops_config.set_creation_rule(path_regex, key_names, replace=True)
+    sops_config.save()
 
 
 def main():
