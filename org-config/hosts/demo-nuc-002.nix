@@ -1,4 +1,4 @@
-{ config, ... }:
+{ config, pkgs, ... }:
 {
   time.timeZone = "Europe/Brussels";
   settings = {
@@ -18,5 +18,6 @@
         update_demo_app_config.enable = true;
       };
     };
+    autoDecrypt.enable = true;
   };
 }

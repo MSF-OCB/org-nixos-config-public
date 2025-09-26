@@ -1,5 +1,6 @@
 {
   imports = [
+    ./auto_decrypt.nix
     ./auto_shutdown.nix
     ./boot.nix
     ./crypto.nix
