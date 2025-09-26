@@ -264,7 +264,9 @@ def main():
         age_public_key = generate_age_identity(age_key_path)
         age_key_name = f"host_{args.host}"
         sops_config.set_key(age_key_name, age_public_key)
-        sops_config.set_creation_rule(f"secrets/hosts/{args.host}", [age_key_name])
+        sops_config.set_creation_rule(
+            f"^secrets/hosts/{args.host}\\.yaml$", [age_key_name]
+        )
         sops_config.save()
 
         run_nixos_anywhere(

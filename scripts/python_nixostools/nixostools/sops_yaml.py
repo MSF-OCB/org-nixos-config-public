@@ -11,7 +11,6 @@ It makes a few opionated assumptions about sops & sops-nix usage:
 """
 
 import logging
-import re
 from pathlib import Path
 
 import ruamel.yaml
@@ -76,11 +75,11 @@ class SopsYaml:
         index = list(self.list_keys().keys()).index(name)
         del self.raw["keys"][index]
 
-    def list_creation_rules(self, matches=None):
+    def list_creation_rules(self, predicate=None):
         rules = dict()
         for rule in self.raw["creation_rules"]:
             path_regex = rule["path_regex"]
-            if matches and not re.match(path_regex, matches):
+            if predicate and not predicate(path_regex):
                 continue
             groups = rule["key_groups"]
             assert len(groups) == 1, f"more than one key group found for {path_regex}"
@@ -91,17 +90,17 @@ class SopsYaml:
             rules[path_regex] = keys
         return rules
 
-    def get_creation_rule(self, file_name):
-        matching = self.list_creation_rules(file_name)
+    def get_creation_rule(self, path_regex):
+        matching = self.list_creation_rules(lambda p: p == path_regex)
         # sops matches rules in order, first one wins
         if matching:
             return list(matching.values())[0]
 
-    def set_creation_rule(self, file_name, key_names, replace=False):
-        existing_rule = self.get_creation_rule(file_name)
+    def set_creation_rule(self, path_regex, key_names, replace=False):
+        existing_rule = self.get_creation_rule(path_regex)
         known_keys = self.list_keys()
         if existing_rule and not replace:
-            raise ValueError(f'A creation rule for "{file_name}" already exists.')
+            raise ValueError(f'A creation rule for "{path_regex}" already exists.')
 
         keys = []
         for key_name in key_names:
@@ -111,12 +110,18 @@ class SopsYaml:
                 known_keys[key_name]
             )
 
-        self.raw["creation_rules"].append(
-            {
-                "path_regex": f"^{file_name.replace('.', '\.')}$",
-                "key_groups": [{"age": keys}],
-            }
-        )
+        new_rule = {
+            "path_regex": path_regex,
+            "key_groups": [{"age": keys}],
+        }
+
+        if existing_rule:
+            for index, rule in enumerate(self.raw["creation_rules"]):
+                if rule["path_regex"] == path_regex:
+                    self.raw["creation_rules"][index] = new_rule
+                    return
+        else:
+            self.raw["creation_rules"].append(new_rule)
 
     def delete_creation_rule(self, path_regex):
         for index, rule in enumerate(self.raw["creation_rules"]):
