@@ -170,7 +170,6 @@ readonly extra_files
 mkdir --parents "${extra_files}/var/lib/org-nix/"
 ssh-keygen -t ed25519 -C "" -N "" -f "${extra_files}/var/lib/org-nix/id_tunnel"
 
-
 if ! type -p "age" >&/dev/null; then
   PATH="${PATH}:$(nix build 'nixpkgs#age.bin' --print-out-paths)/bin"
   export PATH
@@ -183,7 +182,6 @@ extra_files="$(mktemp --directory --tmpdir -t extra_files.XXXXXXXX)"
 readonly extra_files
 mkdir --parents "${extra_files}/var/lib/"
 age-keygen -o "${extra_files}/var/lib/host-identity.key"
-
 
 echo
 echo "Running nixos-anywhere..."
@@ -258,7 +256,6 @@ echo "New age recipient, added to 'host-age.json':"
 echo "${recipient}"
 echo
 echo "This machine will not be able to decrypt any secrets until you add this recipient to host-age.json, and merge the commit into the main branch"
-
 
 echo
 if ((addsecrets)); then
