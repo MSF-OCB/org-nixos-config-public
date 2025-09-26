@@ -23,4 +23,9 @@
     enable = true;
     ipAddressAllow = [ "10.0.19.0/24" ];
   };
+  networking.firewall = {
+    allowedTCPPorts = [
+      7654
+    ];
+  };
 }
