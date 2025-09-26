@@ -46,8 +46,7 @@
       },
       "extra_relay_access": {
         "enable": {
-          "doctor_fictional": "dockerAdmin",
-          "ibrahim_balla": "admin"
+          "doctor_fictional": "dockerAdmin"
         }
       },
       "devops": {
