@@ -17,6 +17,7 @@
     ./org.nix
     ./server-lock.nix
     ./reverse-tunnel.nix
+    ./sops.nix
     ./sshd.nix
     ./swap.nix
     ./system.nix
