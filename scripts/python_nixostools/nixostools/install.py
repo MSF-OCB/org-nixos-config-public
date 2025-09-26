@@ -159,12 +159,15 @@ def run_nixos_anywhere(args, key_file_path, recovery_key_file_path, extra_files_
     to NixOS anywhere
     """
 
-    relay_options = ["--ssh-option", f"ProxyJump={SSH_RELAY_HOST}"]
+    relay_options = (
+        ["--ssh-option", f"ProxyJump={SSH_RELAY_HOST}"] if args.use_relay else []
+    )
     subprocess.run(
         [
             "nix",
             "run",
             "github:nix-community/nixos-anywhere#nixos-anywhere",
+            "--",
             "--print-build-logs",
             "--ssh-port",
             str(args.ssh_port),
