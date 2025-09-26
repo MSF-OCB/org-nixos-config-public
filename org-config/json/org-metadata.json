@@ -4,7 +4,7 @@
   "github_org": "MSF-OCB",
   "iso": {
     "menu_label": "Generic Rescue System",
-    "file_label": "msfocb-rescue"
+    "file_label": "rescue"
   },
   "config_repo": "org-nixos-config-public",
   "acme_email_address": "noReply@example.org"
