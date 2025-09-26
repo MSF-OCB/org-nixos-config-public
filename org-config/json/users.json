@@ -29,6 +29,10 @@
       "demo-nuc-005": {
         "enable_roles": ["devops", "emr_support"]
       },
+      "demo-installer": {
+        "enable_roles": ["devops", "emr_support"]
+      },
+
       "demo-relay-1": {
         "enable_roles": ["extra_relay_access"]
       }

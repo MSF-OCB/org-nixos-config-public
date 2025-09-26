@@ -1,20 +1,58 @@
 keys:
-  - &ibrahim age178qepvp8rd6kt9pxrjvu92vkqeskvqp6jdxqe4tn8aze6ajfhpeq57nhm5
-  - &paul age1lnelufzarkmgev2epdujdrzuqym7rj4lk3ngtuup950f377la5ps9gds87
-  - &zimbatm age1tk655t40a4zx7ry0mzj57vmw4xpr7sa0c8qnckmclj5gzjls4yzsk7weg0
-
+  - &host_demo-nuc-002 age1tt507kehguvukgkdpdepvsqlsdz0mdr9tf0q9udctyqyg56n2sqqz6crv6
+  - &host_demo-nuc-003 age1p9ky2f5zzd2kxgknr0sa66efez0drfdcvuz4x8vqdn5dxg6pzpqq6ssvpn
+  - &user_phaer age1d28qfhsaxmlkwcuddk4nak8ejdg5kmxd3pff3fhqdgr8f8jjvg8sm7mnu2
+  - &user_zimbatm age1tk655t40a4zx7ry0mzj57vmw4xpr7sa0c8qnckmclj5gzjls4yzsk7weg0
+  - &user_robot age135kpn5n9xk7nshv3zv3f4ka5gty3dds2mkr5rt65zh878sqd2anq9yvhws
+  - &user_yves_de_voghel age175lkgdt7qg68eyl4e8y23e2cfc4fecxdr4q7dszw5zxaksdzac8shvgy9v
+  - &user_sohel_sarder age1naqs756u8j48nr0yjc37m4s60a6hft46n0pfkzn4t7hlgzqdg3wqn7thwg
+  - &user_ian_sollars age1jqcsk560grc2r30e6h0pg4ew4lpgn9ke0y6tqu0z0mutggl3c49qqzu7s5
+  - &user_xavier_kaufmann age1ywcm22jm6ukqrxzlvw8fqwmpp9hn0p3gsk09j3k3f2pxhw3r2pcs9x4gqy
+  - &user_brian age1gn03lh2zmsm65n6sam9mt6h9xdrqaa5e80kktpcx9c3me20seewqe7ddug
+  - &user_jfroche age1dw240ya6zkzcnwrarw8a6elk0z5u2l953w03y8jrmkchwk6fj9lssjj48h
+  - &user_akechishiro age1357gyp40shg220rrc9crf0u44sraz5wxhrduuwswuwa7dckc6qrqqsvlgv
+  - &user_felipe age12xl84hxcsy8whvqgagrz334l4tm6d4cwwt035ms5m24y452aud0qlshfea
+  - &user_marton age1yq9a8yerv4nndh9dz6ngarnnd6t0fadncpmet8lz64xuefkw7c3scrz328
+  - &user_yvan age1zdzrzuf2lltujld6ke8m9n9qlrql2a5vef8l73zsp9mt55nmw3qsjmhdfe
+  - &user_doctor_fictional age1zgat52777uqslp4hyx3ckxwk95wy83andp7s6083ul79dngtjp9q58h7ye
+  - &user_ibrahim_balla age178qepvp8rd6kt9pxrjvu92vkqeskvqp6jdxqe4tn8aze6ajfhpeq57nhm5
+  - &host_demo-installer age1ev0z8622re0l268ysgar9frdt6yk3ufd7av39r2n0tjh083pxevqweqpds
 creation_rules:
   - path_regex: ^secrets/hosts/demo-nuc-002\.yaml$
     key_groups:
       - age:
-          - age1tt507kehguvukgkdpdepvsqlsdz0mdr9tf0q9udctyqyg56n2sqqz6crv6
-          - *ibrahim
-          - *paul
-          - *zimbatm
+          - *host_demo-nuc-002
+          - *user_akechishiro
+          - *user_brian
+          - *user_felipe
+          - *user_ian_sollars
+          - *user_ibrahim_balla
+          - *user_jfroche
+          - *user_marton
+          - *user_phaer
+          - *user_sohel_sarder
+          - *user_xavier_kaufmann
+          - *user_yvan
+          - *user_yves_de_voghel
+          - *user_zimbatm
   - path_regex: ^secrets/hosts/demo-nuc-003\.yaml$
     key_groups:
       - age:
-          - age1p9ky2f5zzd2kxgknr0sa66efez0drfdcvuz4x8vqdn5dxg6pzpqq6ssvpn
-          - *ibrahim
-          - *paul
-          - *zimbatm
+          - *host_demo-nuc-003
+          - *user_akechishiro
+          - *user_brian
+          - *user_felipe
+          - *user_ian_sollars
+          - *user_ibrahim_balla
+          - *user_jfroche
+          - *user_marton
+          - *user_phaer
+          - *user_sohel_sarder
+          - *user_xavier_kaufmann
+          - *user_yvan
+          - *user_yves_de_voghel
+          - *user_zimbatm
+  - path_regex: ^secrets/hosts/demo-installer\.yaml$
+    key_groups:
+      - age:
+          - *host_demo-installer

@@ -27,6 +27,9 @@ let
     , requests
     , types-requests
     , ruff
+      # compared to PyYAML this supports preserving anchors during round-trips
+      # which is useful when updating/changing .sops.yaml 
+    , ruamel-yaml
     }:
     buildPythonApplication {
       inherit pname version src doCheck;
@@ -34,7 +37,7 @@ let
       pyproject = true;
 
       nativeCheckInputs = [ mypy pylint ruff types-pyyaml types-requests ];
-      propagatedBuildInputs = [ flit-core ansible-core pynacl pyyaml requests ];
+      propagatedBuildInputs = [ flit-core ansible-core pynacl pyyaml requests ruamel-yaml ];
 
       checkPhase = ''
         mypy ${src}/nixostools
