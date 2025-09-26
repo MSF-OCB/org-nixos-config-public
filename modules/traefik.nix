@@ -1,7 +1,5 @@
 { config, lib, pkgs, ... }:
 
-with lib;
-
 #
 # **** NOTE
 #
@@ -23,100 +21,100 @@ in
     let
       tls_entrypoint_opts = { name, ... }: {
         options = {
-          name = mkOption {
-            type = types.str;
+          name = lib.mkOption {
+            type = lib.types.str;
           };
 
-          enable = mkEnableOption "the user";
+          enable = lib.mkEnableOption "the user";
 
-          host = mkOption {
-            type = types.str;
+          host = lib.mkOption {
+            type = lib.types.str;
             default = "";
           };
 
-          port = mkOption {
-            type = types.port;
+          port = lib.mkOption {
+            type = lib.types.port;
           };
 
         };
         config = {
-          name = mkDefault name;
+          name = lib.mkDefault name;
         };
       };
     in
     {
-      enable = mkEnableOption "the Traefik service";
+      enable = lib.mkEnableOption "the Traefik service";
 
-      version = mkOption {
-        type = types.str;
+      version = lib.mkOption {
+        type = lib.types.str;
         default = "3.3";
       };
 
-      image = mkOption {
-        type = types.str;
+      image = lib.mkOption {
+        type = lib.types.str;
         default = "traefik";
         readOnly = true;
       };
-      encode_semicolons = mkOption {
-        type = types.bool;
+      encode_semicolons = lib.mkOption {
+        type = lib.types.bool;
         default = false;
       };
 
       # Enable the SMTP entrypoint, which is used for sending emails
 
-      smqtt_enable = mkEnableOption "SMQTT";
+      smqtt_enable = lib.mkEnableOption "SMQTT";
 
-      smtp_enable = mkEnableOption "SMTP";
+      smtp_enable = lib.mkEnableOption "SMTP";
 
-      service_name = mkOption {
-        type = types.str;
+      service_name = lib.mkOption {
+        type = lib.types.str;
         default = "nixos-traefik";
         readOnly = true;
       };
 
-      dynamic_config = mkOption {
-        type = with types; attrsOf (submodule {
+      dynamic_config = lib.mkOption {
+        type = with lib.types; attrsOf (submodule {
           options = {
-            enable = mkOption {
-              type = types.bool;
+            enable = lib.mkOption {
+              type = lib.types.bool;
               default = true;
             };
-            value = mkOption {
+            value = lib.mkOption {
               inherit (yaml_format) type;
             };
           };
         });
       };
 
-      tls_entrypoints = mkOption {
-        type = with types; attrsOf (submodule tls_entrypoint_opts);
+      tls_entrypoints = lib.mkOption {
+        type = with lib.types; attrsOf (submodule tls_entrypoint_opts);
         default = { };
       };
 
-      network_name = mkOption {
-        type = types.str;
+      network_name = lib.mkOption {
+        type = lib.types.str;
         default = "web";
       };
 
-      logging_level = mkOption {
-        type = types.enum [ "INFO" "DEBUG" "TRACE" ];
+      logging_level = lib.mkOption {
+        type = lib.types.enum [ "INFO" "DEBUG" "TRACE" ];
         default = "INFO";
       };
 
       accesslog = {
-        enable = mkOption {
-          type = types.bool;
+        enable = lib.mkOption {
+          type = lib.types.bool;
           default = true;
         };
       };
 
-      traefik_entrypoint_port = mkOption {
-        type = types.port;
+      traefik_entrypoint_port = lib.mkOption {
+        type = lib.types.port;
         default = 8080;
       };
 
-      content_type_nosniff_enable = mkOption {
-        type = types.bool;
+      content_type_nosniff_enable = lib.mkOption {
+        type = lib.types.bool;
         default = true;
       };
 
@@ -129,22 +127,22 @@ in
             else null;
         };
 
-        staging.enable = mkEnableOption "the Let's Encrypt staging environment";
+        staging.enable = lib.mkEnableOption "the Let's Encrypt staging environment";
 
-        keytype = mkOption {
-          type = types.str;
+        keytype = lib.mkOption {
+          type = lib.types.str;
           default = "EC256";
           readOnly = true;
         };
 
-        storage = mkOption {
-          type = types.str;
+        storage = lib.mkOption {
+          type = lib.types.str;
           default = "/letsencrypt";
           readOnly = true;
         };
 
-        email_address = mkOption {
-          type = types.str;
+        email_address = lib.mkOption {
+          type = lib.types.str;
         };
 
         resolvers = lib.mkOption {
@@ -170,14 +168,14 @@ in
           default = [ ];
         };
 
-        dnsProviders = mkOption {
-          type = with types; attrsOf str;
+        dnsProviders = lib.mkOption {
+          type = with lib.types; attrsOf str;
           default = { azure = "azure"; route53 = "route53"; exec = "exec"; };
           readOnly = true;
         };
 
-        dnsProvider = mkOption {
-          type = types.enum (attrValues cfg.acme.dnsProviders);
+        dnsProvider = lib.mkOption {
+          type = lib.types.enum (lib.attrValues cfg.acme.dnsProviders);
         };
       };
 
@@ -210,7 +208,7 @@ in
       # https://github.com/traefik/traefik/issues/6636
       dashboard-middleware = "dashboard-middleware";
     in
-    mkIf cfg.enable {
+    lib.mkIf cfg.enable {
 
       assertions = [{
         assertion = config.virtualisation.docker.enable;
@@ -302,11 +300,11 @@ in
             static_config_file_source =
               let
                 generate_tls_entrypoints = lib.compose [
-                  (mapAttrs (_: value: { address = "${value.host}:${toString value.port}"; }))
+                  (lib.mapAttrs (_: value: { address = "${value.host}:${toString value.port}"; }))
                   lib.filterEnabled
                 ];
                 letsencrypt = "letsencrypt";
-                caserver = optionalAttrs (cfg.acme.caServer != null)
+                caserver = lib.optionalAttrs (cfg.acme.caServer != null)
                   { inherit (cfg.acme) caServer; };
                 acme_template = {
                   email = cfg.acme.email_address;
@@ -318,7 +316,7 @@ in
                       cfg.acme.extraCaCertificateFiles
                   );
                 } // caserver;
-                accesslog = optionalAttrs cfg.accesslog.enable {
+                accesslog = lib.optionalAttrs cfg.accesslog.enable {
                   accessLog = {
                     # Make sure that the times are printed in local time
                     # https://doc.traefik.io/traefik/observability/access-logs/#time-zones
@@ -412,7 +410,7 @@ in
                     file = yaml_format.generate name configFile.value;
                   in
                   "${file}:${dynamic_config_directory_target}/${name}:ro";
-                buildConfigFiles = mapAttrsToList buildConfigFile;
+                buildConfigFiles = lib.mapAttrsToList buildConfigFile;
               in
               lib.compose [
                 buildConfigFiles
@@ -435,7 +433,7 @@ in
                       port = toString cfg.port;
                     in
                     "${port}:${port}";
-                  mk_tls_ports = mapAttrsToList (_: mk_tls_port);
+                  mk_tls_ports = lib.mapAttrsToList (_: mk_tls_port);
                 in
                 [
                   "80:80"

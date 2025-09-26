@@ -1,7 +1,5 @@
 { config, lib, ... }:
 
-with lib;
-
 let
   inherit (config.lib) ext_lib;
 
@@ -11,7 +9,7 @@ in
 {
   options.settings.services.deployment_services = {
     update_demo_app_config.enable =
-      mkEnableOption "the update_demo_app_config service";
+      lib.mkEnableOption "the update_demo_app_config service";
 
   };
 
@@ -44,8 +42,8 @@ in
             ext_lib.mkSudoStartServiceCmds { inherit serviceName; };
         in
         lib.compose [
-          (concatMap mkStartCmds)
-          attrNames
+          (lib.concatMap mkStartCmds)
+          lib.attrNames
         ]
           enabled_deployment_services;
     };

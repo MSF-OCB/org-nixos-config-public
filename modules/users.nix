@@ -1,39 +1,37 @@
 { config, lib, pkgs, ... }:
 
-with lib;
-
 let
   cfg = config.settings.users;
 
   userOpts = { name, config, ... }: {
     options = {
-      name = mkOption {
-        type = types.str;
+      name = lib.mkOption {
+        type = lib.types.str;
       };
 
-      enable = mkEnableOption "the user";
+      enable = lib.mkEnableOption "the user";
 
-      sshAllowed = mkOption {
-        type = types.bool;
+      sshAllowed = lib.mkOption {
+        type = lib.types.bool;
         default = false;
       };
 
-      extraGroups = mkOption {
-        type = with types; listOf str;
+      extraGroups = lib.mkOption {
+        type = with lib.types; listOf str;
         default = [ ];
       };
 
-      hasShell = mkOption {
-        type = types.bool;
+      hasShell = lib.mkOption {
+        type = lib.types.bool;
         default = false;
       };
 
-      canTunnel = mkOption {
-        type = types.bool;
+      canTunnel = lib.mkOption {
+        type = lib.types.bool;
         default = false;
       };
 
-      public_keys = mkOption {
+      public_keys = lib.mkOption {
         type = lib.types.listOf (lib.types.coercedTo
           lib.types.pub_key_type
           (publicKey: {
@@ -66,8 +64,8 @@ let
         default = [ ];
       };
 
-      forceCommand = mkOption {
-        type = with types; nullOr str;
+      forceCommand = lib.mkOption {
+        type = with lib.types; nullOr str;
         default = null;
       };
 
@@ -76,8 +74,8 @@ let
         default = [ ];
       };
 
-      expires = mkOption {
-        type = types.nullOr (types.strMatching "[[:digit:]]{4}-[[:digit:]]{2}-[[:digit:]]{2}");
+      expires = lib.mkOption {
+        type = lib.types.nullOr (lib.types.strMatching "[[:digit:]]{4}-[[:digit:]]{2}-[[:digit:]]{2}");
         default = null;
         description = ''
           Set the date on which the user's account will no longer be
@@ -89,7 +87,7 @@ let
       };
     };
     config = {
-      name = mkDefault name;
+      name = lib.mkDefault name;
     };
   };
 
@@ -97,19 +95,19 @@ in
 {
   options = {
     settings.users = {
-      users = mkOption {
-        type = with types; attrsOf (submodule userOpts);
+      users = lib.mkOption {
+        type = with lib.types; attrsOf (submodule userOpts);
         default = { };
       };
 
-      shell-user-group = mkOption {
-        type = types.str;
+      shell-user-group = lib.mkOption {
+        type = lib.types.str;
         default = "shell-users";
         readOnly = true;
       };
 
-      ssh-group = mkOption {
-        type = types.str;
+      ssh-group = lib.mkOption {
+        type = lib.types.str;
         default = "ssh-users";
         readOnly = true;
         description = ''
@@ -118,14 +116,14 @@ in
         '';
       };
 
-      fwd-tunnel-group = mkOption {
-        type = types.str;
+      fwd-tunnel-group = lib.mkOption {
+        type = lib.types.str;
         default = "ssh-fwd-tun-users";
         readOnly = true;
       };
 
-      rev-tunnel-group = mkOption {
-        type = types.str;
+      rev-tunnel-group = lib.mkOption {
+        type = lib.types.str;
         default = "ssh-rev-tun-users";
         readOnly = true;
       };
@@ -152,7 +150,7 @@ in
               # We cannot use a list directly since recursiveMerge only merges attrsets
               tunnelToUsers = t: map
                 (u: {
-                  ${u} = optionalAttrs (lib.stringNotEmpty t.public_key) {
+                  ${u} = lib.optionalAttrs (lib.stringNotEmpty t.public_key) {
                     public_keys = { ${t.public_key} = true; };
                   };
                 })
@@ -160,12 +158,12 @@ in
 
               tunnelsToUsers = lib.compose [
                 # Convert the attrsets containing the keys into lists
-                (mapAttrs (_: u: { public_keys = attrNames u.public_keys; }))
+                (lib.mapAttrs (_: u: { public_keys = lib.attrNames u.public_keys; }))
                 # Merge all definitions together
                 lib.recursiveMerge
                 # Apply the function converting tunnel definitions to user definitions
-                (concatMap tunnelToUsers)
-                attrValues
+                (lib.concatMap tunnelToUsers)
+                lib.attrValues
               ];
             in
             tunnelsToUsers tunnels;
@@ -191,7 +189,7 @@ in
         //
         # Create a group per user
         lib.compose [
-          (mapAttrs' (_: u: nameValuePair u.name { }))
+          (lib.mapAttrs' (_: u: lib.nameValuePair u.name { }))
           lib.filterEnabled
         ]
           cfg.users;
@@ -210,16 +208,16 @@ in
               isSystemUser = ! user.hasShell;
               group = user.name;
               extraGroups = user.extraGroups ++
-                (optional (user.sshAllowed || user.canTunnel) cfg.ssh-group) ++
-                (optional user.canTunnel cfg.fwd-tunnel-group) ++
-                (optional user.hasShell cfg.shell-user-group) ++
-                (optional user.hasShell "users");
+                (lib.optional (user.sshAllowed || user.canTunnel) cfg.ssh-group) ++
+                (lib.optional user.canTunnel cfg.fwd-tunnel-group) ++
+                (lib.optional user.hasShell cfg.shell-user-group) ++
+                (lib.optional user.hasShell "users");
               shell = if (hasShell user) then config.users.defaultUserShell else pkgs.shadow;
               openssh.authorizedKeys.keys = public_keys_for user;
             };
 
             mkUsers = lib.compose [
-              (mapAttrs mkUser)
+              (lib.mapAttrs mkUser)
               lib.filterEnabled
             ];
           in
