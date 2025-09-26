@@ -60,7 +60,7 @@ in
       reverse_tunnel =
         let
           relay_jsondata = lib.importJSON ../org-config/json/relay-servers.json;
-          addPublicKey = name: server: server // { inherit (relay_jsondata) public_key; };
+          addPublicKey = _name: server: server // { inherit (relay_jsondata) public_key; };
           relay_servers = lib.mapAttrs addPublicKey relay_jsondata.relay_servers;
         in
         {

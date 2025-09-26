@@ -188,7 +188,7 @@
 
             # Resolve the given roles, after resolution we set the profile of
             # the resolved entries to a fixed specified one.
-            resolveEntriesWithProfiles = onEntryAbsent: entriesSeen: path:
+            resolveEntriesWithProfiles = _onEntryAbsent: entriesSeen: path:
               let
                 doResolve = resolveEntry onRoleAbsent entriesSeen path;
                 # Replace the profiles in the resolved role with the one

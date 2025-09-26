@@ -162,7 +162,7 @@ in
           }
         );
       } // lib.optionalAttrs (users_json.users ? expires)
-        (lib.mapAttrs (username: expire: { expires = expire; }) users_json.users.expires);
+        (lib.mapAttrs (_username: expire: { expires = expire; }) users_json.users.expires);
     };
 
     users.users = {

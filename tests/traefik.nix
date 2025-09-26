@@ -89,7 +89,7 @@ in
   };
 
   nodes = {
-    acme = { nodes, config, modulesPath, ... }: {
+    acme = { config, modulesPath, ... }: {
       imports = [
         (modulesPath + "/../tests/common/acme/server")
         (registerDnsModule { domain = config.test-support.acme.caDomain; })
@@ -252,7 +252,7 @@ in
         };
       };
 
-    client = { nodes, pkgs, ... }: {
+    client = { nodes, ... }: {
       # We need to trust the acme CA certificate since in the test script we will
       # download the CA certificate that the generated certificates were signed with.
       security.pki.certificateFiles = [
@@ -261,7 +261,7 @@ in
     };
 
     # Simple webserver to have something that traefik can proxy to
-    webserver = { nodes, config, pkgs, ... }:
+    webserver = { pkgs, ... }:
       let
         documentRoot = pkgs.runCommandLocal "docroot" { } ''
           mkdir -p "$out"
