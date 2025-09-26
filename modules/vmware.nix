@@ -4,19 +4,17 @@ let
   cfg = config.settings.vmware;
 in
 
-with lib;
-
 {
   options.settings.vmware = {
-    enable = mkEnableOption "the VMWare guest services";
+    enable = lib.mkEnableOption "the VMWare guest services";
 
-    inDMZ = mkOption {
-      type = types.bool;
+    inDMZ = lib.mkOption {
+      type = lib.types.bool;
       default = false;
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     settings = {
       hardwarePlatform = config.settings.hardwarePlatforms.vmware;
 
@@ -27,7 +25,7 @@ with lib;
       maintenance.nixos_upgrade.startAt = [ "Tue 03:00" ];
     };
 
-    services.timesyncd.servers = mkIf (!cfg.inDMZ) [ "172.16.0.101" ];
+    services.timesyncd.servers = lib.mkIf (!cfg.inDMZ) [ "172.16.0.101" ];
 
     networking.nameservers =
       if cfg.inDMZ

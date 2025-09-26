@@ -1,26 +1,24 @@
 { config, lib, ... }:
 
-with lib;
-
 let
   cfg = config.settings.network;
 
   ifaceOpts = { name, ... }: {
     options = {
-      enable = mkOption {
-        type = types.bool;
+      enable = lib.mkOption {
+        type = lib.types.bool;
         default = true;
       };
 
-      iface = mkOption {
-        type = types.str;
+      iface = lib.mkOption {
+        type = lib.types.str;
         description = ''
           Interface name, defaults to the name of this entry in the attribute set.
         '';
       };
 
-      fallback = mkOption {
-        type = types.bool;
+      fallback = lib.mkOption {
+        type = lib.types.bool;
         default = true;
         description = ''
           Select this static config only as a fallback in case DHCP fails.
@@ -28,20 +26,20 @@ let
         '';
       };
 
-      address = mkOption {
-        type = types.str;
+      address = lib.mkOption {
+        type = lib.types.str;
       };
 
-      prefix_length = mkOption {
-        type = types.ints.between 0 32;
+      prefix_length = lib.mkOption {
+        type = lib.types.ints.between 0 32;
       };
 
-      gateway = mkOption {
-        type = types.str;
+      gateway = lib.mkOption {
+        type = lib.types.str;
       };
 
-      nameservers = mkOption {
-        type = with types; listOf str;
+      nameservers = lib.mkOption {
+        type = with lib.types; listOf str;
         default = [ ];
         description = ''
           DNS servers which will be configured only when this static configuration is selected.
@@ -50,30 +48,30 @@ let
     };
 
     config = {
-      iface = mkDefault name;
+      iface = lib.mkDefault name;
     };
   };
 in
 {
   options = {
     settings.network = {
-      host_name = mkOption {
+      host_name = lib.mkOption {
         type = lib.types.host_name_type;
       };
 
-      static_ifaces = mkOption {
-        type = with types; attrsOf (submodule ifaceOpts);
+      static_ifaces = lib.mkOption {
+        type = with lib.types; attrsOf (submodule ifaceOpts);
         default = { };
       };
 
-      nameservers = mkOption {
-        type = with types; listOf str;
+      nameservers = lib.mkOption {
+        type = with lib.types; listOf str;
         default = [ ];
         description = "Globally defined DNS servers, in addition to those obtained by DHCP.";
       };
 
-      dhcpcd.enable = mkOption {
-        type = types.bool;
+      dhcpcd.enable = lib.mkOption {
+        type = lib.types.bool;
         default = true;
       };
     };
@@ -81,10 +79,10 @@ in
 
   config = {
     networking = {
-      hostName = mkForce cfg.host_name;
+      hostName = lib.mkForce cfg.host_name;
       # All non-manually configured interfaces are configured by DHCP.
       useDHCP = true;
-      dhcpcd = mkIf cfg.dhcpcd.enable (mkMerge [
+      dhcpcd = lib.mkIf cfg.dhcpcd.enable (lib.mkMerge [
         {
           persistent = true;
           # Per the manpage, interfaces matching these but also
@@ -95,7 +93,7 @@ in
           denyInterfaces = [ "eth*" "wlan*" "veth*" "docker*" ];
           extraConfig =
             let
-              format_name_servers = concatStringsSep " ";
+              format_name_servers = lib.concatStringsSep " ";
               mkConfig = _: conf:
                 if conf.fallback then ''
                   profile static_${conf.iface}
@@ -113,8 +111,8 @@ in
                   static domain_name_servers=${format_name_servers conf.nameservers}
                 '';
               mkConfigs = lib.compose [
-                (concatStringsSep "\n\n")
-                (mapAttrsToList mkConfig)
+                (lib.concatStringsSep "\n\n")
+                (lib.mapAttrsToList mkConfig)
                 lib.filterEnabled
               ];
             in

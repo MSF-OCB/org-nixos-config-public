@@ -1,7 +1,5 @@
 { config, pkgs, lib, ... }:
 
-with lib;
-
 let
   cfg_users = config.settings.users.users;
   cfg_rev_tun = config.settings.reverse_tunnel;
@@ -10,16 +8,16 @@ in
 {
   options = {
     settings = {
-      sshd.enable = mkOption {
-        type = types.bool;
+      sshd.enable = lib.mkOption {
+        type = lib.types.bool;
         default = true;
       };
-      fail2ban.enable = mkOption {
-        type = types.bool;
+      fail2ban.enable = lib.mkOption {
+        type = lib.types.bool;
         default = !config.settings.sshguard.enable;
       };
-      sshguard.enable = mkOption {
-        type = types.bool;
+      sshguard.enable = lib.mkOption {
+        type = lib.types.bool;
         default = true;
       };
     };
@@ -38,7 +36,7 @@ in
             let
               hasForceCommand = _: user: user.enable && user.forceCommand != null;
 
-              filterForceCommand = filterAttrs hasForceCommand;
+              filterForceCommand = lib.filterAttrs hasForceCommand;
 
               # Nix strings that refer to store paths, like the string holding the
               # ForceCommand in this case, carry a context that tracks the
@@ -79,30 +77,30 @@ in
               # Since we grouped the users by command, they are guaranteed to all
               # have the same forceCommand value and we can simply look at the first
               # one in the list (which is also guaranteed to be non empty).
-              cleanResults = mapAttrs (_: users: {
+              cleanResults = lib.mapAttrs (_: users: {
                 inherit (builtins.head users) forceCommand;
                 users = map (user: user.name) users;
               });
 
               groupByCommand =
                 let
-                  doGroupByCommand = groupBy (user: hashCommand user.forceCommand);
+                  doGroupByCommand = lib.groupBy (user: hashCommand user.forceCommand);
                 in
                 lib.compose [
                   cleanResults
                   doGroupByCommand
-                  attrValues
+                  lib.attrValues
                 ];
 
-              toCfgs = mapAttrsToList (_: res: ''
-                Match User ${concatStringsSep "," res.users}
+              toCfgs = lib.mapAttrsToList (_: res: ''
+                Match User ${lib.concatStringsSep "," res.users}
                 PermitTTY no
                 ForceCommand ${pkgs.writeShellScript "ssh_force_command" res.forceCommand}
               '');
 
             in
             lib.compose [
-              (concatStringsSep "\n")
+              (lib.concatStringsSep "\n")
               toCfgs
               groupByCommand
               filterForceCommand
@@ -133,7 +131,7 @@ in
           };
           # Ignore the authorized_keys files in the users' home directories,
           # keys should be added through the config.
-          authorizedKeysFiles = mkForce [ "/etc/ssh/authorized_keys.d/%u" ];
+          authorizedKeysFiles = lib.mkForce [ "/etc/ssh/authorized_keys.d/%u" ];
           allowSFTP = true;
           extraConfig = ''
             StrictModes yes
@@ -172,12 +170,12 @@ in
           '';
         };
 
-      fail2ban = mkIf config.settings.fail2ban.enable {
+      fail2ban = lib.mkIf config.settings.fail2ban.enable {
         inherit (config.settings.fail2ban) enable;
         jails.ssh-iptables = lib.mkForce "";
         jails.ssh-iptables-extra = ''
           action   = iptables-multiport[name=SSH, port="${
-            concatMapStringsSep "," toString config.services.openssh.ports
+            lib.concatMapStringsSep "," toString config.services.openssh.ports
           }", protocol=tcp]
           maxretry = 3
           findtime = 3600
@@ -186,7 +184,7 @@ in
         '';
       };
 
-      sshguard = mkIf config.settings.sshguard.enable {
+      sshguard = lib.mkIf config.settings.sshguard.enable {
         inherit (config.settings.sshguard) enable;
         # We are a bit more strict on the relays
         attack_threshold =

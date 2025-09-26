@@ -4,24 +4,22 @@ let
   cfg = config.settings.boot;
 in
 
-with lib;
-
 {
   options = {
     settings.boot = {
-      mode = mkOption {
-        type = types.enum (attrValues cfg.modes);
+      mode = lib.mkOption {
+        type = lib.types.enum (lib.attrValues cfg.modes);
         description = "Boot in either legacy or UEFI mode.";
       };
 
-      separate_partition = mkOption {
-        type = types.bool;
+      separate_partition = lib.mkOption {
+        type = lib.types.bool;
         default = true;
         description = "Whether /boot is a separate partition.";
       };
 
-      modes = mkOption {
-        type = with types; attrsOf str;
+      modes = lib.mkOption {
+        type = with lib.types; attrsOf str;
         default = { legacy = "legacy"; uefi = "uefi"; none = "none"; };
         readOnly = true;
       };
@@ -41,14 +39,14 @@ with lib;
         let
           inherit (cfg) mode;
         in
-        mkIf (mode != cfg.modes.none) (mkMerge [
-          (mkIf (mode == cfg.modes.legacy) {
+        lib.mkIf (mode != cfg.modes.none) (lib.mkMerge [
+          (lib.mkIf (mode == cfg.modes.legacy) {
             grub = {
               enable = true;
               configurationLimit = 15;
             };
           })
-          (mkIf (mode == cfg.modes.uefi) {
+          (lib.mkIf (mode == cfg.modes.uefi) {
             systemd-boot = {
               enable = true;
               editor = false;
@@ -80,7 +78,7 @@ with lib;
         "kernel.panic" = "10";
 
         # Disable bpf() JIT (to eliminate spray attacks)
-        #"net.core.bpf_jit_enable" = mkDefault false;
+        #"net.core.bpf_jit_enable" = lib.mkDefault false;
 
         # ... or at least apply some hardening to it
         "net.core.bpf_jit_harden" = true;
