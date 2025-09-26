@@ -1,5 +1,6 @@
 {
   imports = [
+    # TODO: ./app-configs.nix
     ./auto_shutdown.nix
     ./boot.nix
     ./crypto.nix
