@@ -256,7 +256,7 @@ def main():
         key_file_path = temp_dir / "keyfile"
         recovery_key_file_path = temp_dir / "recovery_keyfile"
         extra_files_path = temp_dir / "extra_files"
-        age_key_path = extra_files_path / "var/lib/host-identity.txt"
+        age_key_path = extra_files_path / "var/lib/host-identity.key"
         tunnel_key_path = extra_files_path / "var/lib/org-nix/id_tunnel"
         tunnel_public_key_path = tunnel_key_path.with_suffix(".pub")
 
