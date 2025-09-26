@@ -31,7 +31,7 @@ in
     systemd = {
       mounts =
         let
-          mkMount = name: mount: {
+          mkMount = _name: mount: {
             enable = true;
             what = "${mount.what}";
             where = "${mount.where}";

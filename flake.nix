@@ -101,6 +101,7 @@
           nixpkgs-fmt.enable = true;
           shellcheck.enable = true;
           shfmt.enable = true;
+          deadnix.enable = true;
           statix = {
             enable = true;
             disabled-lints = [
@@ -122,6 +123,11 @@
             "org-config/app_configs/generated/**"
           ];
           formatter = {
+            # control the order in which nix formatters/linters are applied to ensure a correct and consistent outcome
+            deadnix.priority = 1;
+            statix.priority = 2;
+            nixpkgs-fmt.priority = 3;
+
             prettier = {
               options = [
                 "--trailing-comma"
@@ -144,7 +150,7 @@
         ./modules
         ./org-config
         flakeInputs.disko.nixosModules.default
-        ({ lib, pkgs, ... }: {
+        ({ pkgs, ... }: {
           imports = [
             nix-index-database.nixosModules.nix-index
           ];
@@ -213,7 +219,7 @@
               (final: prev: {
                 ocb-nixostools = final.callPackage ./scripts/python_nixostools { };
 
-                lib = (prev.lib.extend (import ./lib.nix)).extend (final: prev: {
+                lib = (prev.lib.extend (import ./lib.nix)).extend (final: _prev: {
                   # nixosSystem by default passes the import of nixpkgs' lib/default.nix.
                   # It is not aware of the overlay that we added when we created the nixpkgs
                   # instance, so we pass that extended lib here explicitly.
@@ -263,7 +269,7 @@
       #
       # nix-repl> configs.sshrelay2.time.timeZone
       # "Europe/Brussels"
-      configs = lib.mapAttrs (hostname: nixosConfig: nixosConfig.config) self.nixosConfigurations;
+      configs = lib.mapAttrs (_hostname: nixosConfig: nixosConfig.config) self.nixosConfigurations;
       # Target that can be used with nix-eval-jobs
       # In bash: nix build $(jq --raw-output '.drvPath | "\(.)^*"' < <(nix run 'nixpkgs#nix-eval-jobs' -- --flake '.#allSystems' --workers 4))
       # In fish: nix build (jq --raw-output '.drvPath | "\(.)^*"' < (nix run 'nixpkgs#nix-eval-jobs' -- --flake '.#allSystems' --workers 4 | psub))

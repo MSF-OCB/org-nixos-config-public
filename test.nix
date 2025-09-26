@@ -1,10 +1,10 @@
-{ pkgs, pythonTest, qemu-common, test-instrumentation, defaultModules, hostConfigFunction, flakeInputs, hosts }:
+{ pkgs, pythonTest, qemu-common, test-instrumentation, defaultModules, flakeInputs, hosts }:
 with pkgs.lib;
 let
   nixosConfigurations =
     let
       hostOverrides = {
-        rescue-iso = config: {
+        rescue-iso = _config: {
           extraModules = [
             test-instrumentation
             {
