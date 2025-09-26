@@ -8,7 +8,10 @@ import tempfile
 from pathlib import Path
 from textwrap import dedent
 
+from nixostools import sops
+
 SSH_RELAY_HOST = "tunneller@demo-relay-1.ocb.msf.org:443"
+sops_yaml = sops.SopsYaml(Path("org-config/.sops.yaml"))
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("nixostools/install")
@@ -258,7 +261,11 @@ def main():
         generate_disk_encryption_key(recovery_key_file_path)
         generate_tunnel_key(tunnel_key_path)
 
-        generate_age_identity(age_key_path)
+        age_public_key = generate_age_identity(age_key_path)
+        age_key_name = f"host_{args.host}"
+        sops_yaml.set_key(age_key_name, age_public_key)
+        sops_yaml.set_creation_rule(f"secrets/hosts/{args.host}", [age_key_name])
+        sops_yaml.save()
 
         run_nixos_anywhere(
             args,
