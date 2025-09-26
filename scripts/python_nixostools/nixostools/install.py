@@ -119,6 +119,20 @@ def add_tunnel_key(tunnels_json_path, host, tunnel_public_key_path):
     )
 
 
+def generate_age_identity(file_path):
+    """
+    Generate a dedicated age key pair for use with sops-nix.
+    This replaces the tunnel ssh key above to decouple secret management and ssh keys.
+    """
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+    proc = subprocess.run(
+        ["age-keygen", "-o", file_path], check=True, capture_output=True, text=True
+    )
+    public_key = proc.stderr.strip().split(" ")[-1]
+    logger.info(f"Pre-generated age identity for sops-nix in {file_path}: {public_key}")
+    return public_key
+
+
 def check_host_boot_mode(host):
     logger.info(
         f"Evaluating NixOS configuration of {host}  to check that it uses a GPT disk layout..."
@@ -143,7 +157,6 @@ def run_nixos_anywhere(args, key_file_path, recovery_key_file_path, extra_files_
     """
 
     relay_options = ["--ssh-option", f"ProxyJump={SSH_RELAY_HOST}"]
-
     subprocess.run(
         [
             "nix",
@@ -237,12 +250,15 @@ def main():
         key_file_path = temp_dir / "keyfile"
         recovery_key_file_path = temp_dir / "recovery_keyfile"
         extra_files_path = temp_dir / "extra_files"
+        age_key_path = extra_files_path / "var/lib/host-identity.txt"
         tunnel_key_path = extra_files_path / "var/lib/org-nix/id_tunnel"
         tunnel_public_key_path = tunnel_key_path.with_suffix(".pub")
 
         generate_disk_encryption_key(key_file_path)
         generate_disk_encryption_key(recovery_key_file_path)
         generate_tunnel_key(tunnel_key_path)
+
+        generate_age_identity(age_key_path)
 
         run_nixos_anywhere(
             args,

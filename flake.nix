@@ -298,6 +298,7 @@
                 pkgs.xorriso
                 pkgs.nixpkgs-fmt
                 pkgs.sops
+                pkgs.age
                 pkgs.ssh-to-age
               ];
             env = [{
