@@ -75,6 +75,18 @@ let
         type = with lib.types; listOf str;
         default = [ ];
       };
+
+      expires = mkOption {
+        type = types.nullOr (types.strMatching "[[:digit:]]{4}-[[:digit:]]{2}-[[:digit:]]{2}");
+        default = null;
+        description = ''
+          Set the date on which the user's account will no longer be
+          accessible. The date is expressed in the format YYYY-MM-DD, or null
+          to disable the expiry.
+          A user whose account is locked must contact the system
+          administrator before being able to use the system again.
+        '';
+      };
     };
     config = {
       name = mkDefault name;
@@ -193,7 +205,7 @@ in
             hasShell = user: user.hasShell || (hasForceCommand user && isRelay);
 
             mkUser = _: user: {
-              inherit (user) name;
+              inherit (user) name expires;
               isNormalUser = user.hasShell;
               isSystemUser = ! user.hasShell;
               group = user.name;

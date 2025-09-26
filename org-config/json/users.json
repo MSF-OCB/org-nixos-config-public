@@ -55,7 +55,18 @@
       "devops_common": {
         "enable": {
           "ibrahim_balla": "admin",
-          "sohel_sarder": "admin"
+          "sohel_sarder": "admin",
+          "ian_sollars": "admin",
+          "xavier_kaufmann": "admin",
+          "brian": "admin",
+          "jfroche": "admin",
+          "akechishiro": "admin",
+          "felipe": "admin",
+          "marton": "admin",
+          "yvan": "admin",
+          "r-vdp": "admin",
+          "phaer": "admin",
+          "zimbatm": "admin"
         }
       },
       "devops_docker_hq": {
@@ -64,6 +75,10 @@
       "dhis2_support": {
         "enable_roles": ["devops"]
       }
+    },
+    "expires": {
+      "ibrahim_balla": "2025-12-25",
+      "ian_sollars": "2024-12-25"
     }
   }
 }
