@@ -1,5 +1,5 @@
 {
-  "global_admins": ["ibrahim_balla", "yves_de_voghel"],
+  "global_admins": ["ibrahim_balla", "yves_de_voghel", "sohel_sarder"],
   "users": {
     "per-host": {
       "demo-test-host": {
