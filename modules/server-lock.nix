@@ -3,7 +3,6 @@
 let
   cfg = config.settings.services.server-lock;
   crypto_cfg = config.settings.crypto;
-  sys_cfg = config.settings.system;
 in
 
 {
