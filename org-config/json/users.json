@@ -12,7 +12,7 @@
         "enable_roles": ["devops", "emr_support"]
       },
       "nixos-test": {
-        "enable_roles": ["devops", "emr_support"]
+        "enable_roles": ["emr_support"]
       },
       "demo-nuc-001": {
         "enable_roles": ["devops", "emr_support"]
@@ -55,7 +55,6 @@
       "devops_common": {
         "enable": {
           "ibrahim_balla": "admin",
-          "sohel_sarder": "admin",
           "ian_sollars": "admin",
           "xavier_kaufmann": "admin",
           "brian": "admin",
