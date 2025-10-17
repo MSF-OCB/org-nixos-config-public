@@ -1,4 +1,9 @@
-{ config, lib, pkgs, flakeInputs, ... }:
+{ config
+, lib
+, pkgs
+, flakeInputs
+, ...
+}:
 
 let
   cfg = config.settings.system;
@@ -193,36 +198,39 @@ in
   };
 
   imports = [
-    ({ config, lib, ... }: {
-      config = lib.mkIf config.settings.system.isMbr {
-        fileSystems = {
-          "/" = {
-            device = lib.mkForce "/dev/disk/by-label/nixos_root";
-            fsType = "ext4";
-            options = [
-              "x-initrd.mount"
-              "defaults"
-              "noatime"
-              "acl"
-            ];
+    (
+      { config, lib, ... }:
+      {
+        config = lib.mkIf config.settings.system.isMbr {
+          fileSystems = {
+            "/" = {
+              device = lib.mkForce "/dev/disk/by-label/nixos_root";
+              fsType = "ext4";
+              options = [
+                "x-initrd.mount"
+                "defaults"
+                "noatime"
+                "acl"
+              ];
+            };
+            "/boot" = lib.mkIf config.settings.boot.separate_partition {
+              device = "/dev/disk/by-label/nixos_boot";
+              fsType = "ext4";
+              options = [
+                "defaults"
+                "noatime"
+                "nosuid"
+                "nodev"
+                "noexec"
+                "x-systemd.automount"
+                "x-systemd.idle-timeout=5min"
+              ];
+            };
           };
-          "/boot" = lib.mkIf config.settings.boot.separate_partition {
-            device = "/dev/disk/by-label/nixos_boot";
-            fsType = "ext4";
-            options = [
-              "defaults"
-              "noatime"
-              "nosuid"
-              "nodev"
-              "noexec"
-              "x-systemd.automount"
-              "x-systemd.idle-timeout=5min"
-            ];
-          };
+          boot.loader.grub.device = lib.mkDefault config.settings.disko.diskDevice;
         };
-        boot.loader.grub.device = lib.mkDefault config.settings.disko.diskDevice;
-      };
-    })
+      }
+    )
   ];
 
   config = {
@@ -231,13 +239,12 @@ in
       {
         assertion = lib.hasAttr config.networking.hostName tnl_cfg.tunnels;
         message =
-          "This host's host name is not present in the tunnel config " +
-          "(${toString cfg.tunnels_json_dir_path}).";
+          "This host's host name is not present in the tunnel config "
+          + "(${toString cfg.tunnels_json_dir_path}).";
       }
       {
         assertion = config.time.timeZone != null;
-        message =
-          "The time zone is not set for ${config.networking.hostName}, please set config.time.timeZone.";
+        message = "The time zone is not set for ${config.networking.hostName}, please set config.time.timeZone.";
       }
       {
         assertion = config.settings.system.isMbr -> !config.settings.disko.enableDefaultConfig;
@@ -431,12 +438,20 @@ in
                     "d:g::r-x"
                     "d:o::---"
                     "d:user:root:rwx"
-                  ] ++
-                  lib.concatMap (group: [ "group:${group}:rwX" "d:group:${group}:rwx" ])
+                  ]
+                  ++ lib.concatMap
+                    (group: [
+                      "group:${group}:rwX"
+                      "d:group:${group}:rwx"
+                    ])
                     cfg.opt.allow_groups
                 );
                 # For /opt we use setfacl --set, so we need to define the full ACL
-                opt_acl = lib.concatStringsSep "," [ "g::r-X" "o::---" acl ];
+                opt_acl = lib.concatStringsSep "," [
+                  "g::r-X"
+                  "o::---"
+                  acl
+                ];
               in
               ''
                 # Ensure that /opt actually exists
@@ -498,12 +513,27 @@ in
               RemainAfterExit = true;
             };
             unitConfig = {
-              RequiresMountsFor = [ "/run" "/var/lib" ];
+              RequiresMountsFor = [
+                "/run"
+                "/var/lib"
+              ];
             };
             script =
               let
-                base_files = [ cfg.private_key_source legacy_key_path ];
-                files = lib.concatStringsSep " " (lib.unique (lib.concatMap (f: [ f "${f}.pub" ]) base_files));
+                base_files = [
+                  cfg.private_key_source
+                  legacy_key_path
+                ];
+                files = lib.concatStringsSep " " (
+                  lib.unique (
+                    lib.concatMap
+                      (f: [
+                        f
+                        "${f}.pub"
+                      ])
+                      base_files
+                  )
+                );
               in
               ''
                 for file in ${files}; do
@@ -523,7 +553,10 @@ in
               RemainAfterExit = true;
             };
             unitConfig = {
-              RequiresMountsFor = [ "/run" "/var/lib" ];
+              RequiresMountsFor = [
+                "/run"
+                "/var/lib"
+              ];
             };
             script = ''
               if [ ! -f "${cfg.private_key_source}" ] && [ -f "${legacy_key_path}" ]; then
@@ -544,23 +577,40 @@ in
               RemainAfterExit = true;
             };
             unitConfig = {
-              RequiresMountsFor = [ "/run" "/var/lib" ];
+              RequiresMountsFor = [
+                "/run"
+                "/var/lib"
+              ];
             };
             script =
               let
-                install = { source, dest, perms }: ''
-                  ${pkgs.coreutils}/bin/install \
-                    -o ${config.users.users.root.name} \
-                    -g ${config.users.groups.private-key-access.name} \
-                    -m ${perms} \
-                    "${source}" \
-                    "${dest}"
-                '';
+                install =
+                  { source
+                  , dest
+                  , perms
+                  ,
+                  }:
+                  ''
+                    ${pkgs.coreutils}/bin/install \
+                      -o ${config.users.users.root.name} \
+                      -g ${config.users.groups.private-key-access.name} \
+                      -m ${perms} \
+                      "${source}" \
+                      "${dest}"
+                  '';
               in
               ''
                 if [ -f "${cfg.private_key_source}" ]; then
-                  ${install {source=cfg.private_key_source; dest=cfg.private_key; perms="440"; }}
-                  ${install {source=cfg.private_key_source; dest=cfg.github_private_key; perms="400"; }}
+                  ${install {
+                    source = cfg.private_key_source;
+                    dest = cfg.private_key;
+                    perms = "440";
+                  }}
+                  ${install {
+                    source = cfg.private_key_source;
+                    dest = cfg.github_private_key;
+                    perms = "400";
+                  }}
                 else
                   echo "No private key found, ignoring!"
                 fi
@@ -575,7 +625,10 @@ in
               RemainAfterExit = true;
             };
             unitConfig = {
-              RequiresMountsFor = [ "/run" "/var/lib" ];
+              RequiresMountsFor = [
+                "/run"
+                "/var/lib"
+              ];
             };
             script =
               let
@@ -624,45 +677,6 @@ in
                 echo "decrypted the server secrets"
               '';
           };
-          extract-app-configs = {
-            serviceConfig = {
-              Type = "oneshot";
-              RemainAfterExit = true;
-            };
-            script =
-              let
-                # We make an ACL with default permissions and add an extra rule
-                # for each group defined as having access
-                acl = lib.concatStringsSep "," (
-                  [ "u::rwX,g::r-X,o::---" ] ++ map (group: "group:${group}:rX") cfg.app_configs.allow_groups
-                );
-              in
-              ''
-                echo "extracting the server configs..."
-                if [ -e "${cfg.app_configs.dest_directory}" ]; then
-                  ${pkgs.coreutils}/bin/rm --one-file-system \
-                                          --recursive \
-                                          --force \
-                                          "${cfg.app_configs.dest_directory}"
-                fi
-                ${pkgs.coreutils}/bin/mkdir --parent "${cfg.app_configs.dest_directory}"
-
-                ${pkgs.ocb-nixostools}/bin/extract_server_app_configs \
-                  --server_name "${config.networking.hostName}" \
-                  --configs_path "${cfg.app_configs.src_file}" \
-                  --output_path "${cfg.app_configs.dest_directory}"
-
-                # The directory is owned by root
-                ${pkgs.coreutils}/bin/chown --recursive root:root "${cfg.app_configs.dest_directory}"
-                ${pkgs.coreutils}/bin/chmod --recursive u=rwX,g=,o= "${cfg.app_configs.dest_directory}"
-                # Use an ACL to give access to members of the wheel and docker groups
-                ${pkgs.acl}/bin/setfacl \
-                  --recursive \
-                  --set "${acl}" \
-                  "${cfg.app_configs.dest_directory}"
-                echo "extracted the server configs"
-              '';
-          };
         };
       targets = {
         tunnel-key-ready.wants = [ "copy-tunnel-key.service" ];
@@ -702,9 +716,15 @@ in
         startAgent = false;
         # We do not have GUIs
         setXAuthLocation = false;
-        hostKeyAlgorithms = [ "ssh-ed25519" "ssh-rsa" ];
+        hostKeyAlgorithms = [
+          "ssh-ed25519"
+          "ssh-rsa"
+        ];
         knownHosts.github = {
-          hostNames = [ "github.com" "ssh.github.com" ];
+          hostNames = [
+            "github.com"
+            "ssh.github.com"
+          ];
           publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl";
         };
         extraConfig = ''
@@ -762,7 +782,11 @@ in
 
       htpdate = {
         enable = true;
-        servers = [ "www.kernel.org" "www.google.com" "www.cloudflare.com" ];
+        servers = [
+          "www.kernel.org"
+          "www.google.com"
+          "www.cloudflare.com"
+        ];
       };
 
       journald = {
@@ -801,15 +825,24 @@ in
         "nixpkgs=flake:nixpkgs"
       ];
       registry.nixpkgs = {
-        from = { type = "indirect"; id = "nixpkgs"; };
+        from = {
+          type = "indirect";
+          id = "nixpkgs";
+        };
         flake = pkgs.nixpkgsFlake;
       };
       # man nix.conf
       settings = {
         auto-optimise-store = true;
-        trusted-users = [ "root" "@wheel" ];
+        trusted-users = [
+          "root"
+          "@wheel"
+        ];
         builders-use-substitutes = true;
-        experimental-features = [ "nix-command" "flakes" ];
+        experimental-features = [
+          "nix-command"
+          "flakes"
+        ];
         # Fall back to building from source if we cannot substitute
         fallback = true;
         # Disable the global flake registry
