@@ -404,7 +404,7 @@
             import "${flakeInputs.nixpkgs-latest}/nixos/lib/testing-python.nix" {
               inherit (pkgs.stdenv.hostPlatform) system;
             };
-          inherit pkgs hostConfigFunction flakeInputs hosts;
+          inherit pkgs flakeInputs hosts;
           defaultModules = self.nixosModules.default;
           test-instrumentation =
             "${flakeInputs.nixpkgs-latest}/nixos/modules/testing/test-instrumentation.nix";
