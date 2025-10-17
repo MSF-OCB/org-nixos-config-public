@@ -1,0 +1,19 @@
+# .gitignore
+# For general usage reference on this Git configuration file, see e.g.: <https://git-scm.com/docs/gitignore>.
+#
+/.vscode
+/.idea
+#
+.direnv
+#
+__pycache__
+#
+**/*.iso
+**/*.swp
+#
+/result
+/.pre-commit-config.yaml
+/.nixos-test-history
+#
+/local/id_tunnel
+#
