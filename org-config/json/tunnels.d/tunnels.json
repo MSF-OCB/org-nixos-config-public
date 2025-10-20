@@ -47,7 +47,7 @@
       },
       "rescue-iso": {
         "remote_forward_port": 8011,
-        "public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPXaxF9eWuetZK1P7cGbVQVp+rnXmkaa/FnnLT7SvOfK"
+        "public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFhb8kO0waxvQHZci3kh6A8JIhalF8fvqklQVJ2ndZ31"
       }
     }
   }
