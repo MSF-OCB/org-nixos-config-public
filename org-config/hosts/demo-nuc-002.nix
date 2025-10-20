@@ -19,4 +19,6 @@
       };
     };
   };
+
+  sops.secrets.docker_private_repo_creds_ghcr = { };
 }

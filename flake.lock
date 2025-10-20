@@ -250,6 +250,7 @@
         "nixpkgs-legacy": "nixpkgs-legacy",
         "pre-commit-hooks": "pre-commit-hooks",
         "server-lock": "server-lock",
+        "sops-nix": "sops-nix",
         "srvos": "srvos",
         "systems": "systems",
         "treefmt-nix": "treefmt-nix"
@@ -281,6 +282,26 @@
       "original": {
         "owner": "msf-ocb",
         "repo": "nixos_server_lock",
+        "type": "github"
+      }
+    },
+    "sops-nix": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs-latest"
+        ]
+      },
+      "locked": {
+        "lastModified": 1758425756,
+        "narHash": "sha256-L3N8zV6wsViXiD8i3WFyrvjDdz76g3tXKEdZ4FkgQ+Y=",
+        "owner": "mic92",
+        "repo": "sops-nix",
+        "rev": "e0fdaea3c31646e252a60b42d0ed8eafdb289762",
+        "type": "github"
+      },
+      "original": {
+        "owner": "mic92",
+        "repo": "sops-nix",
         "type": "github"
       }
     },

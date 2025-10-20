@@ -33,6 +33,14 @@
         nixpkgs.follows = "nixpkgs-latest";
       };
     };
+
+    sops-nix = {
+      url = "github:mic92/sops-nix";
+      inputs = {
+        nixpkgs.follows = "nixpkgs-latest";
+      };
+    };
+
     treefmt-nix = {
       url = "github:numtide/treefmt-nix";
       inputs.nixpkgs.follows = "nixpkgs-latest";
@@ -329,6 +337,8 @@
                 pkgs.jq
                 pkgs.xorriso
                 pkgs.nixpkgs-fmt
+                pkgs.sops
+                pkgs.ssh-to-age
               ];
             env = [{
               name = "DEVSHELL_NO_MOTD";

@@ -4,6 +4,12 @@
 set -euo pipefail
 shopt -s extglob globstar nullglob
 
+### Settings ###
+
+readonly relaySshProxyJump="tunneller@demo-relay-1.ocb.msf.org:443"
+
+### Functions ###
+
 function print_usage() {
   echo "Usage:"
   echo "./install.sh -H <hostname of target> -u <SSH username> -s <SSH name> [-p <SSH port>] [-r] [-S]"
@@ -35,13 +41,12 @@ function exit_invalid_arg() {
   exit_usage
 }
 
+### Main ###
+
 echo "NixOS Linux installation script (nixos-anywhere)"
 
 script_dir="$(cd -- "$(dirname -- "${0}")" && pwd)"
 readonly script_dir
-
-relaySshProxyJump="tunneller@demo-relay-1.ocb.msf.org:443"
-readonly relaySshProxyJump
 
 username=""
 hostname=""
