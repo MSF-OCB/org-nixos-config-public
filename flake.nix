@@ -68,6 +68,10 @@
         devshell.follows = "devshell";
       };
     };
+    nix-github-actions = {
+      url = "github:nix-community/nix-github-actions";
+      inputs.nixpkgs.follows = "nixpkgs-latest";
+    };
   };
 
   outputs =
@@ -77,6 +81,7 @@
     , devshell
     , treefmt-nix
     , pre-commit-hooks
+    , nix-github-actions
     , ...
     }@flakeInputs:
     let
@@ -101,6 +106,7 @@
           nixpkgs-fmt.enable = true;
           shellcheck.enable = true;
           shfmt.enable = true;
+          deadnix.enable = true;
           statix = {
             enable = true;
             disabled-lints = [
@@ -122,6 +128,11 @@
             "org-config/app_configs/generated/**"
           ];
           formatter = {
+            # control the order in which nix formatters/linters are applied to ensure a correct and consistent outcome
+            deadnix.priority = 1;
+            statix.priority = 2;
+            nixpkgs-fmt.priority = 3;
+
             prettier = {
               options = [
                 "--trailing-comma"
@@ -140,11 +151,39 @@
       };
     in
     {
+      # expose a Github matrix via `nix eval --json '.#githubActions.matrix'
+      # currently it builds all the toplevel packages for each nixos configuration
+      githubActions =
+        nix-github-actions.lib.mkGithubMatrix {
+
+          # Uncomment the following section to change the runner that is used for building a given system:
+          #
+          #  githubPlatforms = {
+          #    "x86_64-linux" = "ubuntu-24.04";
+          #    "x86_64-darwin" = "macos-13";
+          #    "aarch64-darwin" = "macos-14";
+          #    "aarch64-linux" = "ubuntu-24.04-arm";
+          #  };
+
+          checks = eachSystem (system:
+            lib.mapAttrs'
+              (n: v: {
+                name = "nixos-${n}";
+                value = v.config.system.build.toplevel;
+              })
+              (
+                lib.filterAttrs
+                  (_: v: v.config.nixpkgs.pkgs.stdenv.hostPlatform.system == system)
+                  self.nixosConfigurations
+              )
+          );
+        };
+
       nixosModules.default = [
         ./modules
         ./org-config
         flakeInputs.disko.nixosModules.default
-        ({ lib, pkgs, ... }: {
+        ({ pkgs, ... }: {
           imports = [
             nix-index-database.nixosModules.nix-index
           ];
@@ -180,6 +219,8 @@
             pkgs.callPackage ./scripts/python_nixostools/default.nix { };
 
           treefmtWrapper = treefmt-nix.lib.mkWrapper pkgs treefmt-config;
+
+          inherit (pkgs) nix-eval-jobs;
         }
         //
         # Targets to build QEMU virtual machines that can be used for local testing or debugging.
@@ -213,7 +254,7 @@
               (final: prev: {
                 ocb-nixostools = final.callPackage ./scripts/python_nixostools { };
 
-                lib = (prev.lib.extend (import ./lib.nix)).extend (final: prev: {
+                lib = (prev.lib.extend (import ./lib.nix)).extend (final: _prev: {
                   # nixosSystem by default passes the import of nixpkgs' lib/default.nix.
                   # It is not aware of the overlay that we added when we created the nixpkgs
                   # instance, so we pass that extended lib here explicitly.
@@ -263,7 +304,7 @@
       #
       # nix-repl> configs.sshrelay2.time.timeZone
       # "Europe/Brussels"
-      configs = lib.mapAttrs (hostname: nixosConfig: nixosConfig.config) self.nixosConfigurations;
+      configs = lib.mapAttrs (_hostname: nixosConfig: nixosConfig.config) self.nixosConfigurations;
       # Target that can be used with nix-eval-jobs
       # In bash: nix build $(jq --raw-output '.drvPath | "\(.)^*"' < <(nix run 'nixpkgs#nix-eval-jobs' -- --flake '.#allSystems' --workers 4))
       # In fish: nix build (jq --raw-output '.drvPath | "\(.)^*"' < (nix run 'nixpkgs#nix-eval-jobs' -- --flake '.#allSystems' --workers 4 | psub))
@@ -325,48 +366,7 @@
       checks = eachSystem (system:
         let
           pkgs = self.legacyPackages.${system}.nixpkgs-latest;
-
-          configsToList = lib.mapAttrsToList (name: nixosConfig: {
-            inherit name;
-            value = nixosConfig.config.system.build.toplevel;
-          });
-
-          numOfBuilders = 4;
-
-          # Create an attr set mapping builder names to their IDs:
-          # { builder-0 = 0; builder-1 = 1; ... }
-          builders = lib.listToAttrs (lib.genList
-            (id: lib.nameValuePair "builder-${toString id}" id)
-            numOfBuilders);
-
-          getConfigSlice = { builderId, configs }:
-            let
-              numOfConfigs = lib.length configs;
-              slice = lib.getSlice {
-                slice = builderId;
-                sliceCount = numOfBuilders;
-                list = configs;
-              };
-              sliceSize = lib.length slice;
-              configsToEval = lib.listToAttrs slice;
-            in
-            lib.traceSeq
-              (lib.concatStringsSep " " [
-                "Builder ${toString builderId}:"
-                "evaluating ${toString sliceSize}/${toString numOfConfigs} configs:\n"
-                (lib.generators.toPretty { } (lib.attrNames configsToEval))
-              ])
-              configsToEval;
         in
-        # For every builder, create a linkFarm of drvs to be built by this builder
-        lib.flip lib.mapAttrs builders
-          (name: builderId:
-            pkgs.linkFarm name (getConfigSlice {
-              inherit builderId;
-              configs = configsToList self.nixosConfigurations;
-            })
-          )
-        //
         # Build all the other packages as well
         self.packages.${system}
         //
@@ -398,7 +398,7 @@
             import "${flakeInputs.nixpkgs-latest}/nixos/lib/testing-python.nix" {
               inherit (pkgs.stdenv.hostPlatform) system;
             };
-          inherit pkgs hostConfigFunction flakeInputs hosts;
+          inherit pkgs flakeInputs hosts;
           defaultModules = self.nixosModules.default;
           test-instrumentation =
             "${flakeInputs.nixpkgs-latest}/nixos/modules/testing/test-instrumentation.nix";

@@ -101,7 +101,7 @@ in
   };
 
   nodes = {
-    sshrelay1 = { lib, pkgs, nodes, ... }: {
+    sshrelay1 = { lib, nodes, ... }: {
       # The relay sits on both networks, so it's reachable by both machines
       virtualisation.vlans = [ 1 2 ];
 

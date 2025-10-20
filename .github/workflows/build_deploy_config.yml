@@ -241,21 +241,17 @@ jobs:
             --nixos_config_dir   './org-config' \
             --tunnel_config_path './org-config/json/tunnels.d/' --dry_run
 
-  build:
-    name: "build"
+  # Generate the build matrix which will allows us to build each check in parallel.
+  nix-matrix:
     runs-on: "ubuntu-latest"
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
     needs:
       - pre_build
     # Only run this step if no new secrets or app_configs were pushed,
     # when either secrets or app_configs were pushed, this action will be
     # triggered again anyway because we added a new commit to the PR.
     if: needs.pre_build.outputs.files_pushed_outcome == 'skipped'
-    strategy:
-      matrix:
-        # When changing these settings, you need to change as well
-        # the required checks in the branch protection policy on GitHub
-        # and the number of builders in the flake.nix file.
-        builder_id: [0, 1, 2, 3]
     steps:
       - name: Checkout the repo
         uses: "actions/checkout@v4"
@@ -265,8 +261,50 @@ jobs:
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build the NixOS configurations
-        run: nix build ".#checks.x86_64-linux.builder-${{ matrix.builder_id }}"
+      - id: set-matrix
+        name: Generate Nix Matrix
+        run: |
+          set -Eeu
+
+          # fast eval
+          nix run .#nix-eval-jobs -- --flake '.#githubActions.matrix'
+
+          # capture the output
+          matrix="$(nix eval --json '.#githubActions.matrix')"
+
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+
+  # Build each check exposed by the nix-matrix output.
+  nix-build:
+    name: ${{ matrix.name }} (${{ matrix.system }})
+    needs: nix-matrix
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix: ${{ fromJSON(needs.nix-matrix.outputs.matrix) }}
+    steps:
+      - name: Checkout the repo
+        uses: "actions/checkout@v4"
+
+      - name: Install the Nix package manager
+        uses: "cachix/install-nix-action@master"
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Nix Build
+        run: |
+          nix build -L '.#${{ matrix.attr }}'
+
+  build-installation-images:
+    needs: nix-build
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: Checkout the repo
+        uses: "actions/checkout@v4"
+
+      - name: Install the Nix package manager
+        uses: "cachix/install-nix-action@master"
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build the installation images
         run: |
@@ -296,7 +334,7 @@ jobs:
   deploy:
     runs-on: "ubuntu-latest"
     needs:
-      - build
+      - build-installation-images
     # We only want to deploy when commits have been pushed to main or staging.
     # The deployment simply triggers the nixos-upgrade service, so any server
     # that is being deployed will still pull it's config from the branch that's

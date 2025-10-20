@@ -1,7 +1,5 @@
 { config, lib, pkgs, ... }:
 
-with lib;
-
 let
   inherit (config.lib) ext_lib;
 
@@ -10,7 +8,7 @@ let
   addGroups = new_groups: role: role // {
     extraGroups =
       let
-        existing_groups = attrByPath [ "extraGroups" ] [ ] role;
+        existing_groups = lib.attrByPath [ "extraGroups" ] [ ] role;
       in
       existing_groups ++ new_groups;
   };
@@ -35,7 +33,7 @@ let
 
       # Admin users have shell access and belong to the wheel group
       admin = {
-        enable = mkDefault false;
+        enable = lib.mkDefault false;
         sshAllowed = true;
         hasShell = true;
         canTunnel = true;
@@ -47,14 +45,14 @@ let
       localDockerAdmin = addGroups [ "docker" ] localShell;
 
       remoteTunnelWithShell = {
-        enable = mkDefault false;
+        enable = lib.mkDefault false;
         sshAllowed = true;
         hasShell = true;
         canTunnel = true;
       };
 
       localShell = {
-        enable = mkDefault false;
+        enable = lib.mkDefault false;
         sshAllowed = true;
         hasShell = true;
         canTunnel = false;
@@ -62,7 +60,7 @@ let
 
       # Users who can tunnel only
       remoteTunnel = {
-        enable = mkDefault false;
+        enable = lib.mkDefault false;
         sshAllowed = true;
         hasShell = false;
         canTunnel = true;
@@ -126,10 +124,10 @@ in
   options = {
     settings.users = {
       robot = {
-        enable = mkEnableOption "the robot user";
+        enable = lib.mkEnableOption "the robot user";
 
-        username = mkOption {
-          type = types.str;
+        username = lib.mkOption {
+          type = lib.types.str;
           default = "robot";
           readOnly = true;
           description = ''
@@ -164,13 +162,13 @@ in
           }
         );
       } // lib.optionalAttrs (users_json.users ? expires)
-        (lib.mapAttrs (username: expire: { expires = expire; }) users_json.users.expires);
+        (lib.mapAttrs (_username: expire: { expires = expire; }) users_json.users.expires);
     };
 
     users.users = {
       # Lock the root user
       root = {
-        hashedPassword = mkForce "!";
+        hashedPassword = lib.mkForce "!";
       };
     };
   };

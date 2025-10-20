@@ -1,5 +1,5 @@
 {
-  "global_admins": ["ibrahim_balla", "yves_de_voghel"],
+  "global_admins": ["ibrahim_balla", "yves_de_voghel", "sohel_sarder"],
   "users": {
     "per-host": {
       "demo-test-host": {
@@ -12,7 +12,7 @@
         "enable_roles": ["devops", "emr_support"]
       },
       "nixos-test": {
-        "enable_roles": ["devops", "emr_support"]
+        "enable_roles": ["emr_support"]
       },
       "demo-nuc-001": {
         "enable_roles": ["devops", "emr_support"]

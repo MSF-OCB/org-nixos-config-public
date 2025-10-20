@@ -1,7 +1,5 @@
 { config, lib, pkgs, utils, ... }:
 
-with lib;
-
 let
   cfg = config.settings.crypto;
 
@@ -11,35 +9,35 @@ let
     in
     { name, config, ... }: {
       options = {
-        enable = mkEnableOption "the encrypted device";
+        enable = lib.mkEnableOption "the encrypted device";
 
-        name = mkOption {
-          type = types.strMatching "^[[:lower:]][-_[:lower:]]+[[:lower:]]$";
+        name = lib.mkOption {
+          type = lib.types.strMatching "^[[:lower:]][-_[:lower:]]+[[:lower:]]$";
         };
 
-        device = mkOption {
-          type = types.str;
+        device = lib.mkOption {
+          type = lib.types.str;
           example = "/dev/LVMVolGroup/nixos_data";
           description = "The device to mount.";
         };
 
-        device_units = mkOption {
-          type = with types; listOf str;
+        device_units = lib.mkOption {
+          type = with lib.types; listOf str;
           default = [ ];
           example = [ "dev-disk-by\\x2did-dm\\x2dname\\x2dLVMVolGroup\\x2dnixos_data.device" ];
           description = "Device units to wait for or be triggered by.";
         };
 
-        key_file = mkOption {
-          type = types.str;
+        key_file = lib.mkOption {
+          type = lib.types.str;
           default = outerConfig.settings.crypto.defaultKeyFile;
           # We currently do not have multiple key files on any server and
           # we first need to migrate to properly secured key files.
           readOnly = true;
         };
 
-        mount_point = mkOption {
-          type = types.strMatching "^(/[-_[:lower:]]*)+$";
+        mount_point = lib.mkOption {
+          type = lib.types.strMatching "^(/[-_[:lower:]]*)+$";
           description = ''
             The mount point on which to mount the partition contained
             in this encrypted volume.
@@ -48,20 +46,20 @@ let
           '';
         };
 
-        filesystem_type = mkOption {
-          type = types.str;
+        filesystem_type = lib.mkOption {
+          type = lib.types.str;
           default = "ext4";
         };
 
-        mount_options = mkOption {
-          type = types.str;
+        mount_options = lib.mkOption {
+          type = lib.types.str;
           default = "";
           example = "acl,noatime,nosuid,nodev";
         };
       };
 
       config = {
-        name = mkDefault name;
+        name = lib.mkDefault name;
       };
     };
 in
@@ -72,16 +70,16 @@ in
       type = lib.types.str;
     };
 
-    mounts = mkOption {
-      type = with types; attrsOf (submodule cryptoOpts);
+    mounts = lib.mkOption {
+      type = with lib.types; attrsOf (submodule cryptoOpts);
       default = [ ];
     };
 
     encrypted_opt = {
-      enable = mkEnableOption "the encrypted /opt partition";
+      enable = lib.mkEnableOption "the encrypted /opt partition";
 
-      device = mkOption {
-        type = types.str;
+      device = lib.mkOption {
+        type = lib.types.str;
         default = "/dev/LVMVolGroup/nixos_data";
         description = "The device to mount on /opt.";
       };
@@ -89,8 +87,8 @@ in
   };
 
   imports = [
-    (mkRenamedOptionModule [ "settings" "crypto" "enable" ] [ "settings" "crypto" "encrypted_opt" "enable" ])
-    (mkRenamedOptionModule [ "settings" "crypto" "device" ] [ "settings" "crypto" "encrypted_opt" "device" ])
+    (lib.mkRenamedOptionModule [ "settings" "crypto" "enable" ] [ "settings" "crypto" "encrypted_opt" "enable" ])
+    (lib.mkRenamedOptionModule [ "settings" "crypto" "device" ] [ "settings" "crypto" "encrypted_opt" "device" ])
   ];
 
   config =
@@ -212,13 +210,13 @@ in
         ];
       };
 
-      mkOpenServices = mapAttrs' (_: conf: nameValuePair (open_service_name conf)
+      mkOpenServices = lib.mapAttrs' (_: conf: lib.nameValuePair (open_service_name conf)
         (mkOpenService conf));
-      mkMounts = mapAttrsToList (_: conf: mkMount conf);
+      mkMounts = lib.mapAttrsToList (_: conf: mkMount conf);
     in
     {
       settings.crypto.mounts = {
-        opt = mkIf cfg.encrypted_opt.enable {
+        opt = lib.mkIf cfg.encrypted_opt.enable {
           enable = true;
           inherit (cfg.encrypted_opt) device;
           mount_point = "/opt";
@@ -228,7 +226,7 @@ in
       systemd =
         let
           enabled = lib.filterEnabled cfg.mounts;
-          extra_mount_units = optional cfg.encrypted_opt.enable {
+          extra_mount_units = lib.optional cfg.encrypted_opt.enable {
             inherit (cfg.encrypted_opt) enable;
             what = "/opt/.home";
             where = "/home";

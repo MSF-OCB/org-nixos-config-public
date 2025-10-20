@@ -1,45 +1,42 @@
 { lib, config, pkgs, ... }:
 
-with lib;
-
 let
   cfg = config.settings.services.server-lock;
   crypto_cfg = config.settings.crypto;
-  sys_cfg = config.settings.system;
 in
 
 {
   options = {
     settings.services.server-lock = {
-      enable = mkEnableOption "the server lock service";
+      enable = lib.mkEnableOption "the server lock service";
 
-      listen_port = mkOption {
-        type = types.port;
+      listen_port = lib.mkOption {
+        type = lib.types.port;
         default = 1234;
       };
 
-      lock_retry_max_count = mkOption {
-        type = types.int;
+      lock_retry_max_count = lib.mkOption {
+        type = lib.types.int;
         default = 5;
       };
 
-      verify_retry_max_count = mkOption {
-        type = types.int;
+      verify_retry_max_count = lib.mkOption {
+        type = lib.types.int;
         default = 50;
       };
 
-      poll_interval = mkOption {
-        type = types.int;
+      poll_interval = lib.mkOption {
+        type = lib.types.int;
         default = 15;
       };
 
-      disable_targets = mkOption {
-        type = with types; listOf str;
+      disable_targets = lib.mkOption {
+        type = with lib.types; listOf str;
         default = [ "<localhost>" ];
       };
 
-      armed = mkOption {
-        type = types.bool;
+      armed = lib.mkOption {
+        type = lib.types.bool;
         default = false;
         description = ''
           Whether the server lock service is armed.
@@ -50,7 +47,7 @@ in
     };
   };
 
-  config = mkIf cfg.enable (
+  config = lib.mkIf cfg.enable (
     let
       server-lock-user = "server-lock-button";
       mkScript = name: content:
@@ -75,14 +72,14 @@ in
                 ${pkgs.cryptsetup}/bin/cryptsetup luksRemoveKey ${device} ${key_file}
               '';
             in
-            mapAttrsToList (_: conf: mkDisable conf.device conf.key_file)
+            lib.mapAttrsToList (_: conf: mkDisable conf.device conf.key_file)
               crypto_cfg.mounts;
 
           rebootCommand = ''${pkgs.systemd}/bin/systemctl reboot'';
 
           wrapped =
             let
-              commands = concatStringsSep "\n" (disableKeyCommands ++ [ rebootCommand ]);
+              commands = lib.concatStringsSep "\n" (disableKeyCommands ++ [ rebootCommand ]);
             in
             mkScript wrapped_name commands;
 
@@ -111,9 +108,9 @@ in
                 fi
               '';
             in
-            mapAttrsToList (_: conf: mkVerify conf.mount_point) crypto_cfg.mounts;
+            lib.mapAttrsToList (_: conf: mkVerify conf.mount_point) crypto_cfg.mounts;
 
-          commands = concatStringsSep "\n" ([ verifyUptime ] ++ verifyMountPoints);
+          commands = lib.concatStringsSep "\n" ([ verifyUptime ] ++ verifyMountPoints);
 
         in
         mkScript script_name commands;
@@ -155,7 +152,7 @@ in
           script =
             let
               quoteString = s: ''"${s}"'';
-              formatTargets = concatMapStringsSep " " quoteString;
+              formatTargets = lib.concatMapStringsSep " " quoteString;
             in
             ''
               ${pkgs.nixos-server-lock}/bin/nixos_server_lock --listen_port ${toString cfg.listen_port} \

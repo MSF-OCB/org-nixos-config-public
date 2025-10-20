@@ -1,7 +1,5 @@
 { config, lib, pkgs, flakeInputs, ... }:
 
-with lib;
-
 let
   cfg = config.settings.system;
   tnl_cfg = config.settings.reverse_tunnel;
@@ -10,37 +8,37 @@ in
 
 {
   options.settings.system = {
-    isMbr = mkOption {
-      type = types.bool;
+    isMbr = lib.mkOption {
+      type = lib.types.bool;
       default = false;
       description = ''
         Does the machine boot from a disk with an MBR layout.
       '';
     };
 
-    isISO = mkOption {
-      type = types.bool;
+    isISO = lib.mkOption {
+      type = lib.types.bool;
       default = false;
     };
 
-    private_key_source = mkOption {
-      type = types.str;
+    private_key_source = lib.mkOption {
+      type = lib.types.str;
       default = "/var/lib/org-nix/id_tunnel";
       description = ''
         The location of the private key file used to establish the reverse tunnels.
       '';
     };
 
-    private_key_directory = mkOption {
-      type = types.str;
+    private_key_directory = lib.mkOption {
+      type = lib.types.str;
       default = "/run/tunnel";
       readOnly = true;
     };
 
     # It is crucial that this option has type str and not path,
     # to avoid the private key being copied into the nix store.
-    private_key = mkOption {
-      type = types.str;
+    private_key = lib.mkOption {
+      type = lib.types.str;
       default = "${cfg.private_key_directory}/id_tunnel";
       readOnly = true;
       description = ''
@@ -50,8 +48,8 @@ in
 
     # It is crucial that this option has type str and not path,
     # to avoid the private key being copied into the nix store.
-    github_private_key = mkOption {
-      type = types.str;
+    github_private_key = lib.mkOption {
+      type = lib.types.str;
       default = "${cfg.private_key_directory}/id_github";
       description = ''
         Location to load the private key file for GitHub from.
@@ -59,8 +57,8 @@ in
     };
 
     org = {
-      config_dir_name = mkOption {
-        type = types.str;
+      config_dir_name = lib.mkOption {
+        type = lib.types.str;
         default = "org-config";
         readOnly = true;
         description = ''
@@ -69,42 +67,42 @@ in
         '';
       };
 
-      env_var_prefix = mkOption {
-        type = types.str;
+      env_var_prefix = lib.mkOption {
+        type = lib.types.str;
       };
 
-      github_org = mkOption {
-        type = types.str;
+      github_org = lib.mkOption {
+        type = lib.types.str;
       };
 
-      repo_to_url = mkOption {
-        type = with types; functionTo str;
+      repo_to_url = lib.mkOption {
+        type = with lib.types; functionTo str;
         default = repo: ''git+ssh://git@github.com/${cfg.org.github_org}/${repo}.git'';
       };
 
       iso = {
-        menu_label = mkOption {
-          type = types.str;
+        menu_label = lib.mkOption {
+          type = lib.types.str;
           default = "NixOS Rescue System";
         };
 
-        file_label = mkOption {
-          type = types.str;
+        file_label = lib.mkOption {
+          type = lib.types.str;
           default = "nixos-rescue";
         };
       };
     };
 
-    users_json_path = mkOption {
-      type = types.path;
+    users_json_path = lib.mkOption {
+      type = lib.types.path;
     };
 
-    keys_json_path = mkOption {
-      type = types.path;
+    keys_json_path = lib.mkOption {
+      type = lib.types.path;
     };
 
-    tunnels_json_dir_path = mkOption {
-      type = with types; nullOr path;
+    tunnels_json_dir_path = lib.mkOption {
+      type = with lib.types; nullOr path;
     };
 
     secrets = {
@@ -113,35 +111,35 @@ in
         default = config.networking.hostName;
       };
 
-      src_directory = mkOption {
-        type = types.path;
+      src_directory = lib.mkOption {
+        type = lib.types.path;
         description = ''
           The directory containing the generated and encrypted secrets.
         '';
       };
 
-      src_file = mkOption {
-        type = types.path;
+      src_file = lib.mkOption {
+        type = lib.types.path;
         default = cfg.secrets.src_directory + "/generated-secrets.yml";
         description = ''
           The file containing the generated and encrypted secrets.
         '';
       };
 
-      dest_directory = mkOption {
-        type = types.str;
+      dest_directory = lib.mkOption {
+        type = lib.types.str;
         description = ''
           The directory containing the decrypted secrets available to this server.
         '';
       };
 
-      old_dest_directories = mkOption {
-        type = with types; listOf str;
+      old_dest_directories = lib.mkOption {
+        type = with lib.types; listOf str;
         default = [ ];
       };
 
-      allow_groups = mkOption {
-        type = with types; listOf str;
+      allow_groups = lib.mkOption {
+        type = with lib.types; listOf str;
         description = ''
           Groups which have access to the secrets through ACLs.
         '';
@@ -150,30 +148,30 @@ in
     };
 
     app_configs = {
-      src_directory = mkOption {
-        type = types.path;
+      src_directory = lib.mkOption {
+        type = lib.types.path;
         description = ''
           The directory containing the generated app configs.
         '';
       };
 
-      src_file = mkOption {
-        type = types.path;
+      src_file = lib.mkOption {
+        type = lib.types.path;
         default = cfg.app_configs.src_directory + "/generated-app-configs.yml";
         description = ''
           The file containing the generated app configs.
         '';
       };
 
-      dest_directory = mkOption {
-        type = types.str;
+      dest_directory = lib.mkOption {
+        type = lib.types.str;
         description = ''
           The directory containing the app configs available to this server.
         '';
       };
 
-      allow_groups = mkOption {
-        type = with types; listOf str;
+      allow_groups = lib.mkOption {
+        type = with lib.types; listOf str;
         description = ''
           Groups which have access to the app configs through ACLs.
         '';
@@ -182,13 +180,13 @@ in
     };
 
     opt = {
-      allow_groups = mkOption {
-        type = with types; listOf str;
+      allow_groups = lib.mkOption {
+        type = with lib.types; listOf str;
       };
     };
     secrets = {
-      enable = mkOption {
-        type = types.bool;
+      enable = lib.mkOption {
+        type = lib.types.bool;
         default = true;
       };
     };
@@ -231,7 +229,7 @@ in
 
     assertions = [
       {
-        assertion = hasAttr config.networking.hostName tnl_cfg.tunnels;
+        assertion = lib.hasAttr config.networking.hostName tnl_cfg.tunnels;
         message =
           "This host's host name is not present in the tunnel config " +
           "(${toString cfg.tunnels_json_dir_path}).";
@@ -255,15 +253,15 @@ in
     # mkForce has a priority of 50, while the default priority is 100.
     # We use 75 here to override the setting in hardware-configuration.nix files
     # that were generated with old versions of nixos-generate-config that did
-    # not yet use mkDefault, but we also still want to allow the usage of mkForce.
-    powerManagement.cpuFreqGovernor = mkOverride 75 "schedutil";
+    # not yet use lib.mkDefault, but we also still want to allow the usage of mkForce.
+    powerManagement.cpuFreqGovernor = lib.mkOverride 75 "schedutil";
 
     security = {
       sudo = {
         enable = true;
         wheelNeedsPassword = false;
       };
-      pam.services.su.forwardXAuth = mkForce false;
+      pam.services.su.forwardXAuth = lib.mkForce false;
     };
 
     environment = {
@@ -279,7 +277,7 @@ in
           let
             hash = builtins.hashString "sha256" config.networking.hostName;
           in
-          substring 0 12 hash;
+          lib.substring 0 12 hash;
         "${cfg.org.env_var_prefix}_SECRETS_DIRECTORY" = cfg.secrets.dest_directory;
         "${cfg.org.env_var_prefix}_CONFIGS_DIRECTORY" = cfg.app_configs.dest_directory;
       };
@@ -425,7 +423,7 @@ in
                 # from the ACLs on files, but this currently does not seem worth it,
                 # given the additional complexity that this would introduce in this
                 # script.
-                acl = concatStringsSep "," (
+                acl = lib.concatStringsSep "," (
                   [
                     "u::rwX"
                     "user:root:rwX"
@@ -434,11 +432,11 @@ in
                     "d:o::---"
                     "d:user:root:rwx"
                   ] ++
-                  concatMap (group: [ "group:${group}:rwX" "d:group:${group}:rwx" ])
+                  lib.concatMap (group: [ "group:${group}:rwX" "d:group:${group}:rwx" ])
                     cfg.opt.allow_groups
                 );
                 # For /opt we use setfacl --set, so we need to define the full ACL
-                opt_acl = concatStringsSep "," [ "g::r-X" "o::---" acl ];
+                opt_acl = lib.concatStringsSep "," [ "g::r-X" "o::---" acl ];
               in
               ''
                 # Ensure that /opt actually exists
@@ -505,7 +503,7 @@ in
             script =
               let
                 base_files = [ cfg.private_key_source legacy_key_path ];
-                files = concatStringsSep " " (unique (concatMap (f: [ f "${f}.pub" ]) base_files));
+                files = lib.concatStringsSep " " (lib.unique (lib.concatMap (f: [ f "${f}.pub" ]) base_files));
               in
               ''
                 for file in ${files}; do
@@ -583,7 +581,7 @@ in
               let
                 # We make an ACL with default permissions and add an extra rule
                 # for each group defined as having access
-                acl = concatStringsSep "," (
+                acl = lib.concatStringsSep "," (
                   [ "u::rwX,g::r-X,o::---" ] ++ map (group: "group:${group}:rX") cfg.secrets.allow_groups
                 );
                 mkRemoveOldDir = dir: ''
@@ -600,7 +598,7 @@ in
               in
               ''
                 echo "decrypting the server secrets..."
-                ${concatMapStringsSep "\n" mkRemoveOldDir cfg.secrets.old_dest_directories}
+                ${lib.concatMapStringsSep "\n" mkRemoveOldDir cfg.secrets.old_dest_directories}
                 if [ -e "${cfg.secrets.dest_directory}" ]; then
                   ${pkgs.coreutils}/bin/rm --one-file-system \
                                            --recursive \
@@ -635,7 +633,7 @@ in
               let
                 # We make an ACL with default permissions and add an extra rule
                 # for each group defined as having access
-                acl = concatStringsSep "," (
+                acl = lib.concatStringsSep "," (
                   [ "u::rwX,g::r-X,o::---" ] ++ map (group: "group:${group}:rX") cfg.app_configs.allow_groups
                 );
               in
@@ -695,7 +693,7 @@ in
     };
 
     # No fonts needed on a headless system
-    fonts.fontconfig.enable = mkForce false;
+    fonts.fontconfig.enable = lib.mkForce false;
 
     programs = {
       bash.enableCompletion = true;
@@ -752,7 +750,7 @@ in
 
       timesyncd = {
         enable = lib.mkDefault true;
-        servers = mkDefault [
+        servers = lib.mkDefault [
           "0.nixos.pool.ntp.org"
           "1.nixos.pool.ntp.org"
           "2.nixos.pool.ntp.org"

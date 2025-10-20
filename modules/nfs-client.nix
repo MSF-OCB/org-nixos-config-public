@@ -1,15 +1,13 @@
 { config, lib, ... }:
 
-with lib;
-
 let
   cfg = config.nfs-client;
 in
 {
 
   options.nfs-client = {
-    mounts = mkOption {
-      type = types.attrsOf (types.attrsOf types.str);
+    mounts = lib.mkOption {
+      type = with lib.types; attrsOf (attrsOf str);
       default = { };
       description = ''
         List of NFS mounts configurations.
@@ -33,7 +31,7 @@ in
     systemd = {
       mounts =
         let
-          mkMount = name: mount: {
+          mkMount = _name: mount: {
             enable = true;
             what = "${mount.what}";
             where = "${mount.where}";
