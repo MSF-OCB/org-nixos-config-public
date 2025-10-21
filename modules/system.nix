@@ -344,6 +344,18 @@ in
     ];
 
     systemd = {
+      settings.Manager = {
+        # systemd will send a signal to the hardware watchdog at half
+        # the interval defined here, so every 10s.
+        # If the hardware watchdog does not get a signal for 20s,
+        # it will forcefully reboot the system.
+        RuntimeWatchdogSec = 20;
+        # Forcefully reboot if the final stage of the reboot
+        # hangs without progress for more than 30s.
+        # For more info, see:
+        #   https://utcc.utoronto.ca/~cks/space/blog/linux/SystemdShutdownWatchdog
+        RebootWatchdogSec = 30;
+      };
       # Given that our systems are headless, emergency mode is useless.
       # We prefer the system to attempt to continue booting so
       # that we can hopefully still access it remotely.
@@ -368,21 +380,6 @@ in
           MemoryHigh = "70%";
           CPUWeight = 80;
         };
-      };
-
-      # For more detail, see:
-      #   https://0pointer.de/blog/projects/watchdog.html
-      watchdog = {
-        # systemd will send a signal to the hardware watchdog at half
-        # the interval defined here, so every 10s.
-        # If the hardware watchdog does not get a signal for 20s,
-        # it will forcefully reboot the system.
-        runtimeTime = "20s";
-        # Forcefully reboot if the final stage of the reboot
-        # hangs without progress for more than 30s.
-        # For more info, see:
-        #   https://utcc.utoronto.ca/~cks/space/blog/linux/SystemdShutdownWatchdog
-        rebootTime = "30s";
       };
 
       sleep.extraConfig = ''
@@ -696,7 +693,7 @@ in
     fonts.fontconfig.enable = lib.mkForce false;
 
     programs = {
-      bash.enableCompletion = true;
+      bash.completion.enable = true;
 
       ssh = {
         startAgent = false;
@@ -775,15 +772,15 @@ in
 
       # See man logind.conf
       logind = {
-        extraConfig = ''
-          HandlePowerKey=poweroff
-          PowerKeyIgnoreInhibited=yes
-        '';
+        settings.Login = {
+          HandlePowerKey = "poweroff";
+          PowerKeyIgnoreInhibited = true;
+        };
       };
 
       avahi = {
         enable = true;
-        nssmdns = true;
+        nssmdns4 = true;
         extraServiceFiles = {
           ssh = "${pkgs.avahi}/etc/avahi/services/ssh.service";
         };

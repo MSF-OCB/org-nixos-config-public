@@ -11,8 +11,8 @@
       url = "github:edolstra/flake-compat";
     };
 
-    nixpkgs-legacy.url = "github:NixOS/nixpkgs/nixos-24.11-small";
-    nixpkgs-latest.url = "github:NixOS/nixpkgs/nixos-25.05-small";
+    nixpkgs-legacy.url = "https://channels.nixos.org/nixos-25.05/nixexprs.tar.xz";
+    nixpkgs-latest.url = "https://channels.nixos.org/nixos-unstable/nixexprs.tar.xz";
 
     disko = {
       url = "github:nix-community/disko";

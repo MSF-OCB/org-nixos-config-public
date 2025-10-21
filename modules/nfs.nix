@@ -3,7 +3,7 @@
 let
   cfg = config.settings.nfs;
 
-  nfsCryptoMountOpts = { name, config, ... }: {
+  nfsCryptoMountOpts = { name, ... }: {
     options = {
       enable = lib.mkEnableOption "the crypto mount";
 

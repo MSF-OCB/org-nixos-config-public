@@ -7,7 +7,7 @@ let
     let
       outerConfig = config;
     in
-    { name, config, ... }: {
+    { name, ... }: {
       options = {
         enable = lib.mkEnableOption "the encrypted device";
 
