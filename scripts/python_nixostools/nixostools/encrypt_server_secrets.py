@@ -3,10 +3,10 @@ import dataclasses
 import glob
 import os
 import traceback
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from functools import reduce
-from typing import Any, Callable
+from typing import Any
 
 import yaml
 from nacl.public import PublicKey

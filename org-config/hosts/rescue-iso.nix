@@ -22,6 +22,8 @@ in
     network.host_name = "rescue-iso";
   };
 
+  networking.networkmanager.enable = lib.mkForce false;
+
   services.openssh = {
     settings.PermitRootLogin = lib.mkForce "prohibit-password";
     authorizedKeysFiles = lib.mkForce [ "%h/.ssh/authorized_keys" ];
@@ -66,8 +68,8 @@ in
     "overlay"
   ];
 
-  isoImage = {
-    isoName = lib.mkForce (
+  image = {
+    fileName = lib.mkForce (
       (lib.concatStringsSep "-" [
         sys_cfg.org.iso.file_label
         config.isoImage.isoBaseName
@@ -76,6 +78,6 @@ in
       ])
       + ".iso"
     );
-    appendToMenuLabel = " ${sys_cfg.org.iso.menu_label}";
   };
+  isoImage.appendToMenuLabel = " ${sys_cfg.org.iso.menu_label}";
 }
