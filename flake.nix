@@ -103,7 +103,7 @@
       treefmt-config = {
         projectRootFile = "flake.nix";
         programs = {
-          nixpkgs-fmt.enable = true;
+          nixfmt.enable = true;
           shellcheck.enable = true;
           shfmt.enable = true;
           deadnix.enable = true;
@@ -131,7 +131,7 @@
             # control the order in which nix formatters/linters are applied to ensure a correct and consistent outcome
             deadnix.priority = 1;
             statix.priority = 2;
-            nixpkgs-fmt.priority = 3;
+            nixfmt.priority = 3;
 
             prettier = {
               options = [
@@ -328,7 +328,7 @@
                 # jq and xorriso are used to build the rescue ISO
                 pkgs.jq
                 pkgs.xorriso
-                pkgs.nixpkgs-fmt
+                pkgs.nixfmt-rfc-style
               ];
             env = [{
               name = "DEVSHELL_NO_MOTD";
