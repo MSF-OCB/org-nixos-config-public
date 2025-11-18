@@ -1,95 +1,106 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.settings.users;
 
-  userOpts = { name, config, ... }: {
-    options = {
-      name = lib.mkOption {
-        type = lib.types.str;
+  userOpts =
+    { name, config, ... }:
+    {
+      options = {
+        name = lib.mkOption {
+          type = lib.types.str;
+        };
+
+        enable = lib.mkEnableOption "the user";
+
+        sshAllowed = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+        };
+
+        extraGroups = lib.mkOption {
+          type = with lib.types; listOf str;
+          default = [ ];
+        };
+
+        hasShell = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+        };
+
+        canTunnel = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+        };
+
+        public_keys = lib.mkOption {
+          type = lib.types.listOf (
+            lib.types.coercedTo lib.types.pub_key_type
+              (publicKey: {
+                inherit publicKey;
+              })
+              (
+                lib.types.submodule (
+                  let
+                    userConfig = config;
+                  in
+                  { config, ... }:
+                  {
+                    options = {
+                      publicKey = lib.mkOption {
+                        type = lib.types.pub_key_type;
+                      };
+                      keyOptions = lib.mkOption {
+                        type = lib.types.listOf (lib.types.strMatching "[a-zA-Z=@.,\"-]*");
+                        default = [ ];
+                      };
+                      finalKey = lib.mkOption {
+                        type = lib.types.str;
+                        default =
+                          if config.keyOptions == [ ] then
+                            "${config.publicKey} ${userConfig.name}"
+                          else
+                            "${lib.concatStringsSep "," config.keyOptions} ${config.publicKey} ${userConfig.name}";
+                      };
+                    };
+                  }
+                )
+              )
+          );
+          default = [ ];
+        };
+
+        forceCommand = lib.mkOption {
+          type = with lib.types; nullOr str;
+          default = null;
+        };
+
+        whitelistCommands = lib.mkOption {
+          type = with lib.types; listOf str;
+          default = [ ];
+        };
+
+        expires = lib.mkOption {
+          type = lib.types.nullOr (lib.types.strMatching "[[:digit:]]{4}-[[:digit:]]{2}-[[:digit:]]{2}");
+          default = null;
+          description = ''
+            Set the date on which the user's account will no longer be
+            accessible. The date is expressed in the format YYYY-MM-DD, or null
+            to disable the expiry.
+            A user whose account is locked must contact the system
+            administrator before being able to use the system again.
+          '';
+        };
       };
-
-      enable = lib.mkEnableOption "the user";
-
-      sshAllowed = lib.mkOption {
-        type = lib.types.bool;
-        default = false;
-      };
-
-      extraGroups = lib.mkOption {
-        type = with lib.types; listOf str;
-        default = [ ];
-      };
-
-      hasShell = lib.mkOption {
-        type = lib.types.bool;
-        default = false;
-      };
-
-      canTunnel = lib.mkOption {
-        type = lib.types.bool;
-        default = false;
-      };
-
-      public_keys = lib.mkOption {
-        type = lib.types.listOf (lib.types.coercedTo
-          lib.types.pub_key_type
-          (publicKey: {
-            inherit publicKey;
-          })
-          (lib.types.submodule (
-            let
-              userConfig = config;
-            in
-            { config, ... }: {
-              options = {
-                publicKey = lib.mkOption {
-                  type = lib.types.pub_key_type;
-                };
-                keyOptions = lib.mkOption {
-                  type = lib.types.listOf (lib.types.strMatching "[a-zA-Z=@.,\"-]*");
-                  default = [ ];
-                };
-                finalKey = lib.mkOption {
-                  type = lib.types.str;
-                  default =
-                    if config.keyOptions == [ ]
-                    then "${config.publicKey} ${userConfig.name}"
-                    else "${lib.concatStringsSep "," config.keyOptions} ${config.publicKey} ${userConfig.name}";
-                };
-              };
-            }
-          ))
-        );
-        default = [ ];
-      };
-
-      forceCommand = lib.mkOption {
-        type = with lib.types; nullOr str;
-        default = null;
-      };
-
-      whitelistCommands = lib.mkOption {
-        type = with lib.types; listOf str;
-        default = [ ];
-      };
-
-      expires = lib.mkOption {
-        type = lib.types.nullOr (lib.types.strMatching "[[:digit:]]{4}-[[:digit:]]{2}-[[:digit:]]{2}");
-        default = null;
-        description = ''
-          Set the date on which the user's account will no longer be
-          accessible. The date is expressed in the format YYYY-MM-DD, or null
-          to disable the expiry.
-          A user whose account is locked must contact the system
-          administrator before being able to use the system again.
-        '';
+      config = {
+        name = lib.mkDefault name;
       };
     };
-    config = {
-      name = lib.mkDefault name;
-    };
-  };
 
 in
 {
@@ -132,8 +143,7 @@ in
 
   config =
     let
-      public_keys_for = user: map (key: key.finalKey)
-        user.public_keys;
+      public_keys_for = user: map (key: key.finalKey) user.public_keys;
     in
     {
       settings.users.users =
@@ -148,13 +158,15 @@ in
               # Convert a tunnel definition to a partial user definition with its pubkeys
               # We collect for every user the keys to be copied into a set
               # We cannot use a list directly since recursiveMerge only merges attrsets
-              tunnelToUsers = t: map
-                (u: {
+              tunnelToUsers =
+                t:
+                map (u: {
                   ${u} = lib.optionalAttrs (lib.stringNotEmpty t.public_key) {
-                    public_keys = { ${t.public_key} = true; };
+                    public_keys = {
+                      ${t.public_key} = true;
+                    };
                   };
-                })
-                t.copy_key_to_users;
+                }) t.copy_key_to_users;
 
               tunnelsToUsers = lib.compose [
                 # Convert the attrsets containing the keys into lists
@@ -187,12 +199,11 @@ in
           ${cfg.shell-user-group} = { };
         }
         //
-        # Create a group per user
-        lib.compose [
-          (lib.mapAttrs' (_: u: lib.nameValuePair u.name { }))
-          lib.filterEnabled
-        ]
-          cfg.users;
+          # Create a group per user
+          lib.compose [
+            (lib.mapAttrs' (_: u: lib.nameValuePair u.name { }))
+            lib.filterEnabled
+          ] cfg.users;
 
         users =
           let
@@ -205,13 +216,14 @@ in
             mkUser = _: user: {
               inherit (user) name expires;
               isNormalUser = user.hasShell;
-              isSystemUser = ! user.hasShell;
+              isSystemUser = !user.hasShell;
               group = user.name;
-              extraGroups = user.extraGroups ++
-                (lib.optional (user.sshAllowed || user.canTunnel) cfg.ssh-group) ++
-                (lib.optional user.canTunnel cfg.fwd-tunnel-group) ++
-                (lib.optional user.hasShell cfg.shell-user-group) ++
-                (lib.optional user.hasShell "users");
+              extraGroups =
+                user.extraGroups
+                ++ (lib.optional (user.sshAllowed || user.canTunnel) cfg.ssh-group)
+                ++ (lib.optional user.canTunnel cfg.fwd-tunnel-group)
+                ++ (lib.optional user.hasShell cfg.shell-user-group)
+                ++ (lib.optional user.hasShell "users");
               shell = if (hasShell user) then config.users.defaultUserShell else pkgs.shadow;
               openssh.authorizedKeys.keys = public_keys_for user;
             };
@@ -221,17 +233,17 @@ in
               lib.filterEnabled
             ];
           in
-          mkUsers cfg.users //
-          # Allow users that are in the wheel to also log in as root.
-          # This is needed for instance in order to (re-)install using nixos-anywhere.
-          {
-            root.openssh.authorizedKeys.keys =
-              lib.flatten (
+          mkUsers cfg.users
+          //
+            # Allow users that are in the wheel to also log in as root.
+            # This is needed for instance in order to (re-)install using nixos-anywhere.
+            {
+              root.openssh.authorizedKeys.keys = lib.flatten (
                 lib.mapAttrsToList (_: user: map (key: key.finalKey) user.public_keys) (
                   lib.filterAttrs (_: user: lib.elem "wheel" user.extraGroups) config.settings.users.users
                 )
               );
-          };
+            };
       };
 
       settings.reverse_tunnel.relay.tunneller.keys =
@@ -242,13 +254,12 @@ in
             # Flatten this list of lists to get
             # a list containing all keys
             lib.flatten
-            (lib.mapAttrsToList (_: user:
-              map
-                (publicKey: {
-                  username = user.name;
-                  inherit (publicKey) publicKey keyOptions;
-                })
-                user.public_keys
+            (lib.mapAttrsToList (
+              _: user:
+              map (publicKey: {
+                username = user.name;
+                inherit (publicKey) publicKey keyOptions;
+              }) user.public_keys
             ))
           ];
         in
@@ -263,12 +274,13 @@ in
           mkRule = username: cmds: {
             users = [ username ];
             runAs = "root";
-            commands = map
-              (command: {
-                inherit command;
-                options = [ "SETENV" "NOPASSWD" ];
-              })
-              (addDenyAll cmds);
+            commands = map (command: {
+              inherit command;
+              options = [
+                "SETENV"
+                "NOPASSWD"
+              ];
+            }) (addDenyAll cmds);
           };
         in
         lib.compose [
@@ -277,8 +289,7 @@ in
           # Avoid diffs in nix-diff because of the order in which commands were
           # added by sorting the commands for every user lexicographically
           (lib.mapAttrs (_: user: lib.naturalSort user.whitelistCommands))
-        ]
-          cfg.users
+        ] cfg.users
       );
     };
 }

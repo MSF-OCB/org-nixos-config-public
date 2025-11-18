@@ -24,118 +24,160 @@ let
   # Content served by the webserver. We test for it in the test script.
   testDocumentContent = "hello world";
 
-  registerDnsModule = { domain }: { nodes, config, lib, pkgs, ... }: {
-    systemd.services.register-dns = {
-      serviceConfig = {
-        Type = "oneshot";
-        DynamicUser = true;
-        RemainAfterExit = true;
-      };
-      requiredBy = [
-        config.systemd.targets.multi-user.name
-      ];
-      before = [
-        config.systemd.targets.multi-user.name
-      ];
-      after = [
-        "network-online.target"
-      ];
-      requires = [
-        "network-online.target"
-      ];
-      script = ''
-        ${lib.getExe pkgs.curl} \
-          --no-progress-meter \
-          --data '${builtins.toJSON { host = domain; addresses = [ config.networking.primaryIPAddress ]; }}' \
-          "http://[${nodes.dnsserver.networking.primaryIPv6Address}]:8055/add-a"
+  registerDnsModule =
+    { domain }:
+    {
+      nodes,
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
+    {
+      systemd.services.register-dns = {
+        serviceConfig = {
+          Type = "oneshot";
+          DynamicUser = true;
+          RemainAfterExit = true;
+        };
+        requiredBy = [
+          config.systemd.targets.multi-user.name
+        ];
+        before = [
+          config.systemd.targets.multi-user.name
+        ];
+        after = [
+          "network-online.target"
+        ];
+        requires = [
+          "network-online.target"
+        ];
+        script = ''
+          ${lib.getExe pkgs.curl} \
+            --no-progress-meter \
+            --data '${
+              builtins.toJSON {
+                host = domain;
+                addresses = [ config.networking.primaryIPAddress ];
+              }
+            }' \
+            "http://[${nodes.dnsserver.networking.primaryIPv6Address}]:8055/add-a"
 
-        ${lib.getExe pkgs.curl} \
-          --no-progress-meter \
-          --data '${builtins.toJSON { host = domain; addresses = [ config.networking.primaryIPv6Address ]; }}' \
-          "http://[${nodes.dnsserver.networking.primaryIPv6Address}]:8055/add-aaaa"
-      '';
+          ${lib.getExe pkgs.curl} \
+            --no-progress-meter \
+            --data '${
+              builtins.toJSON {
+                host = domain;
+                addresses = [ config.networking.primaryIPv6Address ];
+              }
+            }' \
+            "http://[${nodes.dnsserver.networking.primaryIPv6Address}]:8055/add-aaaa"
+        '';
+      };
     };
-  };
 in
 
 {
   name = "traefik";
 
   # Config shared by all nodes.
-  defaults = { nodes, ... }: {
-    networking = {
-      # Use networkd, which also enables resolved, which makes network config easier
-      useNetworkd = true;
+  defaults =
+    { nodes, ... }:
+    {
+      networking = {
+        # Use networkd, which also enables resolved, which makes network config easier
+        useNetworkd = true;
 
-      # Log blocked packets for easier debugging
-      firewall = {
-        logRefusedPackets = true;
-        logRefusedConnections = true;
-        logReversePathDrops = true;
+        # Log blocked packets for easier debugging
+        firewall = {
+          logRefusedPackets = true;
+          logRefusedConnections = true;
+          logReversePathDrops = true;
+        };
+
+        # Use our DNS server for all nodes
+        nameservers = [
+          nodes.dnsserver.networking.primaryIPv6Address
+        ];
       };
 
-      # Use our DNS server for all nodes
-      nameservers = [
-        nodes.dnsserver.networking.primaryIPv6Address
-      ];
+      systemd.network.wait-online = {
+        ignoredInterfaces = [
+          # Ignore the management interface
+          "eth0"
+        ];
+      };
     };
-
-    systemd.network.wait-online = {
-      ignoredInterfaces = [
-        # Ignore the management interface
-        "eth0"
-      ];
-    };
-  };
 
   nodes = {
-    acme = { config, modulesPath, ... }: {
-      imports = [
-        (modulesPath + "/../tests/common/acme/server")
-        (registerDnsModule { domain = config.test-support.acme.caDomain; })
-      ];
-    };
+    acme =
+      { config, modulesPath, ... }:
+      {
+        imports = [
+          (modulesPath + "/../tests/common/acme/server")
+          (registerDnsModule { domain = config.test-support.acme.caDomain; })
+        ];
+      };
 
     # A fake DNS server which can be configured with records as desired
     # Used to test DNS-01 challenge
-    dnsserver = { pkgs, nodes, lib, ... }: {
-      # Allow DNS requests and the management HTTP API
-      networking.firewall = {
-        allowedTCPPorts = [ 8055 53 ];
-        allowedUDPPorts = [ 53 ];
-      };
+    dnsserver =
+      {
+        pkgs,
+        nodes,
+        lib,
+        ...
+      }:
+      {
+        # Allow DNS requests and the management HTTP API
+        networking.firewall = {
+          allowedTCPPorts = [
+            8055
+            53
+          ];
+          allowedUDPPorts = [ 53 ];
+        };
 
-      # We don't want resolved to bind on port 53, since we need pebble there
-      services.resolved.enable = lib.mkForce false;
+        # We don't want resolved to bind on port 53, since we need pebble there
+        services.resolved.enable = lib.mkForce false;
 
-      systemd.services.pebble-challtestsrv = {
-        enable = true;
-        description = "Pebble ACME challenge test server";
-        wantedBy = [ "network.target" ];
-        serviceConfig = {
-          # By default, we respond to every A/AAAA query with the IP address of the traefik node
-          ExecStart = "${lib.getExe' pkgs.pebble "pebble-challtestsrv"} -dns01 ':53' -defaultIPv6 '${nodes.traefik.networking.primaryIPv6Address}' -defaultIPv4 '${nodes.traefik.networking.primaryIPAddress}'";
-          DynamicUser = true;
-          # Required to bind on privileged ports.
-          AmbientCapabilities = [ "CAP_NET_BIND_SERVICE" ];
+        systemd.services.pebble-challtestsrv = {
+          enable = true;
+          description = "Pebble ACME challenge test server";
+          wantedBy = [ "network.target" ];
+          serviceConfig = {
+            # By default, we respond to every A/AAAA query with the IP address of the traefik node
+            ExecStart = "${lib.getExe' pkgs.pebble "pebble-challtestsrv"} -dns01 ':53' -defaultIPv6 '${nodes.traefik.networking.primaryIPv6Address}' -defaultIPv4 '${nodes.traefik.networking.primaryIPAddress}'";
+            DynamicUser = true;
+            # Required to bind on privileged ports.
+            AmbientCapabilities = [ "CAP_NET_BIND_SERVICE" ];
+          };
         };
       };
-    };
 
-    traefik = { config, lib, nodes, pkgs, ... }:
+    traefik =
+      {
+        config,
+        lib,
+        nodes,
+        pkgs,
+        ...
+      }:
       let
-        traefikImage = version: pkgs.runCommandLocal "traefik-image.tar"
-          {
-            # Break the nix sandbox so that we can download the traefik docker image
-            # from docker hub.
-            # See https://zimbatm.com/notes/nix-packaging-the-heretic-way
-            __noChroot = true;
-          }
-          ''
-            ${lib.getExe pkgs.skopeo} copy \
-              docker://docker.io/traefik:${version} \
-              docker-archive:$out:traefik:${version}
-          '';
+        traefikImage =
+          version:
+          pkgs.runCommandLocal "traefik-image.tar"
+            {
+              # Break the nix sandbox so that we can download the traefik docker image
+              # from docker hub.
+              # See https://zimbatm.com/notes/nix-packaging-the-heretic-way
+              __noChroot = true;
+            }
+            ''
+              ${lib.getExe pkgs.skopeo} copy \
+                docker://docker.io/traefik:${version} \
+                docker-archive:$out:traefik:${version}
+            '';
 
         # This script will be executed by treafik (well, actually by lego, the acme
         # library used by treafik) when it does the ACME challenge.
@@ -143,7 +185,8 @@ in
         # server, and cleans it up again once the validation is done.
         # In production we use the AWS Route53 DNS provider, but in this test we
         # use this simple exec provider instead.
-        dnsScript = nodes:
+        dnsScript =
+          nodes:
           let
             dnsAddress = nodes.dnsserver.networking.primaryIPAddress;
           in
@@ -252,16 +295,19 @@ in
         };
       };
 
-    client = { nodes, ... }: {
-      # We need to trust the acme CA certificate since in the test script we will
-      # download the CA certificate that the generated certificates were signed with.
-      security.pki.certificateFiles = [
-        nodes.acme.test-support.acme.caCert
-      ];
-    };
+    client =
+      { nodes, ... }:
+      {
+        # We need to trust the acme CA certificate since in the test script we will
+        # download the CA certificate that the generated certificates were signed with.
+        security.pki.certificateFiles = [
+          nodes.acme.test-support.acme.caCert
+        ];
+      };
 
     # Simple webserver to have something that traefik can proxy to
-    webserver = { pkgs, ... }:
+    webserver =
+      { pkgs, ... }:
       let
         documentRoot = pkgs.runCommandLocal "docroot" { } ''
           mkdir -p "$out"
@@ -296,7 +342,8 @@ in
       };
   };
 
-  testScript = { nodes, ... }:
+  testScript =
+    { nodes, ... }:
     # python
     ''
       dnsserver.start()

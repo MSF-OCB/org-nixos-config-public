@@ -1,30 +1,48 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   inherit (config.lib) ext_lib;
 
   cfg = config.settings.users;
 
-  addGroups = new_groups: role: role // {
-    extraGroups =
-      let
-        existing_groups = lib.attrByPath [ "extraGroups" ] [ ] role;
-      in
-      existing_groups ++ new_groups;
-  };
+  addGroups =
+    new_groups: role:
+    role
+    // {
+      extraGroups =
+        let
+          existing_groups = lib.attrByPath [ "extraGroups" ] [ ] role;
+        in
+        existing_groups ++ new_groups;
+    };
 
-  addWhitelistCommands = newCmds: role: role // {
-    whitelistCommands = (role.whitelistCommands or [ ]) ++ newCmds;
-  };
+  addWhitelistCommands =
+    newCmds: role:
+    role
+    // {
+      whitelistCommands = (role.whitelistCommands or [ ]) ++ newCmds;
+    };
 
   # Global admin users have the same rights as admin users but
   # are enabled by default on every server
   # This permission cannot be attributed through the JSON config
-  globalAdmin = user_perms.admin // { enable = true; };
+  globalAdmin = user_perms.admin // {
+    enable = true;
+  };
 
   users_json = lib.importJSON ../org-config/json/users.json;
 
-  global_admins = builtins.listToAttrs (lib.map (user: { name = user; value = globalAdmin; }) users_json.global_admins);
+  global_admins = builtins.listToAttrs (
+    lib.map (user: {
+      name = user;
+      value = globalAdmin;
+    }) users_json.global_admins
+  );
 
   user_perms =
     let
@@ -37,7 +55,10 @@ let
         sshAllowed = true;
         hasShell = true;
         canTunnel = true;
-        extraGroups = [ "wheel" "docker" ];
+        extraGroups = [
+          "wheel"
+          "docker"
+        ];
       };
 
       dockerAdmin = addGroups [ "docker" ] remoteTunnelWithShell;
@@ -79,12 +100,13 @@ let
       fieldSupport = lib.compose [
         (addGroups [ systemd_journal ])
         # Members of the field support team can reboot servers and flush DHCP
-        (addWhitelistCommands ([
-          "/run/current-system/sw/bin/systemctl reboot"
-        ] ++
-        ext_lib.mkSudoStartServiceCmds { serviceName = "dhcpcd"; }))
-      ]
-        remoteTunnelWithShell;
+        (addWhitelistCommands (
+          [
+            "/run/current-system/sw/bin/systemctl reboot"
+          ]
+          ++ ext_lib.mkSudoStartServiceCmds { serviceName = "dhcpcd"; }
+        ))
+      ] remoteTunnelWithShell;
 
       docker_logs = lib.compose [
         (addGroups [ systemd_journal ])
@@ -99,25 +121,35 @@ let
           "/run/current-system/sw/bin/docker logs *"
           "/run/current-system/sw/bin/docker-compose logs *"
         ])
-      ]
-        remoteTunnelWithShell;
+      ] remoteTunnelWithShell;
 
       devops = lib.compose [
         (addGroups [ systemd_journal ])
         # Members of the devops team get some additional privileges
-        (addWhitelistCommands ([
-          "/run/current-system/sw/bin/systemctl reboot"
-          "/run/current-system/sw/bin/dmidecode"
-        ] ++
-        ext_lib.mkSudoStartServiceCmds { serviceName = "nixos_rebuild_config"; } ++
-        ext_lib.mkSudoStartServiceCmds { serviceName = "nixos-upgrade"; }))
-      ]
-        dockerAdmin;
+        (addWhitelistCommands (
+          [
+            "/run/current-system/sw/bin/systemctl reboot"
+            "/run/current-system/sw/bin/dmidecode"
+          ]
+          ++ ext_lib.mkSudoStartServiceCmds { serviceName = "nixos_rebuild_config"; }
+          ++ ext_lib.mkSudoStartServiceCmds { serviceName = "nixos-upgrade"; }
+        ))
+      ] dockerAdmin;
 
     in
     {
-      inherit admin dockerAdmin localDockerAdmin devops fieldSupport docker_logs
-        remoteTunnelWithShell localShell remoteTunnel remoteTunnelMonitor;
+      inherit
+        admin
+        dockerAdmin
+        localDockerAdmin
+        devops
+        fieldSupport
+        docker_logs
+        remoteTunnelWithShell
+        localShell
+        remoteTunnel
+        remoteTunnelMonitor
+        ;
     };
 in
 {
@@ -148,21 +180,26 @@ in
       robot = {
         enable = true;
         whitelistCommands =
-          ext_lib.mkSudoStartServiceCmds { serviceName = "nixos_rebuild_config"; } ++
-          ext_lib.mkSudoStartServiceCmds { serviceName = "nixos-upgrade"; };
+          ext_lib.mkSudoStartServiceCmds { serviceName = "nixos_rebuild_config"; }
+          ++ ext_lib.mkSudoStartServiceCmds { serviceName = "nixos-upgrade"; };
       };
 
       available_permission_profiles = user_perms;
 
-      users = global_admins // {
-        ${cfg.robot.username} = lib.mkIf cfg.robot.enable (
-          user_perms.remoteTunnelWithShell // {
-            enable = true;
-            inherit (cfg.robot) whitelistCommands;
-          }
+      users =
+        global_admins
+        // {
+          ${cfg.robot.username} = lib.mkIf cfg.robot.enable (
+            user_perms.remoteTunnelWithShell
+            // {
+              enable = true;
+              inherit (cfg.robot) whitelistCommands;
+            }
+          );
+        }
+        // lib.optionalAttrs (users_json.users ? expires) (
+          lib.mapAttrs (_username: expire: { expires = expire; }) users_json.users.expires
         );
-      } // lib.optionalAttrs (users_json.users ? expires)
-        (lib.mapAttrs (_username: expire: { expires = expire; }) users_json.users.expires);
     };
 
     users.users = {

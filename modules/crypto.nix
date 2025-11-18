@@ -1,4 +1,10 @@
-{ config, lib, pkgs, utils, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  utils,
+  ...
+}:
 
 let
   cfg = config.settings.crypto;
@@ -7,7 +13,8 @@ let
     let
       outerConfig = config;
     in
-    { name, config, ... }: {
+    { name, config, ... }:
+    {
       options = {
         enable = lib.mkEnableOption "the encrypted device";
 
@@ -87,8 +94,14 @@ in
   };
 
   imports = [
-    (lib.mkRenamedOptionModule [ "settings" "crypto" "enable" ] [ "settings" "crypto" "encrypted_opt" "enable" ])
-    (lib.mkRenamedOptionModule [ "settings" "crypto" "device" ] [ "settings" "crypto" "encrypted_opt" "device" ])
+    (lib.mkRenamedOptionModule
+      [ "settings" "crypto" "enable" ]
+      [ "settings" "crypto" "encrypted_opt" "enable" ]
+    )
+    (lib.mkRenamedOptionModule
+      [ "settings" "crypto" "device" ]
+      [ "settings" "crypto" "encrypted_opt" "device" ]
+    )
   ];
 
   config =
@@ -195,7 +208,10 @@ in
         where = conf.mount_point;
         type = conf.filesystem_type;
         options = conf.mount_options;
-        after = [ "${open_service_name conf}.service" "basic.target" ];
+        after = [
+          "${open_service_name conf}.service"
+          "basic.target"
+        ];
         requires = [ "${open_service_name conf}.service" ];
         # Don't Include Default Dependencies as this causes a cyclical dependency error,
         # Instead crypto-mount-targets will ensure all crypto mounts are loaded before,
@@ -210,8 +226,9 @@ in
         ];
       };
 
-      mkOpenServices = lib.mapAttrs' (_: conf: lib.nameValuePair (open_service_name conf)
-        (mkOpenService conf));
+      mkOpenServices = lib.mapAttrs' (
+        _: conf: lib.nameValuePair (open_service_name conf) (mkOpenService conf)
+      );
       mkMounts = lib.mapAttrsToList (_: conf: mkMount conf);
     in
     {

@@ -28,8 +28,15 @@ in
     services.timesyncd.servers = lib.mkIf (!cfg.inDMZ) [ "172.16.0.101" ];
 
     networking.nameservers =
-      if cfg.inDMZ
-      then [ "192.168.50.25" "192.168.50.26" ]
-      else [ "172.16.0.101" "172.16.0.102" ];
+      if cfg.inDMZ then
+        [
+          "192.168.50.25"
+          "192.168.50.26"
+        ]
+      else
+        [
+          "172.16.0.101"
+          "172.16.0.102"
+        ];
   };
 }

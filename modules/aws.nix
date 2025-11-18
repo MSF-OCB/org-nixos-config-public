@@ -1,4 +1,9 @@
-{ modulesPath, config, lib, ... }:
+{
+  modulesPath,
+  config,
+  lib,
+  ...
+}:
 
 {
   imports = [
@@ -20,7 +25,13 @@
   services.timesyncd.servers = config.networking.timeServers;
 
   networking.dhcpcd = {
-    denyInterfaces = lib.mkForce [ "veth*" "docker*" ];
-    allowInterfaces = lib.mkForce [ "en*" "eth*" ];
+    denyInterfaces = lib.mkForce [
+      "veth*"
+      "docker*"
+    ];
+    allowInterfaces = lib.mkForce [
+      "en*"
+      "eth*"
+    ];
   };
 }

@@ -1,4 +1,9 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 let
   cfg_users = config.settings.users.users;
@@ -77,10 +82,12 @@ in
               # Since we grouped the users by command, they are guaranteed to all
               # have the same forceCommand value and we can simply look at the first
               # one in the list (which is also guaranteed to be non empty).
-              cleanResults = lib.mapAttrs (_: users: {
-                inherit (builtins.head users) forceCommand;
-                users = map (user: user.name) users;
-              });
+              cleanResults = lib.mapAttrs (
+                _: users: {
+                  inherit (builtins.head users) forceCommand;
+                  users = map (user: user.name) users;
+                }
+              );
 
               groupByCommand =
                 let
@@ -92,11 +99,13 @@ in
                   lib.attrValues
                 ];
 
-              toCfgs = lib.mapAttrsToList (_: res: ''
-                Match User ${lib.concatStringsSep "," res.users}
-                PermitTTY no
-                ForceCommand ${pkgs.writeShellScript "ssh_force_command" res.forceCommand}
-              '');
+              toCfgs = lib.mapAttrsToList (
+                _: res: ''
+                  Match User ${lib.concatStringsSep "," res.users}
+                  PermitTTY no
+                  ForceCommand ${pkgs.writeShellScript "ssh_force_command" res.forceCommand}
+                ''
+              );
 
             in
             lib.compose [
@@ -187,9 +196,7 @@ in
       sshguard = lib.mkIf config.settings.sshguard.enable {
         inherit (config.settings.sshguard) enable;
         # We are a bit more strict on the relays
-        attack_threshold =
-          if cfg_rev_tun.relay.enable
-          then 40 else 80;
+        attack_threshold = if cfg_rev_tun.relay.enable then 40 else 80;
         blocktime = 10 * 60;
         detection_time = 7 * 24 * 60 * 60;
         whitelist = [ "localhost" ];

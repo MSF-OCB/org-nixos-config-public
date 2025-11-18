@@ -2,110 +2,120 @@
   name = "docker-opt";
 
   # Config shared by all nodes.
-  defaults = { pkgs, ... }: {
-    networking = {
-      # Use networkd, which also enables resolved, which makes network config easier
-      useNetworkd = true;
+  defaults =
+    { pkgs, ... }:
+    {
+      networking = {
+        # Use networkd, which also enables resolved, which makes network config easier
+        useNetworkd = true;
 
-      # Log blocked packets for easier debugging
-      firewall = {
-        logRefusedPackets = true;
-        logRefusedConnections = true;
-        logReversePathDrops = true;
+        # Log blocked packets for easier debugging
+        firewall = {
+          logRefusedPackets = true;
+          logRefusedConnections = true;
+          logReversePathDrops = true;
+        };
       };
-    };
 
-    systemd.network.wait-online = {
-      ignoredInterfaces = [
-        # Ignore the management interface
-        "eth0"
-      ];
-    };
+      systemd.network.wait-online = {
+        ignoredInterfaces = [
+          # Ignore the management interface
+          "eth0"
+        ];
+      };
 
-    settings.crypto.defaultKeyFile = "${
-      pkgs.writeTextFile {
+      settings.crypto.defaultKeyFile = "${pkgs.writeTextFile {
         name = "keyfile";
         text = "5odbQOjY4mljTRW9yzHd5BXoVI5HbSJcWVvpmlQ1Lf4AvVPwngQOavEDJF5IMlbr2E7HKIWz4ySNG9zAhKfOs1PKquVwm1EuXSUS85pwl4V7YCXxYGU3nRW1OkEU9ZQL";
-      }
-    }";
-  };
+      }}";
+    };
 
   nodes = {
-    machine = { config, lib, pkgs, ... }: {
-      imports = [
-        ../modules/crypto.nix
-        ../modules/docker.nix
-      ];
-
-      virtualisation = {
-        fileSystems."/".autoFormat = true;
-        emptyDiskImages = [
-          512
+    machine =
+      {
+        config,
+        lib,
+        pkgs,
+        ...
+      }:
+      {
+        imports = [
+          ../modules/crypto.nix
+          ../modules/docker.nix
         ];
-        useBootLoader = true;
-        useEFIBoot = true;
-      };
 
-      boot = {
-        initrd.systemd.enable = true;
-        loader.systemd-boot.enable = true;
-      };
-
-      systemd.services.format-opt = {
-        requiredBy = [
-          config.systemd.targets.multi-user.name
-        ];
-        before = [
-          config.systemd.targets.multi-user.name
-        ];
-        serviceConfig = {
-          Type = "oneshot";
-          RemainAfterExit = true;
+        virtualisation = {
+          fileSystems."/".autoFormat = true;
+          emptyDiskImages = [
+            512
+          ];
+          useBootLoader = true;
+          useEFIBoot = true;
         };
-        script = ''
-          ${lib.getExe pkgs.cryptsetup} \
-            --verbose \
-            --batch-mode \
-            --cipher aes-xts-plain64 \
-            --key-size 512 \
-            --hash sha512 \
-            --use-urandom \
-            luksFormat \
-            --type luks2 \
-            --key-file ${config.settings.crypto.defaultKeyFile} \
-            /dev/vdb
 
-          ${lib.getExe pkgs.cryptsetup} \
-            open \
-            --key-file ${config.settings.crypto.defaultKeyFile} \
-            /dev/vdb \
-            nixos_data_decrypted
+        boot = {
+          initrd.systemd.enable = true;
+          loader.systemd-boot.enable = true;
+        };
 
-          ${lib.getExe' pkgs.e2fsprogs "mkfs.ext4"} \
-            -e remount-ro \
-            -m 1 \
-            -L nixos_data \
-            /dev/mapper/nixos_data_decrypted
-
-          ${lib.getExe pkgs.cryptsetup} close /dev/mapper/nixos_data_decrypted
-        '';
-      };
-
-      specialisation.encrypted-opt.configuration = { lib, ... }: {
-        systemd.services.format-opt.enable = lib.mkForce false;
-
-        settings = {
-          crypto.encrypted_opt = {
-            enable = true;
-            device = "/dev/vdb";
+        systemd.services.format-opt = {
+          requiredBy = [
+            config.systemd.targets.multi-user.name
+          ];
+          before = [
+            config.systemd.targets.multi-user.name
+          ];
+          serviceConfig = {
+            Type = "oneshot";
+            RemainAfterExit = true;
           };
-          docker.enable = true;
+          script = ''
+            ${lib.getExe pkgs.cryptsetup} \
+              --verbose \
+              --batch-mode \
+              --cipher aes-xts-plain64 \
+              --key-size 512 \
+              --hash sha512 \
+              --use-urandom \
+              luksFormat \
+              --type luks2 \
+              --key-file ${config.settings.crypto.defaultKeyFile} \
+              /dev/vdb
+
+            ${lib.getExe pkgs.cryptsetup} \
+              open \
+              --key-file ${config.settings.crypto.defaultKeyFile} \
+              /dev/vdb \
+              nixos_data_decrypted
+
+            ${lib.getExe' pkgs.e2fsprogs "mkfs.ext4"} \
+              -e remount-ro \
+              -m 1 \
+              -L nixos_data \
+              /dev/mapper/nixos_data_decrypted
+
+            ${lib.getExe pkgs.cryptsetup} close /dev/mapper/nixos_data_decrypted
+          '';
         };
+
+        specialisation.encrypted-opt.configuration =
+          { lib, ... }:
+          {
+            systemd.services.format-opt.enable = lib.mkForce false;
+
+            settings = {
+              crypto.encrypted_opt = {
+                enable = true;
+                device = "/dev/vdb";
+              };
+              docker.enable = true;
+            };
+          };
       };
-    };
   };
 
-  testScript = { ... }:
+  testScript =
+    { ... }:
     # python
     ''
       start_all()

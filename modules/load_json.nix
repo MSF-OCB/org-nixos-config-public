@@ -26,19 +26,23 @@
           */
           get_tunnels_set =
             let
-              tunnels_json_path = [ "tunnels" "per-host" ];
-              warn_string = "ERROR: JSON structure does not contain the attribute " +
-                pathToString tunnels_json_path;
+              tunnels_json_path = [
+                "tunnels"
+                "per-host"
+              ];
+              warn_string =
+                "ERROR: JSON structure does not contain the attribute " + pathToString tunnels_json_path;
             in
             lib.attrByPath tunnels_json_path (abort warn_string);
 
-          get_json_contents = dir: lib.compose [
-            (map lib.traceImportJSON)
-            (lib.mapAttrsToList (name: _: dir + ("/" + name)))
-            (lib.filterAttrs (name: type: type == "regular" && lib.hasSuffix ".json" name))
-            builtins.readDir
-          ]
-            dir;
+          get_json_contents =
+            dir:
+            lib.compose [
+              (map lib.traceImportJSON)
+              (lib.mapAttrsToList (name: _: dir + ("/" + name)))
+              (lib.filterAttrs (name: type: type == "regular" && lib.hasSuffix ".json" name))
+              builtins.readDir
+            ] dir;
         in
         lib.compose [
           (map get_tunnels_set)
@@ -59,8 +63,10 @@
         [
           {
             assertion = lib.length duplicates == 0;
-            message = "Duplicate entries found in the tunnel definitions. " +
-              "Duplicates: " + lib.generators.toPretty { } duplicates;
+            message =
+              "Duplicate entries found in the tunnel definitions. "
+              + "Duplicates: "
+              + lib.generators.toPretty { } duplicates;
           }
         ];
 
@@ -72,11 +78,18 @@
             inherit (sys_cfg) keys_json_path;
             keys_json_data = lib.traceImportJSON keys_json_path;
 
-            hostPath = [ "users" "per-host" ];
-            rolePath = [ "users" "roles" ];
+            hostPath = [
+              "users"
+              "per-host"
+            ];
+            rolePath = [
+              "users"
+              "roles"
+            ];
             permissionProfiles = config.settings.users.available_permission_profiles;
 
-            onRoleAbsent = path:
+            onRoleAbsent =
+              path:
               let
                 formatRoles = lib.compose [
                   (map (r: pathToString (rolePath ++ [ r ])))
@@ -85,24 +98,25 @@
                 ];
               in
               abort (
-                ''The role "${path}" which was '' +
-                ''enabled for host "${hostName}", is not defined. '' +
-                "Available roles: " +
-                lib.generators.toPretty { } (formatRoles users_json_data)
+                ''The role "${path}" which was ''
+                + ''enabled for host "${hostName}", is not defined. ''
+                + "Available roles: "
+                + lib.generators.toPretty { } (formatRoles users_json_data)
               );
 
-            onCycle = entriesSeen: abort (
-              "Cycle detected while resolving roles: " +
-              lib.generators.toPretty { } entriesSeen
-            );
+            onCycle =
+              entriesSeen:
+              abort ("Cycle detected while resolving roles: " + lib.generators.toPretty { } entriesSeen);
 
-            onProfileNotFound = p: abort (
-              ''Permission profile "${p}", mentioned in '' +
-              ''file "${toString users_json_path}", '' +
-              "could not be found. " +
-              "Available profiles: \n" +
-              lib.generators.toPretty { } (lib.attrNames permissionProfiles)
-            );
+            onProfileNotFound =
+              p:
+              abort (
+                ''Permission profile "${p}", mentioned in ''
+                + ''file "${toString users_json_path}", ''
+                + "could not be found. "
+                + "Available profiles: \n"
+                + lib.generators.toPretty { } (lib.attrNames permissionProfiles)
+              );
 
             # Given an attrset mapping users to their permission profile,
             # resolve the permission profiles and activate the users
@@ -111,10 +125,12 @@
             activateUsers =
               let
                 enableProfile = p: p // { enable = true; };
-                retrieveProfile = p:
-                  if lib.hasAttr p permissionProfiles
-                  then enableProfile permissionProfiles.${p}
-                  else onProfileNotFound p;
+                retrieveProfile =
+                  p:
+                  if lib.hasAttr p permissionProfiles then
+                    enableProfile permissionProfiles.${p}
+                  else
+                    onProfileNotFound p;
               in
               lib.mapAttrs (_: retrieveProfile);
 
@@ -140,55 +156,58 @@
             };
 
             # Add a new entry to the set, updating both the internal set and list.
-            addEntryToSet = entryPathStr: { entriesSeenSet, entriesSeenList }:
+            addEntryToSet =
+              entryPathStr:
+              { entriesSeenSet, entriesSeenList }:
               {
-                entriesSeenSet =
-                  entriesSeenSet // { ${entryPathStr} = true; };
-                entriesSeenList =
-                  entriesSeenList ++ [ entryPathStr ];
+                entriesSeenSet = entriesSeenSet // {
+                  ${entryPathStr} = true;
+                };
+                entriesSeenList = entriesSeenList ++ [ entryPathStr ];
               };
 
             # Resolve an entry.
             # We resolve the users given in the 'enable' property and
             # we recurse into the roles given in the 'enable_roles' property.
             # The result is a mapping of every user to its permissions profile.
-            resolveEntry = onEntryAbsent: entriesSeen: path: entry:
+            resolveEntry =
+              onEntryAbsent: entriesSeen: path: entry:
               let
                 entryPath = path ++ [ entry ];
                 entryPathStr = pathToString entryPath;
                 entriesSeen' = addEntryToSet entryPathStr entriesSeen;
-                entryData =
-                  lib.attrByPath
-                    entryPath
-                    (onEntryAbsent entryPathStr)
-                    users_json_data;
+                entryData = lib.attrByPath entryPath (onEntryAbsent entryPathStr) users_json_data;
 
                 direct = lib.attrByPath [ "enable" ] { } entryData;
 
                 # We pass onRoleAbsent instead of onEntryAbsent in the recursive calls below,
                 # this ensures that an error is thrown if we encounter a non-existing role.
-                nested = resolveEntries onRoleAbsent entriesSeen' rolePath
-                  (lib.attrByPath [ "enable_roles" ] [ ] entryData);
+                nested = resolveEntries onRoleAbsent entriesSeen' rolePath (
+                  lib.attrByPath [ "enable_roles" ] [ ] entryData
+                );
 
                 # The property "enable_roles_with_profile" allows to enable a role but
                 # to set the permission profile of all members of the role to a fixed
                 # value.
                 # We do mostly the same as for "enable_roles" above,
                 # but before returning the result we replace the permission profile.
-                nested_with_profile =
-                  resolveEntriesWithProfiles onRoleAbsent entriesSeen' rolePath
-                    (lib.attrByPath [ "enable_roles_with_profile" ] { } entryData);
+                nested_with_profile = resolveEntriesWithProfiles onRoleAbsent entriesSeen' rolePath (
+                  lib.attrByPath [ "enable_roles_with_profile" ] { } entryData
+                );
               in
-              if lib.hasAttr entryPathStr entriesSeen.entriesSeenSet
-              then onCycle entriesSeen'.entriesSeenList
-              else [ direct ] ++ nested ++ nested_with_profile;
+              if lib.hasAttr entryPathStr entriesSeen.entriesSeenSet then
+                onCycle entriesSeen'.entriesSeenList
+              else
+                [ direct ] ++ nested ++ nested_with_profile;
 
-            resolveEntries = onEntryAbsent: entriesSeen: path:
+            resolveEntries =
+              onEntryAbsent: entriesSeen: path:
               lib.concatMap (resolveEntry onEntryAbsent entriesSeen path);
 
             # Resolve the given roles, after resolution we set the profile of
             # the resolved entries to a fixed specified one.
-            resolveEntriesWithProfiles = _onEntryAbsent: entriesSeen: path:
+            resolveEntriesWithProfiles =
+              _onEntryAbsent: entriesSeen: path:
               let
                 doResolve = resolveEntry onRoleAbsent entriesSeen path;
                 # Replace the profiles in the resolved role with the one
@@ -196,20 +215,17 @@
                 replaceProfilesWith = profile: map (lib.mapAttrs (_: _: profile));
                 # Resolve the given role and set the profiles in the result to
                 # the given fixed profile.
-                resolveWithProfile = role: profile:
-                  replaceProfilesWith profile (doResolve role);
+                resolveWithProfile = role: profile: replaceProfilesWith profile (doResolve role);
               in
               lib.concatMapAttrsToList resolveWithProfile;
 
-            ensure_no_duplicates = attrsets:
+            ensure_no_duplicates =
+              attrsets:
               let
                 duplicates = lib.findDuplicateMappings attrsets;
-                msg = "Duplicate permission profiles found for users: " +
-                  lib.generators.toPretty { } duplicates;
+                msg = "Duplicate permission profiles found for users: " + lib.generators.toPretty { } duplicates;
               in
-              if lib.length (lib.attrNames duplicates) == 0
-              then attrsets
-              else abort msg;
+              if lib.length (lib.attrNames duplicates) == 0 then attrsets else abort msg;
 
             enabledUsersForHost =
               let
@@ -236,7 +252,8 @@
         reverse_tunnel.tunnels =
           let
             # We add the SSH tunnel by default
-            addSshTunnel = tunnel:
+            addSshTunnel =
+              tunnel:
               let
                 ssh_tunnel.reverse_tunnels.ssh = {
                   prefix = 0;

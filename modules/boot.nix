@@ -20,7 +20,11 @@ in
 
       modes = lib.mkOption {
         type = with lib.types; attrsOf str;
-        default = { legacy = "legacy"; uefi = "uefi"; none = "none"; };
+        default = {
+          legacy = "legacy";
+          uefi = "uefi";
+          none = "none";
+        };
         readOnly = true;
       };
     };
@@ -39,28 +43,30 @@ in
         let
           inherit (cfg) mode;
         in
-        lib.mkIf (mode != cfg.modes.none) (lib.mkMerge [
-          (lib.mkIf (mode == cfg.modes.legacy) {
-            grub = {
-              enable = true;
-              configurationLimit = 15;
-            };
-          })
-          (lib.mkIf (mode == cfg.modes.uefi) {
-            systemd-boot = {
-              enable = true;
-              editor = false;
-              configurationLimit = 15;
-            };
-            efi = {
-              # Keep this to false, otherwise sd-boot sets itself as the first
-              # UEFI boot entry, but we want to boot from USB when a USB drive
-              # is plugged in.
-              canTouchEfiVariables = false;
-              efiSysMountPoint = config.fileSystems."/boot/efi".mountPoint;
-            };
-          })
-        ]);
+        lib.mkIf (mode != cfg.modes.none) (
+          lib.mkMerge [
+            (lib.mkIf (mode == cfg.modes.legacy) {
+              grub = {
+                enable = true;
+                configurationLimit = 15;
+              };
+            })
+            (lib.mkIf (mode == cfg.modes.uefi) {
+              systemd-boot = {
+                enable = true;
+                editor = false;
+                configurationLimit = 15;
+              };
+              efi = {
+                # Keep this to false, otherwise sd-boot sets itself as the first
+                # UEFI boot entry, but we want to boot from USB when a USB drive
+                # is plugged in.
+                canTouchEfiVariables = false;
+                efiSysMountPoint = config.fileSystems."/boot/efi".mountPoint;
+              };
+            })
+          ]
+        );
 
       kernelParams = [
         # Overwrite free'd memory

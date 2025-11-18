@@ -8,8 +8,7 @@ in
 
 {
   options.settings.services.deployment_services = {
-    update_demo_app_config.enable =
-      lib.mkEnableOption "the update_demo_app_config service";
+    update_demo_app_config.enable = lib.mkEnableOption "the update_demo_app_config service";
 
   };
 
@@ -17,17 +16,16 @@ in
     let
       deployment_services = {
 
-        update_demo_app_config =
-          ext_lib.mkDeploymentService {
-            inherit (cfg.update_demo_app_config) enable;
-            deploy_dir_name = "demo-app";
-            github_repo = "demo-app";
-            git_branch = "main";
-            pre-compose_script = "deploy/pre-compose.sh";
-            docker_compose_files = [
-              "docker-compose.yml"
-            ];
-          };
+        update_demo_app_config = ext_lib.mkDeploymentService {
+          inherit (cfg.update_demo_app_config) enable;
+          deploy_dir_name = "demo-app";
+          github_repo = "demo-app";
+          git_branch = "main";
+          pre-compose_script = "deploy/pre-compose.sh";
+          docker_compose_files = [
+            "docker-compose.yml"
+          ];
+        };
 
       };
 
@@ -38,13 +36,11 @@ in
 
       settings.users.robot.whitelistCommands =
         let
-          mkStartCmds = serviceName:
-            ext_lib.mkSudoStartServiceCmds { inherit serviceName; };
+          mkStartCmds = serviceName: ext_lib.mkSudoStartServiceCmds { inherit serviceName; };
         in
         lib.compose [
           (lib.concatMap mkStartCmds)
           lib.attrNames
-        ]
-          enabled_deployment_services;
+        ] enabled_deployment_services;
     };
 }

@@ -22,7 +22,7 @@ in
 
   config = {
 
-    zramSwap = lib.mkIf (! cfg.diskSwap.enable) {
+    zramSwap = lib.mkIf (!cfg.diskSwap.enable) {
       enable = true;
       algorithm = "zstd";
       memoryPercent = 40;

@@ -75,14 +75,15 @@
   };
 
   outputs =
-    { self
-    , systems
-    , nix-index-database
-    , devshell
-    , treefmt-nix
-    , pre-commit-hooks
-    , nix-github-actions
-    , ...
+    {
+      self,
+      systems,
+      nix-index-database,
+      devshell,
+      treefmt-nix,
+      pre-commit-hooks,
+      nix-github-actions,
+      ...
     }@flakeInputs:
     let
       # Get a lib instance that we use only in the scope of this flake.
@@ -96,9 +97,14 @@
         flake = self;
       };
 
-      hosts = (lib.mapAttrs (hostname: _: hostConfigFunction {
-        inherit hostname;
-      })) lib.allHosts;
+      hosts =
+        (lib.mapAttrs (
+          hostname: _:
+          hostConfigFunction {
+            inherit hostname;
+          }
+        ))
+          lib.allHosts;
 
       treefmt-config = {
         projectRootFile = "flake.nix";
@@ -153,42 +159,45 @@
     {
       # expose a Github matrix via `nix eval --json '.#githubActions.matrix'
       # currently it builds all the toplevel packages for each nixos configuration
-      githubActions =
-        nix-github-actions.lib.mkGithubMatrix {
+      githubActions = nix-github-actions.lib.mkGithubMatrix {
 
-          # Uncomment the following section to change the runner that is used for building a given system:
-          #
-          #  githubPlatforms = {
-          #    "x86_64-linux" = "ubuntu-24.04";
-          #    "x86_64-darwin" = "macos-13";
-          #    "aarch64-darwin" = "macos-14";
-          #    "aarch64-linux" = "ubuntu-24.04-arm";
-          #  };
+        # Uncomment the following section to change the runner that is used for building a given system:
+        #
+        #  githubPlatforms = {
+        #    "x86_64-linux" = "ubuntu-24.04";
+        #    "x86_64-darwin" = "macos-13";
+        #    "aarch64-darwin" = "macos-14";
+        #    "aarch64-linux" = "ubuntu-24.04-arm";
+        #  };
 
-          checks = eachSystem (system:
-            lib.mapAttrs'
-              (n: v: {
-                name = "nixos-${n}";
-                value = v.config.system.build.toplevel;
-              })
-              (
-                lib.filterAttrs
-                  (_: v: v.config.nixpkgs.pkgs.stdenv.hostPlatform.system == system)
-                  self.nixosConfigurations
-              )
-          );
-        };
+        checks = eachSystem (
+          system:
+          lib.mapAttrs'
+            (n: v: {
+              name = "nixos-${n}";
+              value = v.config.system.build.toplevel;
+            })
+            (
+              lib.filterAttrs (
+                _: v: v.config.nixpkgs.pkgs.stdenv.hostPlatform.system == system
+              ) self.nixosConfigurations
+            )
+        );
+      };
 
       nixosModules.default = [
         ./modules
         ./org-config
         flakeInputs.disko.nixosModules.default
-        ({ pkgs, ... }: {
-          imports = [
-            nix-index-database.nixosModules.nix-index
-          ];
-          programs.nix-index.package = pkgs.nix-index-with-db;
-        })
+        (
+          { pkgs, ... }:
+          {
+            imports = [
+              nix-index-database.nixosModules.nix-index
+            ];
+            programs.nix-index.package = pkgs.nix-index-with-db;
+          }
+        )
       ];
 
       nixosConfigurations =
@@ -199,99 +208,110 @@
           # This is only meant for temporary ad-hoc overrides,
           # anything else should probably be done in host-config.nix instead.
           hostOverrides = { };
-          hosts = lib.mapAttrs
-            (hostname: _: hostConfigFunction {
+          hosts = lib.mapAttrs (
+            hostname: _:
+            hostConfigFunction {
               inherit hostname;
-            })
-            lib.allHosts;
+            }
+          ) lib.allHosts;
         in
         lib.mkNixosConfigurations {
           inherit flakeInputs hosts hostOverrides;
           defaultModules = self.nixosModules.default;
         };
 
-      packages = eachSystem (system:
+      packages = eachSystem (
+        system:
         let
           pkgs = self.legacyPackages.${system}.nixpkgs-latest;
         in
         {
-          nixostools =
-            pkgs.callPackage ./scripts/python_nixostools/default.nix { };
+          nixostools = pkgs.callPackage ./scripts/python_nixostools/default.nix { };
 
           treefmtWrapper = treefmt-nix.lib.mkWrapper pkgs treefmt-config;
 
           inherit (pkgs) nix-eval-jobs;
         }
         //
-        # Targets to build QEMU virtual machines that can be used for local testing or debugging.
-        # You can build the VM with:
-        #   nix build '.#nixos-dev-vm'
-        lib.flip lib.mapAttrs' self.nixosConfigurations
-          (hostname: nixosConfig:
-            lib.nameValuePair "${hostname}-vm" nixosConfig.config.system.build.vm
+          # Targets to build QEMU virtual machines that can be used for local testing or debugging.
+          # You can build the VM with:
+          #   nix build '.#nixos-dev-vm'
+          lib.flip lib.mapAttrs' self.nixosConfigurations (
+            hostname: nixosConfig: lib.nameValuePair "${hostname}-vm" nixosConfig.config.system.build.vm
           )
         //
-        # Installation images
-        {
-          rescue-iso-img = self.nixosConfigurations.rescue-iso.config.system.build.isoImage;
-        }
+          # Installation images
+          {
+            rescue-iso-img = self.nixosConfigurations.rescue-iso.config.system.build.isoImage;
+          }
       );
 
-      legacyPackages = eachSystem (system:
+      legacyPackages = eachSystem (
+        system:
         let
-          mkInstance = nixpkgs: extraOverlays: (import nixpkgs {
-            inherit system;
-            # We need to permit node 16 as an insecure package since it is used
-            # by the github-runners module. More and more github actions will be
-            # using nodejs 20 so we will be able to remove this soon.
-            config.permittedInsecurePackages = [
-              "nodejs_20"
-            ];
-            overlays = [
-              nix-index-database.overlays.nix-index
-              flakeInputs.server-lock.overlays.default
-              devshell.overlays.default
-              (final: prev: {
-                ocb-nixostools = final.callPackage ./scripts/python_nixostools { };
+          mkInstance =
+            nixpkgs: extraOverlays:
+            (import nixpkgs {
+              inherit system;
+              # We need to permit node 16 as an insecure package since it is used
+              # by the github-runners module. More and more github actions will be
+              # using nodejs 20 so we will be able to remove this soon.
+              config.permittedInsecurePackages = [
+                "nodejs_20"
+              ];
+              overlays = [
+                nix-index-database.overlays.nix-index
+                flakeInputs.server-lock.overlays.default
+                devshell.overlays.default
+                (final: prev: {
+                  ocb-nixostools = final.callPackage ./scripts/python_nixostools { };
 
-                lib = (prev.lib.extend (import ./lib.nix)).extend (final: _prev: {
-                  # nixosSystem by default passes the import of nixpkgs' lib/default.nix.
-                  # It is not aware of the overlay that we added when we created the nixpkgs
-                  # instance, so we pass that extended lib here explicitly.
-                  nixosSystem = args: nixpkgs.lib.nixosSystem ({ lib = final; } // args);
-                });
+                  lib = (prev.lib.extend (import ./lib.nix)).extend (
+                    final: _prev: {
+                      # nixosSystem by default passes the import of nixpkgs' lib/default.nix.
+                      # It is not aware of the overlay that we added when we created the nixpkgs
+                      # instance, so we pass that extended lib here explicitly.
+                      nixosSystem = args: nixpkgs.lib.nixosSystem ({ lib = final; } // args);
+                    }
+                  );
 
-                # Register the nixpkgs flake so we can use it in NixOS to set the registry entry.
-                nixpkgsFlake = nixpkgs;
+                  # Register the nixpkgs flake so we can use it in NixOS to set the registry entry.
+                  nixpkgsFlake = nixpkgs;
 
-                # We overwrite the command-not-found script here instead of
-                # in nix-index-unwrapped to avoid needing to rebuild nix-index-unwrapped
-                # from source everytime because of the changed hash.
-                nix-index-with-db = prev.nix-index-with-db.overrideAttrs (_: prevAttrs: {
-                  buildCommand =
-                    let
-                      destination = "$out/etc/profile.d/command-not-found.sh";
-                    in
-                    (prevAttrs.buildCommand or "") + ''
-                      if [ ! -f "${destination}" ]; then
-                        echo "command-not-found.sh was not found, something changed in the nix-index package!"
-                        exit 1
-                      fi
-                      unlink $out/etc/profile.d/command-not-found.sh
-                      substitute \
-                        "${./command-not-found.sh}" \
-                        "$out/etc/profile.d/command-not-found.sh" \
-                        --replace "@out@" "$out"
-                    '';
-                });
-              })
-            ] ++ extraOverlays;
-          }) // nixpkgs.sourceInfo;
+                  # We overwrite the command-not-found script here instead of
+                  # in nix-index-unwrapped to avoid needing to rebuild nix-index-unwrapped
+                  # from source everytime because of the changed hash.
+                  nix-index-with-db = prev.nix-index-with-db.overrideAttrs (
+                    _: prevAttrs: {
+                      buildCommand =
+                        let
+                          destination = "$out/etc/profile.d/command-not-found.sh";
+                        in
+                        (prevAttrs.buildCommand or "")
+                        + ''
+                          if [ ! -f "${destination}" ]; then
+                            echo "command-not-found.sh was not found, something changed in the nix-index package!"
+                            exit 1
+                          fi
+                          unlink $out/etc/profile.d/command-not-found.sh
+                          substitute \
+                            "${./command-not-found.sh}" \
+                            "$out/etc/profile.d/command-not-found.sh" \
+                            --replace "@out@" "$out"
+                        '';
+                    }
+                  );
+                })
+              ]
+              ++ extraOverlays;
+            })
+            // nixpkgs.sourceInfo;
         in
         {
           nixpkgs-latest = mkInstance self.inputs.nixpkgs-latest [ ];
           nixpkgs-legacy = mkInstance self.inputs.nixpkgs-legacy [ ];
-        });
+        }
+      );
 
       # Targets to easily access the config of a host in the nix REPL.
       # Example REPL session:
@@ -310,7 +330,8 @@
       # In fish: nix build (jq --raw-output '.drvPath | "\(.)^*"' < (nix run 'nixpkgs#nix-eval-jobs' -- --flake '.#allSystems' --workers 4 | psub))
       allSystems = lib.mapAttrs (_: nixos: nixos.config.system.build.toplevel) self.nixosConfigurations;
 
-      devShells = eachSystem (system:
+      devShells = eachSystem (
+        system:
         let
           pkgs = self.legacyPackages.${system}.nixpkgs-latest;
         in
@@ -330,10 +351,12 @@
                 pkgs.xorriso
                 pkgs.nixfmt-rfc-style
               ];
-            env = [{
-              name = "DEVSHELL_NO_MOTD";
-              value = "1";
-            }];
+            env = [
+              {
+                name = "DEVSHELL_NO_MOTD";
+                value = "1";
+              }
+            ];
             commands = [
               {
                 name = "fmt";
@@ -358,19 +381,20 @@
             ];
             devshell.startup.pre-commit.text = self.checks.${system}.pre-commit-check.shellHook;
           };
-        });
+        }
+      );
 
       # Create a set of builders that can build a subset of the nixos configs defined by
       # this flake.
       # We distribute configs evenly between all builders.
-      checks = eachSystem (system:
+      checks = eachSystem (
+        system:
         let
           pkgs = self.legacyPackages.${system}.nixpkgs-latest;
         in
         # Build all the other packages as well
         self.packages.${system}
-        //
-        {
+        // {
           pre-commit-check = pre-commit-hooks.lib.${system}.run {
             src = ./.;
             tools = {
@@ -388,20 +412,16 @@
 
           vmTests = pkgs.callPackage ./tests/default.nix { };
         }
-        //
-        (import ./test.nix {
-          qemu-common =
-            import "${flakeInputs.nixpkgs-latest}/nixos/lib/qemu-common.nix" {
-              inherit (pkgs) lib pkgs;
-            };
-          pythonTest =
-            import "${flakeInputs.nixpkgs-latest}/nixos/lib/testing-python.nix" {
-              inherit (pkgs.stdenv.hostPlatform) system;
-            };
+        // (import ./test.nix {
+          qemu-common = import "${flakeInputs.nixpkgs-latest}/nixos/lib/qemu-common.nix" {
+            inherit (pkgs) lib pkgs;
+          };
+          pythonTest = import "${flakeInputs.nixpkgs-latest}/nixos/lib/testing-python.nix" {
+            inherit (pkgs.stdenv.hostPlatform) system;
+          };
           inherit pkgs flakeInputs hosts;
           defaultModules = self.nixosModules.default;
-          test-instrumentation =
-            "${flakeInputs.nixpkgs-latest}/nixos/modules/testing/test-instrumentation.nix";
+          test-instrumentation = "${flakeInputs.nixpkgs-latest}/nixos/modules/testing/test-instrumentation.nix";
         })
       );
       formatter = eachSystem (system: self.packages.${system}.treefmtWrapper);
