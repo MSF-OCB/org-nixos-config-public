@@ -17,3 +17,4 @@ __pycache__
 #
 /local/id_tunnel
 #
+**/*.qcow2
