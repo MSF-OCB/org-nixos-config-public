@@ -1,4 +1,9 @@
-{ config, flakeInputs, pkgs, ... }:
+{
+  config,
+  flakeInputs,
+  pkgs,
+  ...
+}:
 {
 
   imports = [
@@ -43,57 +48,59 @@
     nix-ld.enable = true;
   };
 
-  home-manager.users.nixos = { pkgs, ... }: {
-    home.packages = [
-      pkgs.fd
-      pkgs.git
-      pkgs.jq
-      pkgs.ripgrep
-      pkgs.tldr
-      pkgs.wget
-      pkgs.nixpkgs-fmt
-      pkgs.nil
-      pkgs.statix
-    ];
+  home-manager.users.nixos =
+    { pkgs, ... }:
+    {
+      home.packages = [
+        pkgs.fd
+        pkgs.git
+        pkgs.jq
+        pkgs.ripgrep
+        pkgs.tldr
+        pkgs.wget
+        pkgs.nixpkgs-fmt
+        pkgs.nil
+        pkgs.statix
+      ];
 
-    programs = {
-      bash.enable = true;
-      direnv = {
-        enable = true;
-        nix-direnv.enable = true;
-      };
-      fzf.enable = true;
-      gh = {
-        enable = true;
-        settings = {
-          # Workaround for https://github.com/nix-community/home-manager/issues/4744
-          version = 1;
+      programs = {
+        bash.enable = true;
+        direnv = {
+          enable = true;
+          nix-direnv.enable = true;
         };
-      };
-      git = {
-        enable = true;
-        includes = [
-          { path = "~/.config/git/config.inc"; }
-        ];
-        aliases = {
-          b = "branch --color -v";
-          co = "checkout";
-          d = "diff HEAD";
-          ds = "diff --staged";
-          exec = "!exec ";
-          ri = "rebase --interactive";
+        fzf.enable = true;
+        gh = {
+          enable = true;
+          settings = {
+            # Workaround for https://github.com/nix-community/home-manager/issues/4744
+            version = 1;
+          };
         };
+        git = {
+          enable = true;
+          includes = [
+            { path = "~/.config/git/config.inc"; }
+          ];
+          aliases = {
+            b = "branch --color -v";
+            co = "checkout";
+            d = "diff HEAD";
+            ds = "diff --staged";
+            exec = "!exec ";
+            ri = "rebase --interactive";
+          };
+        };
+        home-manager.enable = true;
+        neovim.enable = true;
+        starship.enable = true;
       };
-      home-manager.enable = true;
-      neovim.enable = true;
-      starship.enable = true;
+
+      # Until HM does not use optionsDocBook anymore, we just disable the HM config manpage.
+      manual.manpages.enable = false;
+
+      home.stateVersion = "23.05";
     };
-
-    # Until HM does not use optionsDocBook anymore, we just disable the HM config manpage.
-    manual.manpages.enable = false;
-
-    home.stateVersion = "23.05";
-  };
 
   nix.buildMachines = [
     {
@@ -104,7 +111,12 @@
       sshUser = "jfroche";
       protocol = "ssh";
       sshKey = "/home/nixos/.ssh/id_ed25519";
-      supportedFeatures = [ "nixos-test" "benchmark" "big-parallel" "kvm" ];
+      supportedFeatures = [
+        "nixos-test"
+        "benchmark"
+        "big-parallel"
+        "kvm"
+      ];
     }
   ];
 

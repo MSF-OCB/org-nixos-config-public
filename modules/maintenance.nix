@@ -1,4 +1,9 @@
-{ lib, config, pkgs, ... }:
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.settings.maintenance;
@@ -42,7 +47,10 @@ in
         # the night or during the weekend (which can be anywhere from Thursday to Sunday).
         # When the service is being run during the day, we will be outside the
         # reboot window and the config will not be switched.
-        default = [ "Tue 03:00" "Mon 16:00" ];
+        default = [
+          "Tue 03:00"
+          "Mon 16:00"
+        ];
         description = ''
           When to run the nixos-upgrade service.
         '';
@@ -56,7 +64,10 @@ in
     system.autoUpgrade = {
       inherit (cfg.nixos_upgrade) enable;
       allowReboot = true;
-      rebootWindow = { lower = "01:00"; upper = "05:00"; };
+      rebootWindow = {
+        lower = "01:00";
+        upper = "05:00";
+      };
       flake =
         let
           repo = config.settings.maintenance.config_repo;
@@ -68,7 +79,8 @@ in
         # We pull a remote repo into the nix store,
         # so we cannot write the lock file.
         "--no-write-lock-file"
-      ] ++ lib.optionals (config.settings.boot.mode == config.settings.boot.modes.uefi) [
+      ]
+      ++ lib.optionals (config.settings.boot.mode == config.settings.boot.modes.uefi) [
         # While we're moving from grub to systemd-boot on uefi machines, we need
         # to make sure to reinstall the bootloader to actually switch to the new
         # bootloader.

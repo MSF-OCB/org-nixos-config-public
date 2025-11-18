@@ -1,36 +1,46 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 let
   cfg = config.settings.nfs;
 
-  nfsCryptoMountOpts = { name, config, ... }: {
-    options = {
-      enable = lib.mkEnableOption "the crypto mount";
+  nfsCryptoMountOpts =
+    { name, config, ... }:
+    {
+      options = {
+        enable = lib.mkEnableOption "the crypto mount";
 
-      name = lib.mkOption {
-        type = lib.types.str;
+        name = lib.mkOption {
+          type = lib.types.str;
+        };
+
+        device = lib.mkOption {
+          type = lib.types.str;
+        };
+
+        exportTo = lib.mkOption {
+          type = with lib.types; listOf str;
+          default = [ ];
+        };
       };
 
-      device = lib.mkOption {
-        type = lib.types.str;
-      };
-
-      exportTo = lib.mkOption {
-        type = with lib.types; listOf str;
-        default = [ ];
+      config = {
+        name = lib.mkDefault name;
       };
     };
-
-    config = {
-      name = lib.mkDefault name;
-    };
-  };
 in
 {
   options.settings.nfs = {
     nfsPorts = lib.mkOption {
       type = with lib.types; listOf int;
-      default = [ 111 2049 ];
+      default = [
+        111
+        2049
+      ];
       readOnly = true;
     };
     nfsUserId = lib.mkOption {
@@ -69,7 +79,8 @@ in
       mkNfsCryptoMounts = lib.mapAttrs mkNfsCryptoMount;
 
       mkClientConf = client: "${client}(${cfg.nfsExportOptions})";
-      mkExportEntry = _: conf: "${exported_path conf.name} ${lib.concatMapStringsSep " " mkClientConf conf.exportTo}";
+      mkExportEntry =
+        _: conf: "${exported_path conf.name} ${lib.concatMapStringsSep " " mkClientConf conf.exportTo}";
       mkExports = confs: lib.concatStringsSep "\n" (lib.mapAttrsToList mkExportEntry confs);
 
       enabledCryptoMounts = lib.filterEnabled cfg.server.cryptoMounts;

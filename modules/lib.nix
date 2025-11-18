@@ -1,9 +1,15 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   mkSudoStartServiceCmds =
-    { serviceName
-    , extraOpts ? [ "--system" ]
+    {
+      serviceName,
+      extraOpts ? [ "--system" ],
     }:
     let
       optsStr = lib.concatStringsSep " " extraOpts;
@@ -15,17 +21,22 @@ let
     ];
 
   reset_git =
-    { url
-    , branch
-    , git_options
-    , indent ? 0
+    {
+      url,
+      branch,
+      git_options,
+      indent ? 0,
     }:
     let
       git = "${pkgs.git}/bin/git";
       mkOptionsStr = lib.concatStringsSep " ";
       mkGitCommand = git_options: cmd: "${git} ${mkOptionsStr git_options} ${cmd}";
-      mkGitCommandIndented = indent: git_options:
-        lib.compose [ (lib.indentStr indent) (mkGitCommand git_options) ];
+      mkGitCommandIndented =
+        indent: git_options:
+        lib.compose [
+          (lib.indentStr indent)
+          (mkGitCommand git_options)
+        ];
     in
     lib.concatMapStringsSep "\n" (mkGitCommandIndented indent git_options) [
       ''remote set-url origin "${url}"''
@@ -40,11 +51,12 @@ let
     ];
 
   clone_and_reset_git =
-    { clone_dir
-    , github_repo
-    , branch
-    , git_options ? [ ]
-    , indent ? 0
+    {
+      clone_dir,
+      github_repo,
+      branch,
+      git_options ? [ ],
+      indent ? 0,
     }:
     let
       repo_url = config.settings.system.org.repo_to_url github_repo;
@@ -58,21 +70,27 @@ let
         ${pkgs.coreutils}/bin/mkdir --parent "${clone_dir}"
         ${pkgs.git}/bin/git clone "${repo_url}" "${clone_dir}"
       fi
-      ${reset_git { inherit branch indent;
-                    url = repo_url;
-                    git_options = git_options ++ [ "-C" ''"${clone_dir}"'' ]; }}
+      ${reset_git {
+        inherit branch indent;
+        url = repo_url;
+        git_options = git_options ++ [
+          "-C"
+          ''"${clone_dir}"''
+        ];
+      }}
     '';
 
   mkDeploymentService =
-    { enable ? true
-    , deploy_dir_name
-    , github_repo
-    , git_branch ? "main"
-    , pre-compose_script ? "deploy/pre-compose.sh"
-    , extra_script ? ""
-    , restart ? false
-    , force_build ? false
-    , docker_compose_files ? [ "docker-compose.yml" ]
+    {
+      enable ? true,
+      deploy_dir_name,
+      github_repo,
+      git_branch ? "main",
+      pre-compose_script ? "deploy/pre-compose.sh",
+      extra_script ? "",
+      restart ? false,
+      force_build ? false,
+      docker_compose_files ? [ "docker-compose.yml" ],
     }:
     let
       secrets_dir = config.settings.system.secrets.dest_directory;
@@ -87,13 +105,18 @@ let
         WorkingDirectory = "-${deploy_dir}";
       };
 
-      /* We need to explicitly set the docker runtime dependency
-       since docker-compose does not depend on docker.
-       Nix is included so that nix-shell can be used in the external scripts
-       called dynamically by this function.
-       Bash is included because several pre-compose scripts depend on it.
+      /*
+        We need to explicitly set the docker runtime dependency
+        since docker-compose does not depend on docker.
+        Nix is included so that nix-shell can be used in the external scripts
+        called dynamically by this function.
+        Bash is included because several pre-compose scripts depend on it.
       */
-      path = with pkgs; [ nix docker bash ];
+      path = with pkgs; [
+        nix
+        docker
+        bash
+      ];
 
       environment =
         let
@@ -144,9 +167,11 @@ let
           '';
         in
         ''
-          ${clone_and_reset_git { inherit github_repo;
-                                  clone_dir = deploy_dir;
-                                  branch = git_branch; }}
+          ${clone_and_reset_git {
+            inherit github_repo;
+            clone_dir = deploy_dir;
+            branch = git_branch;
+          }}
 
           # Change to the deploy dir in case it did not exist yet
           # when the service started.
@@ -170,9 +195,11 @@ let
             --project-directory "${deploy_dir}" \
             ${lib.concatMapStringsSep " " (s: ''--file "${deploy_dir}/${s}"'') docker_compose_files} \
             --ansi never \
-            ${if restart
-              then "restart"
-              else ''up --detach --remove-orphans ${lib.optionalString force_build "--build"}''
+            ${
+              if restart then
+                "restart"
+              else
+                ''up --detach --remove-orphans ${lib.optionalString force_build "--build"}''
             }
 
           echo "Log out of all docker repos..."

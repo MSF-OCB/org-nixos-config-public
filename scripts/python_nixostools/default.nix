@@ -1,6 +1,7 @@
-{ lib
-, python3Packages
-, doCheck ? true
+{
+  lib,
+  python3Packages,
+  doCheck ? true,
 }:
 
 let
@@ -16,25 +17,43 @@ let
   };
 
   package =
-    { buildPythonApplication
-    , ansible-core
-    , flit-core
-    , mypy
-    , pylint
-    , pynacl
-    , pyyaml
-    , types-pyyaml
-    , requests
-    , types-requests
-    , ruff
+    {
+      buildPythonApplication,
+      ansible-core,
+      flit-core,
+      mypy,
+      pylint,
+      pynacl,
+      pyyaml,
+      types-pyyaml,
+      requests,
+      types-requests,
+      ruff,
     }:
     buildPythonApplication {
-      inherit pname version src doCheck;
+      inherit
+        pname
+        version
+        src
+        doCheck
+        ;
 
       pyproject = true;
 
-      nativeCheckInputs = [ mypy pylint ruff types-pyyaml types-requests ];
-      propagatedBuildInputs = [ flit-core ansible-core pynacl pyyaml requests ];
+      nativeCheckInputs = [
+        mypy
+        pylint
+        ruff
+        types-pyyaml
+        types-requests
+      ];
+      propagatedBuildInputs = [
+        flit-core
+        ansible-core
+        pynacl
+        pyyaml
+        requests
+      ];
 
       checkPhase = ''
         mypy ${src}/nixostools

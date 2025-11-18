@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 #
 # **** NOTE
@@ -19,28 +24,30 @@ in
 
   options.settings.services.traefik =
     let
-      tls_entrypoint_opts = { name, ... }: {
-        options = {
-          name = lib.mkOption {
-            type = lib.types.str;
+      tls_entrypoint_opts =
+        { name, ... }:
+        {
+          options = {
+            name = lib.mkOption {
+              type = lib.types.str;
+            };
+
+            enable = lib.mkEnableOption "the user";
+
+            host = lib.mkOption {
+              type = lib.types.str;
+              default = "";
+            };
+
+            port = lib.mkOption {
+              type = lib.types.port;
+            };
+
           };
-
-          enable = lib.mkEnableOption "the user";
-
-          host = lib.mkOption {
-            type = lib.types.str;
-            default = "";
+          config = {
+            name = lib.mkDefault name;
           };
-
-          port = lib.mkOption {
-            type = lib.types.port;
-          };
-
         };
-        config = {
-          name = lib.mkDefault name;
-        };
-      };
     in
     {
       enable = lib.mkEnableOption "the Traefik service";
@@ -73,17 +80,19 @@ in
       };
 
       dynamic_config = lib.mkOption {
-        type = with lib.types; attrsOf (submodule {
-          options = {
-            enable = lib.mkOption {
-              type = lib.types.bool;
-              default = true;
+        type =
+          with lib.types;
+          attrsOf (submodule {
+            options = {
+              enable = lib.mkOption {
+                type = lib.types.bool;
+                default = true;
+              };
+              value = lib.mkOption {
+                inherit (yaml_format) type;
+              };
             };
-            value = lib.mkOption {
-              inherit (yaml_format) type;
-            };
-          };
-        });
+          });
       };
 
       tls_entrypoints = lib.mkOption {
@@ -97,7 +106,11 @@ in
       };
 
       logging_level = lib.mkOption {
-        type = lib.types.enum [ "INFO" "DEBUG" "TRACE" ];
+        type = lib.types.enum [
+          "INFO"
+          "DEBUG"
+          "TRACE"
+        ];
         default = "INFO";
       };
 
@@ -122,9 +135,7 @@ in
         caServer = lib.mkOption {
           type = lib.types.nullOr lib.types.str;
           default =
-            if cfg.acme.staging.enable
-            then "http://acme-staging-v02.api.letsencrypt.org/directory"
-            else null;
+            if cfg.acme.staging.enable then "http://acme-staging-v02.api.letsencrypt.org/directory" else null;
         };
 
         staging.enable = lib.mkEnableOption "the Let's Encrypt staging environment";
@@ -170,7 +181,11 @@ in
 
         dnsProviders = lib.mkOption {
           type = with lib.types; attrsOf str;
-          default = { azure = "azure"; route53 = "route53"; exec = "exec"; };
+          default = {
+            azure = "azure";
+            route53 = "route53";
+            exec = "exec";
+          };
           readOnly = true;
         };
 
@@ -210,10 +225,12 @@ in
     in
     lib.mkIf cfg.enable {
 
-      assertions = [{
-        assertion = config.virtualisation.docker.enable;
-        message = "The Traefik module requires Docker to be enabled";
-      }];
+      assertions = [
+        {
+          assertion = config.virtualisation.docker.enable;
+          message = "The Traefik module requires Docker to be enabled";
+        }
+      ];
 
       settings = {
 
@@ -304,18 +321,16 @@ in
                   lib.filterEnabled
                 ];
                 letsencrypt = "letsencrypt";
-                caserver = lib.optionalAttrs (cfg.acme.caServer != null)
-                  { inherit (cfg.acme) caServer; };
+                caserver = lib.optionalAttrs (cfg.acme.caServer != null) { inherit (cfg.acme) caServer; };
                 acme_template = {
                   email = cfg.acme.email_address;
                   storage = "${cfg.acme.storage}/acme.json";
                   keyType = cfg.acme.keytype;
                   caCertificates = lib.optionals (lib.length cfg.acme.extraCaCertificateFiles > 0) (
-                    map
-                      (f: "/etc/pki/tls/certs/${builtins.baseNameOf f}")
-                      cfg.acme.extraCaCertificateFiles
+                    map (f: "/etc/pki/tls/certs/${builtins.baseNameOf f}") cfg.acme.extraCaCertificateFiles
                   );
-                } // caserver;
+                }
+                // caserver;
                 accesslog = lib.optionalAttrs cfg.accesslog.enable {
                   accessLog = {
                     # Make sure that the times are printed in local time
@@ -341,7 +356,8 @@ in
                       watch = true;
                       directory = dynamic_config_directory_target;
                     };
-                  } // lib.optionalAttrs cfg.docker.swarm.enable {
+                  }
+                  // lib.optionalAttrs cfg.docker.swarm.enable {
                     swarm = {
                       inherit (cfg.docker.swarm) endpoint;
                     };
@@ -371,40 +387,43 @@ in
                       address = ":${toString cfg.traefik_entrypoint_port}";
                       http.middlewares = [ "${dashboard-middleware}@file" ];
                     };
-                  } // lib.optionalAttrs cfg.smtp_enable {
+                  }
+                  // lib.optionalAttrs cfg.smtp_enable {
                     smtp = {
                       address = ":1025";
                     };
-                  } // lib.optionalAttrs cfg.smqtt_enable {
+                  }
+                  // lib.optionalAttrs cfg.smqtt_enable {
                     smqtt = {
                       address = ":8883";
                     };
-                  } // generate_tls_entrypoints cfg.tls_entrypoints;
+                  }
+                  // generate_tls_entrypoints cfg.tls_entrypoints;
 
                   certificatesresolvers = {
-                    ${letsencrypt}.acme =
-                      acme_template // {
-                        httpChallenge.entryPoint = "web";
-                      };
-                    "${letsencrypt}_dns".acme =
-                      acme_template // {
-                        dnsChallenge = {
-                          provider = cfg.acme.dnsProvider;
-                          resolvers = lib.optionals (lib.length cfg.acme.resolvers > 0) cfg.acme.resolvers;
-                          propagation = {
-                            inherit (cfg.acme) disableChecks;
-                            inherit (cfg.acme) delayBeforeChecks;
-                          };
+                    ${letsencrypt}.acme = acme_template // {
+                      httpChallenge.entryPoint = "web";
+                    };
+                    "${letsencrypt}_dns".acme = acme_template // {
+                      dnsChallenge = {
+                        provider = cfg.acme.dnsProvider;
+                        resolvers = lib.optionals (lib.length cfg.acme.resolvers > 0) cfg.acme.resolvers;
+                        propagation = {
+                          inherit (cfg.acme) disableChecks;
+                          inherit (cfg.acme) delayBeforeChecks;
                         };
                       };
+                    };
                   };
-                } // accesslog;
+                }
+                // accesslog;
               in
               yaml_format.generate static_config_file_name static_config;
 
             dynamic_config_mounts =
               let
-                buildConfigFile = key: configFile:
+                buildConfigFile =
+                  key: configFile:
                   let
                     name = "${key}.yml";
                     file = yaml_format.generate name configFile.value;
@@ -415,8 +434,7 @@ in
               lib.compose [
                 buildConfigFiles
                 lib.filterEnabled
-              ]
-                cfg.dynamic_config;
+              ] cfg.dynamic_config;
 
           in
           {
@@ -428,7 +446,8 @@ in
               ports =
                 let
                   traefik_entrypoint_port_str = toString cfg.traefik_entrypoint_port;
-                  mk_tls_port = cfg:
+                  mk_tls_port =
+                    cfg:
                     let
                       port = toString cfg.port;
                     in
@@ -443,7 +462,8 @@ in
                   "1025:1025/tcp"
                   "127.0.0.1:${traefik_entrypoint_port_str}:${traefik_entrypoint_port_str}"
                   "[::1]:${traefik_entrypoint_port_str}:${traefik_entrypoint_port_str}"
-                ] ++ mk_tls_ports cfg.tls_entrypoints;
+                ]
+                ++ mk_tls_ports cfg.tls_entrypoints;
               volumes = [
                 "/etc/localtime:/etc/localtime:ro"
                 "/var/run/docker.sock:/var/run/docker.sock:ro"
@@ -451,9 +471,7 @@ in
                 "traefik_letsencrypt:${cfg.acme.storage}"
               ]
               ++ cfg.extraVolumes
-              ++ map
-                (f: "${f}:/etc/pki/tls/certs/${builtins.baseNameOf f}:ro")
-                cfg.acme.extraCaCertificateFiles
+              ++ map (f: "${f}:/etc/pki/tls/certs/${builtins.baseNameOf f}:ro") cfg.acme.extraCaCertificateFiles
               ++ dynamic_config_mounts;
               workdir = "/";
               extraOptions = [

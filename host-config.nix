@@ -1,6 +1,6 @@
-{ lib
-, flake
-,
+{
+  lib,
+  flake,
 }:
 
 { hostname }:
@@ -44,17 +44,15 @@ let
         lib.throwIfNot (lib.elem hostname (lib.attrNames allHosts)) "host with name ${hostname} defined in ./org-config/waves-and-staging-hosts.nix not found in the repo";
     in
     hostnames: mkConfig:
-      lib.listToAttrs (
-        lib.map
-          (
-            hostname:
-            # We do the validation in the attribute names since attrsets are strict in their
-            # names and so we will get an error even if we're evaluating another host.
-            # This allows for errors to be detected earlier.
-            lib.nameValuePair (assertHostExists hostname hostname) (mkConfig defaultSystem)
-          )
-          hostnames
-      );
+    lib.listToAttrs (
+      lib.map (
+        hostname:
+        # We do the validation in the attribute names since attrsets are strict in their
+        # names and so we will get an error even if we're evaluating another host.
+        # This allows for errors to be detected earlier.
+        lib.nameValuePair (assertHostExists hostname hostname) (mkConfig defaultSystem)
+      ) hostnames
+    );
 
   firstWave = mkWave waves.firstWave mkFirstWaveConfig;
   middleWave = mkWave waves.middleWave mkMiddleWaveConfig;

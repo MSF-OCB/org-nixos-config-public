@@ -26,7 +26,6 @@ in
     };
   };
 
-
   config = {
     systemd = {
       mounts =
@@ -47,4 +46,3 @@ in
   };
 
 }
-

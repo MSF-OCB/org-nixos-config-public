@@ -1,111 +1,130 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 let
   cfg = config.settings.reverse_tunnel;
 
-  addCheckDesc = desc: elemType: check: lib.types.addCheck elemType check
-    // { description = "${elemType.description} (with check: ${desc})"; };
+  addCheckDesc =
+    desc: elemType: check:
+    lib.types.addCheck elemType check
+    // {
+      description = "${elemType.description} (with check: ${desc})";
+    };
   isNonEmpty = s: (builtins.match "[ \t\n]*" s) == null;
   nonEmptyStr = addCheckDesc "non-empty" lib.types.str isNonEmpty;
 
-  reverseTunnelOpts = { name, ... }: {
-    options = {
-      name = lib.mkOption {
-        type = lib.types.str;
-      };
-      prefix = lib.mkOption {
-        type = lib.types.ints.between 0 5;
-        description = ''
-          Numerical prefix to be added to the main port.
-        '';
-      };
-      forwarded_port = lib.mkOption {
-        type = lib.types.port;
-        description = ''
-          The local port from this server to forward.
-        '';
-      };
-    };
-
-    config = {
-      name = lib.mkDefault name;
-    };
-  };
-
-  tunnelOpts = { name, ... }: {
-    options = {
-      name = lib.mkOption {
-        type = lib.types.host_name_type;
+  reverseTunnelOpts =
+    { name, ... }:
+    {
+      options = {
+        name = lib.mkOption {
+          type = lib.types.str;
+        };
+        prefix = lib.mkOption {
+          type = lib.types.ints.between 0 5;
+          description = ''
+            Numerical prefix to be added to the main port.
+          '';
+        };
+        forwarded_port = lib.mkOption {
+          type = lib.types.port;
+          description = ''
+            The local port from this server to forward.
+          '';
+        };
       };
 
-      remote_forward_port = lib.mkOption {
-        type = with lib.types; either (ints.between 0 0) (ints.between 2000 9999);
-        description = "The port used for this server on the relay servers.";
-      };
-
-      connectTimeout = lib.mkOption {
-        type = lib.types.ints.positive;
-        default = 360;
-      };
-
-      # We allow the empty string to allow bootstrapping
-      # an installation where the key has not yet been generated
-      public_key = lib.mkOption {
-        type = lib.types.either lib.types.empty_str_type lib.types.pub_key_type;
-      };
-
-      generate_secrets = lib.mkOption {
-        type = lib.types.bool;
-        default = true;
-        description = ''
-          Setting used by the python scripts generating the secrets.
-          Setting this option to false makes sure that no secrets get generated for this host.
-        '';
-      };
-
-      copy_key_to_users = lib.mkOption {
-        type = with lib.types; listOf str;
-        default = [ ];
-        description = ''
-          A list of users to which this public key will be copied for SSH authentication.
-        '';
-      };
-
-      reverse_tunnels = lib.mkOption {
-        type = with lib.types; attrsOf (submodule reverseTunnelOpts);
-        default = { };
+      config = {
+        name = lib.mkDefault name;
       };
     };
 
-    config = {
-      name = lib.mkDefault name;
+  tunnelOpts =
+    { name, ... }:
+    {
+      options = {
+        name = lib.mkOption {
+          type = lib.types.host_name_type;
+        };
+
+        remote_forward_port = lib.mkOption {
+          type = with lib.types; either (ints.between 0 0) (ints.between 2000 9999);
+          description = "The port used for this server on the relay servers.";
+        };
+
+        connectTimeout = lib.mkOption {
+          type = lib.types.ints.positive;
+          default = 360;
+        };
+
+        # We allow the empty string to allow bootstrapping
+        # an installation where the key has not yet been generated
+        public_key = lib.mkOption {
+          type = lib.types.either lib.types.empty_str_type lib.types.pub_key_type;
+        };
+
+        generate_secrets = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = ''
+            Setting used by the python scripts generating the secrets.
+            Setting this option to false makes sure that no secrets get generated for this host.
+          '';
+        };
+
+        copy_key_to_users = lib.mkOption {
+          type = with lib.types; listOf str;
+          default = [ ];
+          description = ''
+            A list of users to which this public key will be copied for SSH authentication.
+          '';
+        };
+
+        reverse_tunnels = lib.mkOption {
+          type = with lib.types; attrsOf (submodule reverseTunnelOpts);
+          default = { };
+        };
+      };
+
+      config = {
+        name = lib.mkDefault name;
+      };
     };
-  };
 
-  relayServerOpts = { name, ... }: {
-    options = {
-      name = lib.mkOption {
-        type = lib.types.str;
+  relayServerOpts =
+    { name, ... }:
+    {
+      options = {
+        name = lib.mkOption {
+          type = lib.types.str;
+        };
+
+        addresses = lib.mkOption {
+          type = with lib.types; listOf nonEmptyStr;
+        };
+
+        public_key = lib.mkOption {
+          type = lib.types.pub_key_type;
+        };
+
+        ports = lib.mkOption {
+          type = with lib.types; listOf port;
+          default = [
+            22
+            80
+            443
+          ];
+        };
       };
 
-      addresses = lib.mkOption {
-        type = with lib.types; listOf nonEmptyStr;
-      };
-
-      public_key = lib.mkOption {
-        type = lib.types.pub_key_type;
-      };
-
-      ports = lib.mkOption {
-        type = with lib.types; listOf port;
-        default = [ 22 80 443 ];
+      config = {
+        name = lib.mkDefault name;
       };
     };
-
-    config = {
-      name = lib.mkDefault name;
-    };
-  };
 in
 {
 
@@ -147,35 +166,39 @@ in
             default = [ ];
           };
           keys = lib.mkOption {
-            type = lib.types.listOf (lib.types.submodule (
-              { config, ... }: {
-                options = {
-                  username = lib.mkOption {
-                    type = lib.types.str;
+            type = lib.types.listOf (
+              lib.types.submodule (
+                { config, ... }:
+                {
+                  options = {
+                    username = lib.mkOption {
+                      type = lib.types.str;
+                    };
+                    publicKey = lib.mkOption {
+                      type = lib.types.pub_key_type;
+                    };
+                    keyOptions = lib.mkOption {
+                      type = lib.types.listOf (lib.types.strMatching "[a-zA-Z=@.,\"-]*");
+                      default = [ ];
+                    };
+                    finalKey = lib.mkOption {
+                      type = lib.types.str;
+                      default =
+                        if config.keyOptions == [ ] then
+                          "${config.publicKey} ${config.username}"
+                        else
+                          "${lib.concatStringsSep "," config.keyOptions} ${config.publicKey} ${config.username}";
+                    };
                   };
-                  publicKey = lib.mkOption {
-                    type = lib.types.pub_key_type;
+                  config = {
+                    keyOptions = [
+                      "restrict"
+                      "port-forwarding"
+                    ];
                   };
-                  keyOptions = lib.mkOption {
-                    type = lib.types.listOf (lib.types.strMatching "[a-zA-Z=@.,\"-]*");
-                    default = [ ];
-                  };
-                  finalKey = lib.mkOption {
-                    type = lib.types.str;
-                    default =
-                      if config.keyOptions == [ ]
-                      then "${config.publicKey} ${config.username}"
-                      else "${lib.concatStringsSep "," config.keyOptions} ${config.publicKey} ${config.username}";
-                  };
-                };
-                config = {
-                  keyOptions = [
-                    "restrict"
-                    "port-forwarding"
-                  ];
-                };
-              }
-            ));
+                }
+              )
+            );
           };
         };
       };
@@ -184,8 +207,7 @@ in
 
   config =
     let
-      includeTunnel = tunnel: lib.stringNotEmpty tunnel.public_key &&
-        tunnel.remote_forward_port > 0;
+      includeTunnel = tunnel: lib.stringNotEmpty tunnel.public_key && tunnel.remote_forward_port > 0;
       add_port_prefix = prefix: base_port: 10000 * prefix + base_port;
       extract_prefix = reverse_tunnel: reverse_tunnel.prefix;
       get_prefixes = lib.mapAttrsToList (_: extract_prefix);
@@ -194,13 +216,10 @@ in
       {
         # This is very important, it ensures that the remote hosts can
         # set up their reverse tunnels without any issues with host keys
-        programs.ssh.knownHosts =
-          lib.mapAttrs
-            (_: conf: {
-              hostNames = conf.addresses;
-              publicKey = conf.public_key;
-            })
-            cfg.relay_servers;
+        programs.ssh.knownHosts = lib.mapAttrs (_: conf: {
+          hostNames = conf.addresses;
+          publicKey = conf.public_key;
+        }) cfg.relay_servers;
       }
       (lib.mkIf (cfg.enable || cfg.relay.enable) {
         assertions =
@@ -211,7 +230,8 @@ in
               get_prefixes
               (lib.getAttr "reverse_tunnels")
             ];
-            pretty_print_prefixes = host: prefixes:
+            pretty_print_prefixes =
+              host: prefixes:
               let
                 sorted_prefixes = lib.concatMapStringsSep ", " toString (lib.naturalSort prefixes);
               in
@@ -242,14 +262,12 @@ in
           [
             {
               assertion = lib.length duplicate_prefixes == 0;
-              message = "Duplicate prefixes defined! Details: " +
-                lib.concatStringsSep "; " duplicate_prefixes;
+              message = "Duplicate prefixes defined! Details: " + lib.concatStringsSep "; " duplicate_prefixes;
             }
             {
               assertion = lib.length duplicate_ports == 0;
-              message = "Duplicate tunnel ports defined! " +
-                "Duplicates: " +
-                lib.concatStringsSep ", " duplicate_ports;
+              message =
+                "Duplicate tunnel ports defined! " + "Duplicates: " + lib.concatStringsSep ", " duplicate_ports;
             }
           ];
 
@@ -279,10 +297,9 @@ in
           current_host_tunnel = cfg.tunnels.${config.networking.hostName} or null;
         in
         {
-          warnings =
-            lib.optional (! includeTunnel current_host_tunnel) ''
-              The current machine has reverse tunnelling enabled, but it has no public key configured.
-            '';
+          warnings = lib.optional (!includeTunnel current_host_tunnel) ''
+            The current machine has reverse tunnelling enabled, but it has no public key configured.
+          '';
 
           assertions = [
             {
@@ -308,8 +325,14 @@ in
               make_tunnel_service = tunnel: relay: {
                 enable = true;
                 description = "AutoSSH reverse tunnel service to ensure resilient ssh access";
-                wants = [ "network.target" "tunnel-key-ready.target" ];
-                after = [ "network.target" "tunnel-key-ready.target" ];
+                wants = [
+                  "network.target"
+                  "tunnel-key-ready.target"
+                ];
+                after = [
+                  "network.target"
+                  "tunnel-key-ready.target"
+                ];
                 wantedBy = [ "multi-user.target" ];
                 environment = {
                   AUTOSSH_GATETIME = "0";
@@ -324,20 +347,23 @@ in
                 };
                 script =
                   let
-                    mkRevTunLine = port: rev_tnl: lib.concatStrings [
-                      "-R "
-                      (toString (add_port_prefix rev_tnl.prefix port))
-                      ":localhost:"
-                      (toString rev_tnl.forwarded_port)
-                    ];
-                    mkRevTunLines = port: lib.compose [
-                      (lib.concatStringsSep " \\\n      ")
-                      (lib.mapAttrsToList (_: mkRevTunLine port))
-                    ];
-                    rev_tun_lines = mkRevTunLines tunnel.remote_forward_port
-                      tunnel.reverse_tunnels;
+                    mkRevTunLine =
+                      port: rev_tnl:
+                      lib.concatStrings [
+                        "-R "
+                        (toString (add_port_prefix rev_tnl.prefix port))
+                        ":localhost:"
+                        (toString rev_tnl.forwarded_port)
+                      ];
+                    mkRevTunLines =
+                      port:
+                      lib.compose [
+                        (lib.concatStringsSep " \\\n      ")
+                        (lib.mapAttrsToList (_: mkRevTunLine port))
+                      ];
+                    rev_tun_lines = mkRevTunLines tunnel.remote_forward_port tunnel.reverse_tunnels;
                   in
-                    /* bash */ ''
+                  /* bash */ ''
                     for host in ${lib.concatStringsSep " " relay.addresses}; do
                       for port in ${lib.concatMapStringsSep " " toString relay.ports}; do
                         echo "Attempting to connect to ''$host on port ''${port}"
@@ -373,19 +399,19 @@ in
                   '';
               };
 
-              make_tunnel_services = tunnel: relay_servers:
+              make_tunnel_services =
+                tunnel: relay_servers:
                 lib.optionalAttrs (includeTunnel current_host_tunnel) (
-                  lib.mapAttrs'
-                    (_: relay: lib.nameValuePair "autossh-reverse-tunnel-${relay.name}"
-                      (make_tunnel_service tunnel relay))
-                    relay_servers
+                  lib.mapAttrs' (
+                    _: relay:
+                    lib.nameValuePair "autossh-reverse-tunnel-${relay.name}" (make_tunnel_service tunnel relay)
+                  ) relay_servers
                 );
 
             in
-            lib.optionalAttrs
-              (current_host_tunnel != null)
-              (make_tunnel_services current_host_tunnel
-                cfg.relay_servers);
+            lib.optionalAttrs (current_host_tunnel != null) (
+              make_tunnel_services current_host_tunnel cfg.relay_servers
+            );
         }
       ))
 
@@ -394,10 +420,11 @@ in
         assertions = [
           {
             assertion = lib.hasAttr config.networking.hostName cfg.relay_servers;
-            message = "This host is set as a relay, " +
-              "but its host name could not be found in the list of relays! " +
-              "Defined relays: " +
-              lib.concatStringsSep ", " (lib.attrNames cfg.relay_servers);
+            message =
+              "This host is set as a relay, "
+              + "but its host name could not be found in the list of relays! "
+              + "Defined relays: "
+              + lib.concatStringsSep ", " (lib.attrNames cfg.relay_servers);
           }
         ];
 
@@ -406,14 +433,16 @@ in
             tunnel =
               let
                 prefixes = tunnel: get_prefixes tunnel.reverse_tunnels;
-                mkLimitation = base_port: prefix:
+                mkLimitation =
+                  base_port: prefix:
                   ''restrict,port-forwarding,permitlisten="${toString (add_port_prefix prefix base_port)}"'';
-                mkKeyConfig = tunnel: lib.concatStringsSep " " [
-                  (lib.concatMapStringsSep "," (mkLimitation tunnel.remote_forward_port)
-                    (prefixes tunnel))
-                  tunnel.public_key
-                  "tunnel@${tunnel.name}"
-                ];
+                mkKeyConfig =
+                  tunnel:
+                  lib.concatStringsSep " " [
+                    (lib.concatMapStringsSep "," (mkLimitation tunnel.remote_forward_port) (prefixes tunnel))
+                    tunnel.public_key
+                    "tunnel@${tunnel.name}"
+                  ];
                 mkKeyConfigs = lib.compose [
                   lib.naturalSort
                   (lib.mapAttrsToList (_: mkKeyConfig))

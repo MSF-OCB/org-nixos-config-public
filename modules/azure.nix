@@ -1,4 +1,9 @@
-{ modulesPath, config, lib, ... }:
+{
+  modulesPath,
+  config,
+  lib,
+  ...
+}:
 {
   imports = [
     "${modulesPath}/virtualisation/azure-common.nix"
@@ -51,11 +56,11 @@
     "runcmd"
   ];
 
-
   # azure-common.nix sets the root partition device without an option to configure
   # the value. So we have to override it here.
   # 'filesystems.<name>.label' and 'filesystems.<name>.device' are mutually exclusive. Need to set only one.
-  fileSystems."/".device = lib.mkForce "/dev/disk/by-partlabel/${config.disko.devices.disk.main.content.partitions.nixos-root.label}";
+  fileSystems."/".device =
+    lib.mkForce "/dev/disk/by-partlabel/${config.disko.devices.disk.main.content.partitions.nixos-root.label}";
   fileSystems."/".label = lib.mkForce null;
 
   disko.devices.disk.main = {

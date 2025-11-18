@@ -1,6 +1,7 @@
-{ linkFarmFromDrvs
-, testers
-, lib
+{
+  linkFarmFromDrvs,
+  testers,
+  lib,
 }:
 
 let
@@ -11,9 +12,8 @@ let
   };
 in
 
-(linkFarmFromDrvs "vm-tests" (
-  lib.attrValues tests
-)) // {
+(linkFarmFromDrvs "vm-tests" (lib.attrValues tests))
+// {
   passthru = {
     inherit tests;
   };

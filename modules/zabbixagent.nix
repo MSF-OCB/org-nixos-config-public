@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.settings.services.zabbixAgent;
@@ -23,11 +28,15 @@ in
       enable = true;
       openFirewall = true;
       server = if cfg.hqNuc then servers.server2 else servers.server1;
-      extraPackages = with pkgs; [ lm_sensors gawk ];
+      extraPackages = with pkgs; [
+        lm_sensors
+        gawk
+      ];
       settings = {
         ServerActive = if cfg.hqNuc then servers.server2 else servers.server1;
         Hostname = config.networking.hostName;
-      } // lib.optionalAttrs (platform == "nuc") {
+      }
+      // lib.optionalAttrs (platform == "nuc") {
         UnsafeUserParameters = 1;
         UserParameter = "basicCPUTemp.max,sensors | grep Core | awk -F'[:+°]' '{avg+=$3}END{print avg/NR}'";
 

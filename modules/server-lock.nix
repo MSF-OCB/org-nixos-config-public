@@ -1,4 +1,9 @@
-{ lib, config, pkgs, ... }:
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.settings.services.server-lock;
@@ -50,13 +55,12 @@ in
   config = lib.mkIf cfg.enable (
     let
       server-lock-user = "server-lock-button";
-      mkScript = name: content:
+      mkScript =
+        name: content:
         let
           script = pkgs.writeShellScript name content;
         in
-        if cfg.armed
-        then script
-        else "${pkgs.coreutils}/bin/true";
+        if cfg.armed then script else "${pkgs.coreutils}/bin/true";
 
       mkWrapper = name: wrapped: mkScript name ''sudo --non-interactive ${wrapped}'';
 
@@ -72,8 +76,7 @@ in
                 ${pkgs.cryptsetup}/bin/cryptsetup luksRemoveKey ${device} ${key_file}
               '';
             in
-            lib.mapAttrsToList (_: conf: mkDisable conf.device conf.key_file)
-              crypto_cfg.mounts;
+            lib.mapAttrsToList (_: conf: mkDisable conf.device conf.key_file) crypto_cfg.mounts;
 
           rebootCommand = ''${pkgs.systemd}/bin/systemctl reboot'';
 
@@ -131,8 +134,13 @@ in
       security.sudo.extraRules = [
         {
           users = [ server-lock-user ];
-          commands = map (command: { inherit command; options = [ "SETENV" "NOPASSWD" ]; })
-            [ (toString lock_script) ];
+          commands = map (command: {
+            inherit command;
+            options = [
+              "SETENV"
+              "NOPASSWD"
+            ];
+          }) [ (toString lock_script) ];
         }
       ];
 
@@ -142,7 +150,9 @@ in
           description = "Web interface to lock the encrypted data partition";
           # Include the path to the security wrappers to make sudo available
           path = [ "/run/wrappers/" ];
-          environment = { PYTHONUNBUFFERED = "1"; };
+          environment = {
+            PYTHONUNBUFFERED = "1";
+          };
           wantedBy = [ "multi-user.target" ];
           serviceConfig = {
             User = server-lock-user;
