@@ -1,0 +1,8 @@
+# Ignore all files in the org-config directory
+# Ignore all markdown files in the repository
+.git/workflows/build_deploy.yml
+.git/workflows/create_staging_pr.yaml
+.git/workflows/update-flake-lock.yml
+.git/workflows/publish-ocb-nix-code.yml
+.git/workflows/auto-assign.yml
+flake.lock

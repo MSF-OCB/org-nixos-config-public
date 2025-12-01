@@ -1,0 +1,11 @@
+{
+  "hq_outgoing_ips": ["8.8.8.8"],
+  "env_var_prefix": "NIXOS",
+  "github_org": "MSF-OCB",
+  "iso": {
+    "menu_label": "Generic Rescue System",
+    "file_label": "rescue"
+  },
+  "config_repo": "org-nixos-config-public",
+  "acme_email_address": "noReply@example.org"
+}

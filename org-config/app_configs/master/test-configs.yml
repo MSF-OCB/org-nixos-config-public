@@ -1,0 +1,8 @@
+configs:
+  tests_configs:
+    path: test_configs
+    content: |
+      FOO=BARS
+    servers:
+      - demo-prod-host
+      - demo-uat-host

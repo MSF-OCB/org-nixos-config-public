@@ -1,0 +1,37 @@
+[build-system]
+requires = ["flit_core"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "nixostools"
+version = "0.0.0"
+description = ""
+
+[project.scripts]
+encrypt_server_secrets = "nixostools.encrypt_server_secrets:main"
+decrypt_server_secrets = "nixostools.decrypt_server_secrets:main"
+generate_server_app_configs = "nixostools.generate_server_app_configs:main"
+extract_server_app_configs = "nixostools.extract_server_app_configs:main"
+add_encryption_key     = "nixostools.add_encryption_key:main"
+update_nixos_keys      = "nixostools.update_nixos_keys:main"
+install                = "nixostools.install:main"
+copy_down_dhis       = "nixostools.copy_down_dhis2:main"
+
+[tool.setuptools.packages]
+find = {}
+
+[tool.ruff]
+line-length = 88
+lint.select = ["E", "F", "I", "U", "N"]
+lint.ignore = ["E501"]
+
+[tool.mypy]
+warn_redundant_casts = true
+warn_unused_ignores = true
+disallow_untyped_calls = false
+disallow_untyped_defs = false
+no_implicit_optional = true
+
+[tool.pylint."messages control"]
+disable = "all"
+enable = "errors,warnings,unused-import"

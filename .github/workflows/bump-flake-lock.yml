@@ -1,0 +1,49 @@
+name: Flake-Lock Update Org-Nix
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "45 3 * * 1" # runs weekly every Monday at 03:45 UTC
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  lockfile:
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+      - name: Checkout the repo
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ steps.app-token.outputs.token }}
+      - name: Install the Nix package manager
+        uses: cachix/install-nix-action@master
+        with:
+          github_access_token: ${{ steps.app-token.outputs.token }}
+      - name: Update the lockfile
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          nix flake update --commit-lock-file
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          branch: auto_update_flake_lock
+          title: Bump the flake lock
+          body: |
+            Automatically bumped the flake.lock file.

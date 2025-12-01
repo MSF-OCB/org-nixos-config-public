@@ -1,0 +1,32 @@
+{
+  imports = [
+    ./auto_shutdown.nix
+    ./boot.nix
+    ./crypto.nix
+    ./disko.nix
+    ./docker.nix
+    ./hardware-configs.nix
+    ./lib.nix
+    ./maintenance.nix
+    ./network.nix
+    ./nfs.nix
+    ./packages.nix
+    ./live_system.nix
+    ./load_json.nix
+    ./org_users.nix
+    ./org.nix
+    ./server-lock.nix
+    ./reverse-tunnel.nix
+    ./sshd.nix
+    ./swap.nix
+    ./system.nix
+    ./syno_vm.nix
+    ./traefik.nix
+    ./users.nix
+    ./vim-config.nix
+    ./virtualbox.nix
+    ./vmware.nix
+    ./nfs-client.nix
+    ./zabbixagent.nix
+  ];
+}

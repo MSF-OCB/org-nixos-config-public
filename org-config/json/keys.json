@@ -1,0 +1,91 @@
+{
+  "_comment": "Comments can be added with key _comment, which will be filtered out automatically.",
+  "keys": {
+    "robot": {
+      "public_keys": [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKBmpPrG/ol/NQ0Sf55gWbbpu9GEljbIhuqRwf71RQem"
+      ]
+    },
+    "ibrahim_balla": {
+      "public_keys": [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICC8KJT5hqQEuhwQOK6zFa8mmzzx00qKtVyYtXPOEXP1"
+      ]
+    },
+    "yves_de_voghel": {
+      "public_keys": [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDkn+PBXpcLPlo2lHT53lRHc0cF+5dJsUXesEOBIrmhn"
+      ]
+    },
+    "sohel_sarder": {
+      "public_keys": [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMiEiudd6Z478rjdgMJPayVZZOkvC1eMFeqvBb7iscgr"
+      ]
+    },
+    "ian_sollars": {
+      "public_keys": [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICD2mOPEqc3qXqz78w29QsnvzqeGITfybcLfOXJ2iEgu"
+      ]
+    },
+    "xavier_kaufmann": {
+      "public_keys": [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOElTt6UTqlKK7xTz4syDCetxa0Q1hBZyAJ6z95ishGJ"
+      ]
+    },
+    "brian": {
+      "public_keys": [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBpv0nOr0v0C6ae+P6+LwD2e4inlJstfI4IhLqSamoGE"
+      ]
+    },
+    "jfroche": {
+      "public_keys": [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIo+ulCUfJjnCVgfM4946Ih5Nm8DeZZiayYeABHGPEl7"
+      ]
+    },
+    "akechishiro": {
+      "public_keys": [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICRDM7fyeGRgYzuW+falRZayYSf5xMwj2d2PI9vSyjOD"
+      ]
+    },
+    "felipe": {
+      "public_keys": [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGj2f7bClTR5Kp3KBlWFSemyqWcBEJ/8uytDSVOQG9ma"
+      ]
+    },
+    "marton": {
+      "public_keys": [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFZOC3FgP/8TUK62obAW/uDENhdXkLGAjickSF53zncg"
+      ]
+    },
+    "yvan": {
+      "public_keys": [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIArkmq6Th79Z4klW6Urgi4phN8yq769/l/10jlE00tU9"
+      ]
+    },
+    "r-vdp": {
+      "public_keys": [
+        {
+          "publicKey": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJmTp2X1aA+PXayWUgHWCE3IX3iK/+MtbO/XrFILJxuy",
+          "keyOptions": [
+            "cert-authority",
+            "principals=\"ramses@well-founded.dev\""
+          ]
+        }
+      ]
+    },
+    "phaer": {
+      "public_keys": [
+        "sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIHqRNv8hueRuN4khLUQMiPVS0NqwZfX17BNXIRZJ9yRPAAAAE3NzaDpoZWxsb0BwaGFlci5vcmc="
+      ]
+    },
+    "zimbatm": {
+      "public_keys": [
+        "sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIOH4yGDIDHCOFfNeXuvYwNoSVtAPOznAHfxSTSze8tMnAAAABHNzaDo="
+      ]
+    },
+    "doctor_fictional": {
+      "public_keys": [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEDQWS17VwntcxZlNDm5rA+ty7g8L8yIGcrqmh/oqp53"
+      ]
+    }
+  }
+}

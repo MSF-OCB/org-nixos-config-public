@@ -1,0 +1,7 @@
+CONFIGS_KEY = "configs"
+SERVERS_KEY = "servers"
+PATH_KEY = "path"
+CONTENT_KEY = "content"
+TUNNELS_KEY = "tunnels"
+PER_HOST_KEY = "per-host"
+PUBLIC_KEY_KEY = "public_key"

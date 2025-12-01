@@ -1,0 +1,13 @@
+name: Auto-assign
+on:
+  pull_request:
+
+jobs:
+  assign_author:
+    runs-on: ubuntu-latest
+    if: >-
+      ${{ github.event_name == 'pull_request' &&
+          github.event.action == 'opened' }}
+    steps:
+      - name: Assign author to PR
+        uses: technote-space/assign-author@v1
