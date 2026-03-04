@@ -198,7 +198,11 @@ in
           );
         }
         // lib.optionalAttrs (users_json.users ? expires) (
-          lib.mapAttrs (_username: expire: { expires = expire; }) users_json.users.expires
+          lib.mapAttrs (_username: expire: { expires = expire; }) (
+            lib.filterAttrs (
+              username: _: !(lib.elem username users_json.global_admins)
+            ) users_json.users.expires
+          )
         );
     };
 

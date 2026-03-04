@@ -5,3 +5,4 @@
 .git/workflows/update-flake-lock.yml
 .git/workflows/publish-ocb-nix-code.yml
 .git/workflows/auto-assign.yml
+flake.lock

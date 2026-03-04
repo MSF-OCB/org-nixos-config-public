@@ -36,7 +36,7 @@ def read_vault_file(passwd: str, vault_file: str) -> Mapping:
     vault = get_vaultlib(passwd)
     if os.path.isfile(vault_file):
         with open(vault_file) as f:
-            return yaml.safe_load(vault.decrypt(f.read(), filename=vault_file))
+            return yaml.safe_load(vault.decrypt(f.read()))
     else:
         raise FileNotFoundError(f"Ansible Vault file ({vault_file}): no such file!")
 

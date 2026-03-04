@@ -42,12 +42,12 @@ let
       ''remote set-url origin "${url}"''
       # The following line is only used to avoid the warning emitted by git.
       # We will reset the local repo anyway and remove all local changes.
-      ''config pull.rebase true''
-      ''fetch origin ${branch}''
-      ''checkout ${branch} --''
-      ''reset --hard origin/${branch}''
-      ''clean -d --force''
-      ''pull''
+      "config pull.rebase true"
+      "fetch origin ${branch}"
+      "checkout ${branch} --"
+      "reset --hard origin/${branch}"
+      "clean -d --force"
+      "pull"
     ];
 
   clone_and_reset_git =
@@ -199,7 +199,7 @@ let
               if restart then
                 "restart"
               else
-                ''up --detach --remove-orphans ${lib.optionalString force_build "--build"}''
+                "up --detach --remove-orphans ${lib.optionalString force_build "--build"}"
             }
 
           echo "Log out of all docker repos..."

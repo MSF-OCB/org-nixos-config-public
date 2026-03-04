@@ -113,7 +113,7 @@ in
       nixos_rebuild_config = lib.mkIf cfg.nixos_upgrade.enable {
         serviceConfig = {
           Type = "oneshot";
-          ExecStart = ''${lib.getBin pkgs.coreutils}/bin/true'';
+          ExecStart = "${lib.getBin pkgs.coreutils}/bin/true";
         };
         requires = [ "nixos-upgrade.service" ];
       };

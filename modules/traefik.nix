@@ -131,6 +131,11 @@ in
         default = true;
       };
 
+      forceSameOrigin = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+      };
+
       acme = {
         caServer = lib.mkOption {
           type = lib.types.nullOr lib.types.str;
@@ -266,7 +271,7 @@ in
                     ];
                     ${security-headers}.headers = {
                       referrerPolicy = "no-referrer, strict-origin-when-cross-origin";
-                      customFrameOptionsValue = "SAMEORIGIN";
+                      customFrameOptionsValue = if cfg.forceSameOrigin then "SAMEORIGIN" else null;
                       customResponseHeaders = {
                         Expect-CT = "max-age=${toString (24 * 60 * 60)}, enforce";
                         Server = "";

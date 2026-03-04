@@ -43,7 +43,7 @@ in
     virtualisation.docker = {
       inherit (cfg) enable;
       enableOnBoot = true;
-      liveRestore = !cfg.swarm.enable;
+      liveRestore = false;
       # Docker internal IP addressing
       # Ranges used: 172.28.0.0/16, 172.29.0.0/16
       #

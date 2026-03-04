@@ -41,7 +41,7 @@ let
     let
       assertHostExists =
         hostname:
-        lib.throwIfNot (lib.elem hostname (lib.attrNames allHosts)) "host with name ${hostname} defined in ./org-config/waves-and-staging-hosts.nix not found in the repo";
+        lib.throwIfNot (lib.elem hostname (lib.attrNames allHosts)) "host with name ${hostname} defined in waves-and-staging-hosts.nix not found in the repo!";
     in
     hostnames: mkConfig:
     lib.listToAttrs (
@@ -60,7 +60,6 @@ let
   # These hosts always use the latest nixpkgs version since they are extra security critical, like the relays
   latest = mkWave waves.latestWave mkLatestConfig;
 
-  # lib.mergeDisjoint fails when there's duplicated entries in ./org-config/waves-and-staging-hosts.nix
   mergedWaves = lib.mergeDisjoint [
     firstWave
     middleWave
@@ -69,6 +68,7 @@ let
   ];
 
   diff = lib.subtractLists (lib.attrNames mergedWaves) (lib.attrNames allHosts);
+
   config =
     lib.throwIfNot (builtins.length diff == 0)
       "you forgot to define in ./org-config/waves-and-staging-hosts.nix a wave for these machines: ${builtins.toString diff}"

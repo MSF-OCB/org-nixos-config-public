@@ -16,10 +16,10 @@ in
 
   options.settings.services.zabbixAgent = {
     enable = lib.mkEnableOption "The zabbixAgent service";
-    hqNuc = lib.mkOption {
+    internalHost = lib.mkOption {
       type = lib.types.bool;
       default = false;
-      description = "Hq Zabbix Nuc";
+      description = "Server on internal network";
     };
   };
 
@@ -27,13 +27,13 @@ in
     services.zabbixAgent = {
       enable = true;
       openFirewall = true;
-      server = if cfg.hqNuc then servers.server2 else servers.server1;
+      server = if cfg.internalHost then servers.internalZabbixHost else servers.externalZabbixHost;
       extraPackages = with pkgs; [
         lm_sensors
         gawk
       ];
       settings = {
-        ServerActive = if cfg.hqNuc then servers.server2 else servers.server1;
+        ServerActive = if cfg.internalHost then servers.internalZabbixHost else servers.externalZabbixHost;
         Hostname = config.networking.hostName;
       }
       // lib.optionalAttrs (platform == "nuc") {
