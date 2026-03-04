@@ -11,8 +11,8 @@
       url = "github:edolstra/flake-compat";
     };
 
-    nixpkgs-legacy.url = "github:NixOS/nixpkgs/nixos-24.11-small";
-    nixpkgs-latest.url = "github:NixOS/nixpkgs/nixos-25.05-small";
+    nixpkgs-legacy.url = "github:NixOS/nixpkgs/nixos-25.05-small";
+    nixpkgs-latest.url = "github:NixOS/nixpkgs/nixos-25.11-small";
 
     disko = {
       url = "github:nix-community/disko";
@@ -45,7 +45,7 @@
       };
     };
     home-manager = {
-      url = "github:nix-community/home-manager/release-24.05";
+      url = "github:nix-community/home-manager/release-25.11";
       inputs.nixpkgs.follows = "nixpkgs-latest";
     };
     pre-commit-hooks = {
@@ -256,9 +256,12 @@
               # We need to permit node 16 as an insecure package since it is used
               # by the github-runners module. More and more github actions will be
               # using nodejs 20 so we will be able to remove this soon.
-              config.permittedInsecurePackages = [
-                "nodejs_20"
-              ];
+              config = {
+                allowUnfree = true;
+                permittedInsecurePackages = [
+                  "nodejs_20"
+                ];
+              };
               overlays = [
                 nix-index-database.overlays.nix-index
                 flakeInputs.server-lock.overlays.default

@@ -62,7 +62,7 @@ in
         in
         if cfg.armed then script else "${pkgs.coreutils}/bin/true";
 
-      mkWrapper = name: wrapped: mkScript name ''sudo --non-interactive ${wrapped}'';
+      mkWrapper = name: wrapped: mkScript name "sudo --non-interactive ${wrapped}";
 
       lock_script =
         let
@@ -78,7 +78,7 @@ in
             in
             lib.mapAttrsToList (_: conf: mkDisable conf.device conf.key_file) crypto_cfg.mounts;
 
-          rebootCommand = ''${pkgs.systemd}/bin/systemctl reboot'';
+          rebootCommand = "${pkgs.systemd}/bin/systemctl reboot";
 
           wrapped =
             let

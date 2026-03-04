@@ -148,8 +148,6 @@ in
             TCPKeepAlive yes
             ClientAliveInterval 10
             ClientAliveCountMax 5
-            GSSAPIAuthentication no
-            KerberosAuthentication no
 
             ${lib.optionalString cfg_rev_tun.relay.enable ''
               # See man sshd_config

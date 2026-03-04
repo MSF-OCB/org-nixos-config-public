@@ -24,13 +24,15 @@ in
         aws = "aws";
         azure = "azure";
         nuc = "nuc";
+        micronuc = "micronuc";
+        laptop-elitebook840 = "laptop-elitebook840";
         laptop = "laptop";
         synology = "synology";
+        hosted-vm = "hosted-vm";
         thinkserver = "thinkserver";
         virtualbox = "virtualbox";
         vmware = "vmware";
         hetzner = "hetzner";
-
         none = "none";
       };
     };
@@ -61,6 +63,18 @@ in
               "xhci_pci"
             ];
           };
+          micronuc = {
+            initrd.availableKernelModules = [
+              "ahci"
+              "xhci_pci"
+              "usb_storage"
+              "sd_mod"
+              "sdhci_pci"
+              "iwlwifi"
+              "cfg80211"
+              "mac80211"
+            ];
+          };
           laptop = {
             initrd.availableKernelModules = [
               "ahci"
@@ -71,6 +85,27 @@ in
               "sr_mod"
               "usb_storage"
               "xhci_pci"
+            ];
+          };
+          laptop-elitebook840 = {
+            initrd.availableKernelModules = [
+              "ahci"
+              "ehci_pci"
+              "nvme"
+              "rtsx_pci_sdmmc"
+              "sd_mod"
+              "sr_mod"
+              "usb_storage"
+              "xhci_pci"
+              "iwlwifi"
+              "cfg80211"
+              "mac80211"
+            ];
+            kernelModules = [
+              "iwlwifi"
+              "iwlmvm"
+              "mac80211"
+              "cfg80211"
             ];
           };
           synology = {
@@ -122,6 +157,17 @@ in
               "xhci_pci"
               "usbhid"
               "usb_storage"
+              "sd_mod"
+              "sr_mod"
+            ];
+          };
+          hosted-vm = {
+            initrd.availableKernelModules = [
+              "ahci"
+              "ata_piix"
+              "vmw_pvscsi"
+              "mptspi"
+              "floppy"
               "sd_mod"
               "sr_mod"
             ];

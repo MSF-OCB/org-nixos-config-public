@@ -322,8 +322,8 @@ let
                 };
               pub_key_pattern = lib.concatStringsSep "|" (lib.attrValues key_patterns);
               description =
-                ''valid ${lib.concatStringsSep " or " (lib.attrNames key_patterns)} key, ''
-                + ''meaning a string matching the pattern ${pub_key_pattern}'';
+                "valid ${lib.concatStringsSep " or " (lib.attrNames key_patterns)} key, "
+                + "meaning a string matching the pattern ${pub_key_pattern}";
             in
             lib.types.strMatching pub_key_pattern // { inherit description; };
         }

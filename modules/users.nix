@@ -24,7 +24,7 @@ let
         };
 
         extraGroups = lib.mkOption {
-          type = with lib.types; listOf str;
+          type = lib.types.listOf lib.types.str;
           default = [ ];
         };
 
@@ -76,15 +76,14 @@ let
         };
 
         forceCommand = lib.mkOption {
-          type = with lib.types; nullOr str;
+          type = lib.types.nullOr lib.types.str;
           default = null;
         };
 
         whitelistCommands = lib.mkOption {
-          type = with lib.types; listOf str;
+          type = lib.types.listOf lib.types.str;
           default = [ ];
         };
-
         expires = lib.mkOption {
           type = lib.types.nullOr (lib.types.strMatching "[[:digit:]]{4}-[[:digit:]]{2}-[[:digit:]]{2}");
           default = null;

@@ -26,7 +26,10 @@
     ./vim-config.nix
     ./virtualbox.nix
     ./vmware.nix
+    ./hetzner.nix
     ./nfs-client.nix
     ./zabbixagent.nix
+    ./wifi_access_point.nix
+    ./usb_auto_backup.nix
   ];
 }

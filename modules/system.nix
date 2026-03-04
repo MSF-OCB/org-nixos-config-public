@@ -10,6 +10,9 @@ let
   cfg = config.settings.system;
   tnl_cfg = config.settings.reverse_tunnel;
   tmux_term = "tmux-256color";
+  is2505orlater =
+    lib.versionAtLeast config.system.nixos.release "25.05"
+    && lib.versionOlder config.system.nixos.release "25.06";
 in
 
 {
@@ -83,7 +86,7 @@ in
 
       repo_to_url = lib.mkOption {
         type = with lib.types; functionTo str;
-        default = repo: ''git+ssh://git@github.com/${cfg.org.github_org}/${repo}.git'';
+        default = repo: "git+ssh://git@github.com/${cfg.org.github_org}/${repo}.git";
       };
 
       iso = {
@@ -385,12 +388,12 @@ in
         # the interval defined here, so every 10s.
         # If the hardware watchdog does not get a signal for 20s,
         # it will forcefully reboot the system.
-        runtimeTime = "20s";
+        runtimeTime = 20;
         # Forcefully reboot if the final stage of the reboot
         # hangs without progress for more than 30s.
         # For more info, see:
         #   https://utcc.utoronto.ca/~cks/space/blog/linux/SystemdShutdownWatchdog
-        rebootTime = "30s";
+        rebootTime = 30;
       };
 
       sleep.extraConfig = ''
@@ -613,6 +616,98 @@ in
                 fi
               '';
           };
+          ap-uplink-check = lib.mkIf config.settings.services.accessPoint.enable {
+            enable = true;
+            description = "Detect uplink(s) and block AP when online";
+            wantedBy = [ "multi-user.target" ];
+            after = [ "network-online.target" ];
+            wants = [ "network-online.target" ];
+            serviceConfig = {
+              Type = "oneshot";
+            };
+            script = ''
+              set -euo pipefail
+              echo "Checking uplink interfaces..."
+              echo "IPv4 default: $(${pkgs.iproute2}/bin/ip -4 route show default || true)"
+              echo "IPv6 default: $(${pkgs.iproute2}/bin/ip -6 route show default || true)"
+
+
+              ALLOW="/run/ap-allow"
+              uplink_online="0"
+
+              #Check default route interface on All Interfaces
+              active_interface="$(${pkgs.iproute2}/bin/ip -4 route show default 2>/dev/null | ${pkgs.gawk}/bin/awk '{print $5}' | head -n1 || true)"
+              echo "Interface with Default Route: $active_interface"
+
+              for UPLINK in ${lib.escapeShellArgs config.settings.services.accessPoint.uplink_interfaces}; do
+                echo "Checking uplink interface $UPLINK is in the list of allowed uplinks..."
+                if [ -n "$active_interface" ] && [ "$active_interface" = "$UPLINK" ]; then
+                    echo "$UPLINK is active and has default route"
+                    uplink_online="1"
+                    break
+                fi
+              done
+
+              if [ "$uplink_online" = "1" ]; then
+                echo "Uplink is online, blocking AP from starting"
+                ${pkgs.coreutils}/bin/rm -f "$ALLOW"
+                ${pkgs.systemd}/bin/systemctl stop --no-block hostapd.service dnsmasq.service ap-iface-address.service || true
+              else
+                echo "No uplink online, allowing AP"
+                ${pkgs.coreutils}/bin/touch "$ALLOW"
+                ${pkgs.systemd}/bin/systemctl start --no-block ap-iface-address.service || true
+              fi
+            '';
+
+          };
+          ap-iface-address = lib.mkIf config.settings.services.accessPoint.enable {
+            enable = true;
+            description = "Configure AP interface address";
+            wantedBy = [ "multi-user.target" ];
+            after = [ "ap-uplink-check.service" ];
+            wants = [ "ap-uplink-check.service" ];
+            unitConfig = {
+              ConditionPathExists = "/run/ap-allow";
+              StartLimitIntervalSec = 0;
+            };
+            serviceConfig = {
+              Type = "oneshot";
+              RemainAfterExit = true;
+              Restart = "on-failure";
+              RestartSec = 3;
+              TimeoutStartSec = 30;
+            };
+            script = ''
+              set -euo pipefail
+              echo "Configuring AP interface address..."
+              iface="${config.settings.services.accessPoint.interface}"
+              [ -d "/sys/class/net/$iface" ] || { echo "$iface missing" >&2; exit 1; }
+              ${pkgs.iproute2}/bin/ip link set "$iface" up || true
+              ${pkgs.iproute2}/bin/ip addr replace ${config.settings.services.accessPoint.dns}/24 dev "$iface"
+            '';
+          };
+          hostapd = lib.mkIf config.settings.services.accessPoint.enable {
+            enable = true;
+            bindsTo = lib.mkForce [ ];
+            after = [ "ap-iface-address.service" ];
+            wants = [ "ap-iface-address.service" ];
+            unitConfig = {
+              ConditionPathExists = "/run/ap-allow";
+              StartLimitIntervalSec = 0;
+            };
+            serviceConfig = {
+              RestartSec = 3;
+              TimeoutStartSec = 300;
+            };
+          };
+          dnsmasq = lib.mkIf config.settings.services.accessPoint.enable {
+            enable = true;
+            after = [ "hostapd.service" ];
+            wants = [ "hostapd.service" ];
+            unitConfig = {
+              ConditionPathExists = "/run/ap-allow";
+            };
+          };
           decrypt-secrets = {
             inherit (cfg.secrets) enable;
             wants = [ "tunnel-key-ready.target" ];
@@ -740,13 +835,58 @@ in
         '';
         wantedBy = [ "default.target" ];
       };
-    };
+    }
+    // (
+      if !is2505orlater then
+        {
+          settings.Manager = {
+            # systemd will send a signal to the hardware watchdog at half
+            # the interval defined here, so every 10s.
+            # If the hardware watchdog does not get a signal for 20s,
+            # it will forcefully reboot the system.
+            RuntimeWatchdogSec = 20;
+            # Forcefully reboot if the final stage of the reboot
+            # hangs without progress for more than 30s.
+            # For more info, see:
+            #   https://utcc.utoronto.ca/~cks/space/blog/linux/SystemdShutdownWatchdog
+            RebootWatchdogSec = 30;
+          };
+        }
+      else
+        {
+          # For more detail, see:
+          #   https://0pointer.de/blog/projects/watchdog.html
+          watchdog = {
+            # systemd will send a signal to the hardware watchdog at half
+            # the interval defined here, so every 10s.
+            # If the hardware watchdog does not get a signal for 20s,
+            # it will forcefully reboot the system.
+            runtimeTime = "20s";
+            # Forcefully reboot if the final stage of the reboot
+            # hangs without progress for more than 30s.
+            # For more info, see:
+            #   https://utcc.utoronto.ca/~cks/space/blog/linux/SystemdShutdownWatchdog
+            rebootTime = "30s";
+          };
+        }
+    );
 
     # No fonts needed on a headless system
     fonts.fontconfig.enable = lib.mkForce false;
 
     programs = {
-      bash.enableCompletion = true;
+      bash = {
+      }
+      // (
+        if is2505orlater then
+          {
+            enableCompletion = true;
+          }
+        else
+          {
+            completion.enable = true;
+          }
+      );
 
       ssh = {
         startAgent = false;
@@ -834,16 +974,25 @@ in
       };
 
       # See man logind.conf
-      logind = {
-        extraConfig = ''
-          HandlePowerKey=poweroff
-          PowerKeyIgnoreInhibited=yes
-        '';
-      };
+      logind =
+        if is2505orlater then
+          {
+            extraConfig = ''
+              HandlePowerKey=poweroff
+              PowerKeyIgnoreInhibited=yes
+            '';
+          }
+        else
+          {
+            settings.Login = {
+              HandlePowerKey = "poweroff";
+              PowerKeyIgnoreInhibited = true;
+            };
+
+          };
 
       avahi = {
         enable = true;
-        nssmdns = true;
         extraServiceFiles = {
           ssh = "${pkgs.avahi}/etc/avahi/services/ssh.service";
         };
@@ -853,7 +1002,17 @@ in
           addresses = true;
           workstation = true;
         };
-      };
+      }
+      // (
+        if is2505orlater then
+          {
+            nssmdns = true;
+          }
+        else
+          {
+            nssmdns4 = true;
+          }
+      );
     };
 
     nix = {

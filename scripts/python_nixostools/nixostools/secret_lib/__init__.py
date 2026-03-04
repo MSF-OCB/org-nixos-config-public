@@ -1,7 +1,7 @@
 from base64 import b64decode
 from collections.abc import Mapping
 from textwrap import wrap
-from typing import Any, Optional
+from typing import Any
 
 import nacl.utils
 from nacl.encoding import Base64Encoder, RawEncoder
@@ -99,7 +99,7 @@ def extract_curve_private_key(priv_key: str) -> PrivateKey:
 # Extract the public key from the JSON data and cut away the header
 def extract_public_key(
     tunnels_json: Mapping, server: str, public_keys_path: str
-) -> Optional[PublicKey]:
+) -> PublicKey | None:
     def raise_wrong_format():
         raise Exception(
             f"Error parsing the public key for server {server}, wrong format."
