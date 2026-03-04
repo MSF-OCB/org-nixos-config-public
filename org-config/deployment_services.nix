@@ -40,7 +40,7 @@ in
         in
         lib.compose [
           (lib.concatMap mkStartCmds)
-          attrNames
+          lib.attrNames
         ] enabled_deployment_services;
     };
 }
