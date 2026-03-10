@@ -5,6 +5,7 @@
 }:
 let
   cfg = config.settings.services.accessPoint;
+  dnsConfig = lib.importJSON ../org-config/json/wifi-ap-dns-records.json;
 in
 {
   options.settings.services.accessPoint = {
@@ -113,8 +114,7 @@ in
           "option:router,${cfg.dns}"
           "option:dns-server,${cfg.dns}"
         ];
-        address = [
-        ];
+        address = map (host: "/${host}/${cfg.dns}") dnsConfig.hosts;
         server = [
           "8.8.8.8"
           "1.1.1.1"
