@@ -55,9 +55,9 @@
       "devops_common": {
         "enable": {
           "ibrahim_balla": "admin",
+          "sohel_sarder": "admin",
           "ian_sollars": "admin",
           "xavier_kaufmann": "admin",
-          "sohel_sarder": "admin",
           "brian": "admin",
           "jfroche": "admin",
           "akechishiro": "admin",
@@ -77,8 +77,8 @@
       }
     },
     "expires": {
-      "ian_sollars": "2024-12-25",
-      "sohel_sarder": "2025-09-25"
+      "ibrahim_balla": "2025-12-25",
+      "ian_sollars": "2024-12-25"
     }
   }
 }
