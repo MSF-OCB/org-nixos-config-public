@@ -107,7 +107,7 @@
             inherit hostname;
           }
         ))
-          lib.allHosts;
+          lib.allNixOSHosts;
 
       treefmt-config = {
         projectRootFile = "flake.nix";
@@ -203,6 +203,10 @@
         )
       ];
 
+      nixosModules.defaultUbuntu = [
+        ./modules/defaultUbuntu.nix
+      ];
+
       nixosConfigurations =
         let
           # The arguments to the evalHost function can be overridden here
@@ -216,11 +220,26 @@
             hostConfigFunction {
               inherit hostname;
             }
-          ) lib.allHosts;
+          ) lib.allNixOSHosts;
         in
         lib.mkNixosConfigurations {
           inherit flakeInputs hosts hostOverrides;
           defaultModules = self.nixosModules.default;
+        };
+
+      systemConfigs =
+        let
+          hosts = lib.mapAttrs (
+            hostname: _:
+            hostConfigFunction {
+              inherit hostname;
+            }
+          ) lib.allUbuntuHosts;
+
+        in
+        lib.mkSystemManagerConfigurations {
+          inherit flakeInputs hosts;
+          defaultModules = self.nixosModules.defaultUbuntu;
         };
 
       packages = eachSystem (
