@@ -72,6 +72,9 @@
       url = "github:nix-community/nix-github-actions";
       inputs.nixpkgs.follows = "nixpkgs-latest";
     };
+    system-manager = {
+      url = "github:numtide/system-manager/ssh-knownhost";
+    };
   };
 
   outputs =
