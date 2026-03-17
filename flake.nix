@@ -436,6 +436,11 @@
           };
 
           vmTests = pkgs.callPackage ./tests/default.nix { };
+          containerTests = pkgs.callPackage ./tests/containers.nix {
+            inherit pkgs lib;
+            inputs = flakeInputs;
+            defaultUbuntuModules = self.nixosModules.defaultUbuntu;
+          };
         }
         // (import ./test.nix {
           qemu-common = import "${flakeInputs.nixpkgs-latest}/nixos/lib/qemu-common.nix" {
