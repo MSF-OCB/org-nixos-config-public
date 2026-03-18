@@ -20,12 +20,6 @@
       default = [ 22 ];
     };
 
-    # Stub for NixOS security.sudo.extraRules (from nixos/modules/security/sudo.nix)
-    security.sudo.extraRules = lib.mkOption {
-      type = lib.types.listOf lib.types.raw;
-      default = [ ];
-    };
-
     # From modules/network.nix
     settings.network.host_name = lib.mkOption {
       type = lib.types.host_name_type;
