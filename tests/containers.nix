@@ -14,7 +14,7 @@ let
             ../org-config/hosts/ubuntu/demo001.nix
           ]
           ++ defaultUbuntuModules;
-          extraSpecialArgs = {
+          specialArgs = {
             inherit lib;
             flakeInputs = inputs;
           };

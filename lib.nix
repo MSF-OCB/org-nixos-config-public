@@ -169,7 +169,7 @@ let
           hostname,
           nixpkgs,
           extraModules ? [ ],
-          extraSpecialArgs ? { },
+          specialArgs ? { },
           ...
         }:
         let
@@ -183,10 +183,10 @@ let
         traceInfo (
           flakeInputs.system-manager.lib.makeSystemConfig {
             # The nixpkgs instance passed down here has potentially been overridden by the host override
-            extraSpecialArgs = {
+            specialArgs = {
               inherit flakeInputs lib;
             }
-            // extraSpecialArgs;
+            // specialArgs;
             modules = [
               (toHostPath ("ubuntu/" + hostname))
               {
@@ -242,7 +242,7 @@ let
                 # We concatenate the two lists of extraModules
                 extraModules = lib.concatLists values;
                 # We recursively merge the specialArgs
-                extraSpecialArgs = lib.recursiveMerge values;
+                specialArgs = lib.recursiveMerge values;
               }
               .${name} or (throw "Unsupported attribute in hostOverrides: ${name}")
             )
@@ -292,7 +292,7 @@ let
                 # We concatenate the two lists of extraModules
                 extraModules = lib.concatLists values;
                 # We recursively merge the specialArgs
-                extraSpecialArgs = lib.recursiveMerge values;
+                specialArgs = lib.recursiveMerge values;
               }
               .${name} or (throw "Unsupported attribute in hostOverrides: ${name}")
             )
