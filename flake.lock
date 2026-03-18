@@ -417,16 +417,15 @@
         "userborn": "userborn"
       },
       "locked": {
-        "lastModified": 1773696629,
-        "narHash": "sha256-87R5rK2q75N/MQ+CiX+IcY3OytExMhArs1QKaCisXOA=",
+        "lastModified": 1773827232,
+        "narHash": "sha256-7oAUEjTDc7tgNYbaxrPTqJsq1CCh1hObkW8orBcvZNM=",
         "owner": "numtide",
         "repo": "system-manager",
-        "rev": "63cb9af87f5ea6791939715c55dcd063e4d95bc3",
+        "rev": "617183f535579e431803403063182c040e2685d2",
         "type": "github"
       },
       "original": {
         "owner": "numtide",
-        "ref": "ssh-knownhost",
         "repo": "system-manager",
         "type": "github"
       }
