@@ -57,7 +57,7 @@ in
         machine = {
           imports = [
             ./org-config/hosts/benuc004.nix
-            { _module.args = { inherit (pkgs.lib) allHosts; }; }
+            { _module.args = { inherit (pkgs.lib) allNixOSHosts; }; }
           ]
           ++ defaultModules;
           services.timesyncd.enable = mkForce false;

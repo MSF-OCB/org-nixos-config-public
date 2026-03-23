@@ -72,6 +72,9 @@
       url = "github:nix-community/nix-github-actions";
       inputs.nixpkgs.follows = "nixpkgs-latest";
     };
+    system-manager = {
+      url = "github:numtide/system-manager";
+    };
   };
 
   outputs =
@@ -104,7 +107,7 @@
             inherit hostname;
           }
         ))
-          lib.allHosts;
+          lib.allNixOSHosts;
 
       treefmt-config = {
         projectRootFile = "flake.nix";
@@ -200,6 +203,10 @@
         )
       ];
 
+      nixosModules.defaultUbuntu = [
+        ./modules/defaultUbuntu.nix
+      ];
+
       nixosConfigurations =
         let
           # The arguments to the evalHost function can be overridden here
@@ -213,11 +220,26 @@
             hostConfigFunction {
               inherit hostname;
             }
-          ) lib.allHosts;
+          ) lib.allNixOSHosts;
         in
         lib.mkNixosConfigurations {
           inherit flakeInputs hosts hostOverrides;
           defaultModules = self.nixosModules.default;
+        };
+
+      systemConfigs =
+        let
+          hosts = lib.mapAttrs (
+            hostname: _:
+            hostConfigFunction {
+              inherit hostname;
+            }
+          ) lib.allUbuntuHosts;
+
+        in
+        lib.mkSystemManagerConfigurations {
+          inherit flakeInputs hosts;
+          defaultModules = self.nixosModules.defaultUbuntu;
         };
 
       packages = eachSystem (
@@ -414,6 +436,11 @@
           };
 
           vmTests = pkgs.callPackage ./tests/default.nix { };
+          containerTests = pkgs.callPackage ./tests/containers.nix {
+            inherit pkgs lib;
+            inputs = flakeInputs;
+            defaultUbuntuModules = self.nixosModules.defaultUbuntu;
+          };
         }
         // (import ./test.nix {
           qemu-common = import "${flakeInputs.nixpkgs-latest}/nixos/lib/qemu-common.nix" {

@@ -31,6 +31,9 @@
       },
       "demo-relay-1": {
         "enable_roles": ["extra_relay_access"]
+      },
+      "demo001": {
+        "enable_roles": ["devops"]
       }
     },
     "roles": {

@@ -8,6 +8,7 @@ in
   firstWave = stagingHosts ++ [
     "demo-test-host"
     "rescue-iso"
+    "demo001"
   ];
   middleWave = [
     "demo-uat-host"

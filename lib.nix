@@ -152,9 +152,47 @@ let
               (toHostPath hostname)
               {
                 # Pass the set of all host names as a module input
-                _module.args = { inherit allHosts; };
+                _module.args = { inherit allNixOSHosts; };
                 # Set nixpkgs.pkgs to avoid creating new nixpkgs instances
                 nixpkgs.pkgs = nixpkgs;
+              }
+            ]
+            ++ defaultModules
+            ++ extraModules;
+          }
+        );
+
+      evalSystemManagerHost =
+        defaultModules: flakeInputs:
+        # The arguments below can be overridden by the hostOverrides argument
+        {
+          hostname,
+          nixpkgs,
+          extraModules ? [ ],
+          specialArgs ? { },
+          ...
+        }:
+        let
+          traceInfo = compose [
+            # Trace the actual nixpkgs version used,
+            # since it may have been overridden by the hostOverrides
+            (lib.trace "Evaluating using nixpkgs version ${lib.versions.majorMinor nixpkgs.lib.version}")
+            (lib.trace "Evaluating config: ${hostname}")
+          ];
+        in
+        traceInfo (
+          flakeInputs.system-manager.lib.makeSystemConfig {
+            # The nixpkgs instance passed down here has potentially been overridden by the host override
+            specialArgs = {
+              inherit flakeInputs lib;
+            }
+            // specialArgs;
+            modules = [
+              (toHostPath ("ubuntu/" + hostname))
+              {
+                # Pass the set of all host names as a module input
+                _module.args = { inherit allUbuntuHosts; };
+                nixpkgs.hostPlatform = "x86_64-linux";
               }
             ]
             ++ defaultModules
@@ -204,7 +242,7 @@ let
                 # We concatenate the two lists of extraModules
                 extraModules = lib.concatLists values;
                 # We recursively merge the specialArgs
-                extraSpecialArgs = lib.recursiveMerge values;
+                specialArgs = lib.recursiveMerge values;
               }
               .${name} or (throw "Unsupported attribute in hostOverrides: ${name}")
             )
@@ -212,17 +250,75 @@ let
         in
         evalHosts hostDefinitions;
 
-      allHosts = compose [
-        (lib.mapAttrs' (
-          name: _:
-          let
-            host = lib.removeSuffix ".nix" name;
-          in
-          lib.nameValuePair host host
-        ))
-        (lib.filterAttrs (name: type: type == "regular" && lib.hasSuffix ".nix" name))
-        builtins.readDir
-      ] ./org-config/hosts;
+      # Construct the set of systemManager configs, adding the given additional host overrides
+      mkSystemManagerConfigurations =
+        {
+          hosts,
+          defaultModules,
+          flakeInputs,
+          hostOverrides ? { },
+        }:
+        let
+          # Generate an attrset containing one attribute per host
+          evalHosts = lib.mapAttrs (
+            hostname: args: evalSystemManagerHost defaultModules flakeInputs ({ inherit hostname; } // args)
+          );
+
+          # Merge in the set of overrides. We need to make sure that the hostOverrides
+          # do not override what was passed in from the host-config, so we need
+          # to merge values one level deep into the attrset.
+          # If this logic becomes any more complex, we might be better off doing
+          # a module system eval to take care of the merging.
+          # We map over the set of hosts, and for every host we check if there is
+          # a corresponding entry in the hostOverrides set.
+          # If there is, then we zip both of them together with our merge function.
+          hostDefinitions = lib.flip lib.mapAttrs hosts (
+            hostname: config:
+            let
+              # We pass the original config as an argument to the override function
+              # so that the overrides can use for instance the system that was
+              # configured for the host in question.
+              hostOverride = (hostOverrides.${hostname} or (lib.const { })) config;
+            in
+            lib.flip lib.zipAttrsWith [ config hostOverride ] (
+              name: values:
+              {
+                # The value from hostOverrides always wins here, we cannot merge this
+                nixpkgs = lib.last values;
+                # The value from hostOverrides always wins here, we cannot merge this
+                hostname = lib.last values;
+                # The value from hostOverrides always wins here, we cannot merge this
+                system = lib.last values;
+                # We concatenate the two lists of extraModules
+                extraModules = lib.concatLists values;
+                # We recursively merge the specialArgs
+                specialArgs = lib.recursiveMerge values;
+              }
+              .${name} or (throw "Unsupported attribute in hostOverrides: ${name}")
+            )
+          );
+        in
+        evalHosts hostDefinitions;
+
+      listHosts =
+        path:
+        compose [
+          (lib.mapAttrs' (
+            name: _:
+            let
+              host = lib.removeSuffix ".nix" name;
+            in
+            lib.nameValuePair host host
+          ))
+          (lib.filterAttrs (name: type: type == "regular" && lib.hasSuffix ".nix" name))
+          builtins.readDir
+        ] path;
+
+      allUbuntuHosts = listHosts ./org-config/hosts/ubuntu;
+
+      allNixOSHosts = listHosts ./org-config/hosts;
+
+      allHosts = allUbuntuHosts // allNixOSHosts;
 
       # Slice a list up in equally-sized slices and return the requested one
       getSlice =
@@ -348,7 +444,10 @@ let
           toHostPath
           recursiveMerge
           allHosts
+          allNixOSHosts
+          allUbuntuHosts
           mkNixosConfigurations
+          mkSystemManagerConfigurations
           getSlice
           runNixOSTest
           ;
