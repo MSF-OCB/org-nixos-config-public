@@ -378,6 +378,7 @@
                 pkgs.jq
                 pkgs.xorriso
                 pkgs.nixfmt-rfc-style
+                pkgs.ansible
               ];
             env = [
               {
