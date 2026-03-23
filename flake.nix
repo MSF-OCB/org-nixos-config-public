@@ -185,6 +185,9 @@
                 _: v: v.config.nixpkgs.pkgs.stdenv.hostPlatform.system == system
               ) self.nixosConfigurations
             )
+          // lib.optionalAttrs (self.checks ? ${system}) {
+            inherit (self.checks.${system}) containerTests;
+          }
         );
       };
 

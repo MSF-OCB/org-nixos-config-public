@@ -289,6 +289,10 @@ jobs:
         uses: "cachix/install-nix-action@master"
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
+          system-features: kvm benchmark nixos-test uid-range
+          extra_nix_config: |
+            experimental-features = nix-command flakes auto-allocate-uids cgroups
+            auto-allocate-uids = true
 
       - name: Nix Build
         run: |
