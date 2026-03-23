@@ -41,6 +41,11 @@
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIo+ulCUfJjnCVgfM4946Ih5Nm8DeZZiayYeABHGPEl7"
       ]
     },
+    "picnoir": {
+      "public_keys": [
+        "sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIEPPocCK4JCbFWshVHMgICOm61LC6V2JAXThzKjXv7TSAAAABHNzaDo="
+      ]
+    },
     "akechishiro": {
       "public_keys": [
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICRDM7fyeGRgYzuW+falRZayYSf5xMwj2d2PI9vSyjOD"

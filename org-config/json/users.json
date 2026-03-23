@@ -50,7 +50,8 @@
       "extra_relay_access": {
         "enable": {
           "doctor_fictional": "dockerAdmin",
-          "jfroche": "admin"
+          "jfroche": "admin",
+          "picnoir": "admin"
         }
       },
       "devops": {
@@ -64,6 +65,7 @@
           "sohel_sarder": "admin",
           "brian": "admin",
           "jfroche": "admin",
+          "picnoir": "admin",
           "akechishiro": "admin",
           "felipe": "admin",
           "marton": "admin",
