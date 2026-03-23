@@ -18,6 +18,7 @@
     ./server-lock.nix
     ./reverse-tunnel.nix
     ./sshd.nix
+    ./sudo.nix
     ./swap.nix
     ./system.nix
     ./syno_vm.nix
