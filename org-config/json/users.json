@@ -49,7 +49,8 @@
       },
       "extra_relay_access": {
         "enable": {
-          "doctor_fictional": "dockerAdmin"
+          "doctor_fictional": "dockerAdmin",
+          "jfroche": "admin"
         }
       },
       "devops": {
