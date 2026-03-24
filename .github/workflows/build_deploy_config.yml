@@ -296,7 +296,7 @@ jobs:
 
       - name: Nix Build
         run: |
-          nix build -L '.#${{ matrix.attr }}'
+          nix build --accept-flake-config -L '.#${{ matrix.attr }}'
 
   build-installation-images:
     needs: nix-build
