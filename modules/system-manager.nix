@@ -63,7 +63,6 @@
     # https://github.com/numtide/system-manager/issues/415
     users.users.tunnel = lib.mkIf config.settings.reverse_tunnel.enable {
       shell = lib.mkForce "/usr/sbin/nologin";
-      extraGroups = [ "ssh-group" ];
     };
     users.users.tunneller = lib.mkIf config.settings.reverse_tunnel.relay.enable {
       shell = lib.mkForce "/usr/sbin/nologin";
