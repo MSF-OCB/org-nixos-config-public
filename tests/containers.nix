@@ -7,6 +7,54 @@
 }:
 let
   ubuntuTests = {
+    reverseTunnel =
+      let
+        toplevel = inputs.system-manager.lib.makeSystemConfig {
+          modules = [
+            ../org-config/hosts/ubuntu/demo001.nix
+            (
+              { lib, ... }:
+              {
+                settings.reverse_tunnel = {
+                  enable = true;
+                  tunnels = {
+                    demo001 = {
+                      name = "demo001";
+                      remote_forward_port = 2222;
+                      public_key = "";
+                    };
+                  };
+                };
+                #
+                users.users.tunnel.shell = lib.mkForce "/bin/nologin";
+              }
+            )
+          ]
+          ++ defaultUbuntuModules;
+          specialArgs = {
+            inherit lib;
+            flakeInputs = inputs;
+          };
+        };
+      in
+      inputs.system-manager.lib.containerTest.makeContainerTest {
+        hostPkgs = pkgs;
+        name = "reverse-tunnel-test";
+        inherit toplevel;
+        skipTypeCheck = true;
+        extraPathsToRegister = [ toplevel ];
+        testScript = ''
+          start_all()
+          demo001.wait_for_unit("multi-user.target")
+
+          activation_logs = machine.activate()
+          for line in activation_logs.split("\n"):
+              assert "ERROR" not in line, f"Activation error: {line}"
+
+          machine.wait_for_unit("system-manager.target")
+
+        '';
+      };
     demo001 =
       let
         toplevel = inputs.system-manager.lib.makeSystemConfig {

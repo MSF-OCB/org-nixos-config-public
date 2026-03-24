@@ -14,12 +14,6 @@
       default = "";
     };
 
-    # Stub for NixOS services.openssh.ports (from nixos/modules/services/networking/ssh/sshd.nix)
-    services.openssh.ports = lib.mkOption {
-      type = lib.types.listOf lib.types.port;
-      default = [ 22 ];
-    };
-
     # From modules/network.nix
     settings.network.host_name = lib.mkOption {
       type = lib.types.host_name_type;
@@ -41,23 +35,12 @@
       default = { };
     };
 
-    # Extend user submodule with openssh.authorizedKeys (normally from sshd.nix)
-    users.users = lib.mkOption {
-      type = lib.types.attrsOf (
-        lib.types.submodule {
-          options.openssh.authorizedKeys = {
-            keys = lib.mkOption {
-              type = lib.types.listOf lib.types.str;
-              default = [ ];
-            };
-            keyFiles = lib.mkOption {
-              type = lib.types.listOf lib.types.path;
-              default = [ ];
-            };
-          };
-        }
-      );
+    services.openssh.startWhenNeeded = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
     };
+
+    networking.nftables.enable = lib.mkEnableOption "Mocked nftables";
   };
 
   config = {
@@ -74,5 +57,26 @@
     environment.etc."nix/nix.conf".replaceExisting = true;
 
     programs.ssh.enable = true;
+
+    # Overriding the upstream module. System-manager do not support
+    # setuid binaries for now. See
+    # https://github.com/numtide/system-manager/issues/415
+    users.users.tunnel = lib.mkIf config.settings.reverse_tunnel.enable {
+      shell = lib.mkForce "/usr/sbin/nologin";
+      extraGroups = [ "ssh-group" ];
+    };
+    users.users.tunneller = lib.mkIf config.settings.reverse_tunnel.relay.enable {
+      shell = lib.mkForce "/usr/sbin/nologin";
+    };
+    # systemd-manager disables sshd and use its own
+    # ssh-system-manager.service instead. There's no need for the
+    # sshd socket.
+    systemd.sockets.sshd.enable = false;
+    systemd.services = lib.mapAttrs' (
+      _: relay:
+      lib.nameValuePair "autossh-reverse-tunnel-${relay.name}" {
+        after = [ "ssh-system-manager.service" ];
+      }
+    ) config.settings.reverse_tunnel.relay_servers;
   };
 }
