@@ -69,5 +69,10 @@
     # Override users.mutableUsers set by users.nix (false is for NixOS,
     # system-manager on Ubuntu should keep users mutable)
     users.mutableUsers = lib.mkForce true;
+
+    nix.enable = true;
+    environment.etc."nix/nix.conf".replaceExisting = true;
+
+    programs.ssh.enable = true;
   };
 }
