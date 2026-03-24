@@ -387,6 +387,7 @@
                 pkgs.xorriso
                 pkgs.nixfmt-rfc-style
                 pkgs.ansible
+                flakeInputs.system-manager.packages.${system}.default
               ];
             env = [
               {
