@@ -247,9 +247,6 @@
         in
         lib.mkSystemManagerConfigurations {
           inherit flakeInputs hosts;
-          extraArgs = {
-            inherit flakeInputs;
-          };
           defaultModules = self.nixosModules.defaultUbuntu;
         };
 
