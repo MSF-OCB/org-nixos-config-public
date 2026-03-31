@@ -4,7 +4,7 @@
 set -euo pipefail
 shopt -s extglob globstar nullglob
 
-script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+script_dir="$(dirname "$(realpath "$0")")"
 readonly script_dir
 # shellcheck source=scripts/install-lib.sh
 source "${script_dir}/scripts/install-lib.sh"
