@@ -144,6 +144,7 @@
           formatter = {
             # control the order in which nix formatters/linters are applied to ensure a correct and consistent outcome
             deadnix.priority = 1;
+            shellcheck.options = [ "-x" ];
             statix.priority = 2;
             nixfmt.priority = 3;
 
