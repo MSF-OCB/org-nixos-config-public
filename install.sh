@@ -69,9 +69,6 @@ else
     "${username}@${sshname}"
 fi
 
-# Don't leave the private key behind on this machine
-rm -rf "${extra_files}/var/lib/org-nix/id_tunnel"
-
 update_tunnels_json
 
 echo

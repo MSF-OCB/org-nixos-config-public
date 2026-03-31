@@ -53,17 +53,11 @@ ssh "${ssh_opts[@]}" "${ssh_target}" "sudo mkdir -p /var/lib/org-nix && sudo cho
 scp "${scp_opts[@]}" "${extra_files}/var/lib/org-nix/id_tunnel" "${ssh_target}:/tmp/id_tunnel"
 ssh "${ssh_opts[@]}" "${ssh_target}" "sudo mv /tmp/id_tunnel /var/lib/org-nix/id_tunnel && sudo chown root:root /var/lib/org-nix/id_tunnel && sudo chmod 600 /var/lib/org-nix/id_tunnel"
 
-# Don't leave the private key behind on this machine
-rm -f "${extra_files}/var/lib/org-nix/id_tunnel"
-
 echo
 echo "Deploying system-manager configuration for '${hostname}'..."
 system-manager switch --flake ".#${hostname}" --target-host "${ssh_target}"
 
 update_tunnels_json
-
-# Clean up remaining files
-rm -rf "${extra_files}"
 
 echo
 echo "All done"

@@ -132,6 +132,7 @@ function generate_tunnel_key() {
   # Generate a new tunnel key and have nixos-anywhere upload it to the new root fs
   extra_files="$(mktemp --directory --tmpdir -t extra_files.XXXXXXXX)"
   readonly extra_files
+  trap 'rm -rf "${extra_files}"' EXIT
   mkdir --parents "${extra_files}/var/lib/org-nix/"
   ssh-keygen -t ed25519 -C "" -N "" -f "${extra_files}/var/lib/org-nix/id_tunnel"
 }
