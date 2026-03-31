@@ -1,5 +1,7 @@
 # shellcheck shell=bash
 
+umask 077
+
 function print_usage() {
   echo "Usage:"
   echo "./$(basename "${0}") -H <hostname of target> -u <SSH username> -s <SSH name> [-p <SSH port>] [-r] [-S]"
