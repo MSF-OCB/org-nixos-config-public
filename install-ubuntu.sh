@@ -24,13 +24,12 @@ if [[ ! -f "${script_dir}/org-config/hosts/ubuntu/${hostname}.nix" ]]; then
 fi
 echo "Done"
 
-# Build SSH options (scp uses -P for port, ssh uses -p)
+# Build SSH options
 ssh_common_opts=(-o "StrictHostKeyChecking=accept-new")
 if ((userelay)); then
   ssh_common_opts+=(-o "ProxyJump=${relaySshProxyJump}")
 fi
 ssh_opts=("${ssh_common_opts[@]}" -p "${sshport}")
-scp_opts=("${ssh_common_opts[@]}" -P "${sshport}")
 
 ssh_target="${username}@${sshname}"
 
@@ -50,7 +49,7 @@ fi
 echo
 echo "Uploading tunnel key to ${ssh_target}..."
 ssh "${ssh_opts[@]}" "${ssh_target}" "sudo mkdir -p /var/lib/org-nix && sudo chown root:root /var/lib/org-nix && sudo chmod 755 /var/lib/org-nix"
-scp "${scp_opts[@]}" "${extra_files}/var/lib/org-nix/id_tunnel" "${ssh_target}:/tmp/id_tunnel"
+ssh "${ssh_opts[@]}" "${ssh_target}" "cat > /tmp/id_tunnel" <"${extra_files}/var/lib/org-nix/id_tunnel"
 ssh "${ssh_opts[@]}" "${ssh_target}" "sudo mv /tmp/id_tunnel /var/lib/org-nix/id_tunnel && sudo chown root:root /var/lib/org-nix/id_tunnel && sudo chmod 600 /var/lib/org-nix/id_tunnel"
 
 echo
