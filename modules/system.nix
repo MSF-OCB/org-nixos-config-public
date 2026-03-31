@@ -84,10 +84,6 @@ in
     powerManagement.cpuFreqGovernor = lib.mkOverride 75 "schedutil";
 
     security = {
-      sudo = {
-        enable = true;
-        wheelNeedsPassword = false;
-      };
       pam.services.su.forwardXAuth = lib.mkForce false;
     };
 

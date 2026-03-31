@@ -1,4 +1,9 @@
 {
+  nixConfig = {
+    extra-substituters = [ "https://cache.numtide.com" ];
+    extra-trusted-public-keys = [ "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g=" ];
+  };
+
   inputs = {
     systems.url = "github:nix-systems/x86_64-linux";
 
@@ -185,6 +190,9 @@
                 _: v: v.config.nixpkgs.pkgs.stdenv.hostPlatform.system == system
               ) self.nixosConfigurations
             )
+          // lib.optionalAttrs (self.checks ? ${system}) {
+            inherit (self.checks.${system}) containerTests;
+          }
         );
       };
 
@@ -375,6 +383,7 @@
                 pkgs.jq
                 pkgs.xorriso
                 pkgs.nixfmt-rfc-style
+                pkgs.ansible
               ];
             env = [
               {
