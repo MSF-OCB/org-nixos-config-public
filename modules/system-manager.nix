@@ -25,11 +25,6 @@
       default = { };
     };
 
-    settings.maintenance = lib.mkOption {
-      type = lib.types.attrsOf lib.types.raw;
-      default = { };
-    };
-
     settings.services.traefik = lib.mkOption {
       type = lib.types.attrsOf lib.types.raw;
       default = { };

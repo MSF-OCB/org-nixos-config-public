@@ -1,12 +1,14 @@
 {
   lib,
   config,
+  options,
   pkgs,
   ...
 }:
 
 let
   cfg = config.settings.maintenance;
+  isSystemManager = options ? system-manager;
 in
 
 {
@@ -63,37 +65,58 @@ in
   config = lib.mkIf cfg.enable {
     system.autoUpgrade = {
       inherit (cfg.nixos_upgrade) enable;
-      allowReboot = true;
-      rebootWindow = {
-        lower = "01:00";
-        upper = "05:00";
-      };
       flake =
         let
           repo = config.settings.maintenance.config_repo;
         in
         "${repo.url}?ref=${repo.branch}";
-      flags = [
-        "--refresh"
-        "--no-update-lock-file"
-        # We pull a remote repo into the nix store,
-        # so we cannot write the lock file.
-        "--no-write-lock-file"
-      ]
-      ++ lib.optionals (config.settings.boot.mode == config.settings.boot.modes.uefi) [
-        # While we're moving from grub to systemd-boot on uefi machines, we need
-        # to make sure to reinstall the bootloader to actually switch to the new
-        # bootloader.
-        # TODO: remove this once we have no more uefi machines using grub
-        "--install-bootloader"
-      ];
+      flags =
+        lib.optionals (!isSystemManager) [
+          "--refresh"
+          "--no-update-lock-file"
+          # We pull a remote repo into the nix store,
+          # so we cannot write the lock file.
+          "--no-write-lock-file"
+        ]
+        ++
+          lib.optionals (!isSystemManager && config.settings.boot.mode == config.settings.boot.modes.uefi)
+            [
+              # While we're moving from grub to systemd-boot on uefi machines, we need
+              # to make sure to reinstall the bootloader to actually switch to the new
+              # bootloader.
+              # TODO: remove this once we have no more uefi machines using grub
+              "--install-bootloader"
+            ]
+        ++ lib.optionals isSystemManager [
+          "--ssh-option"
+          "-F /etc/ssh/ssh_config"
+          "--ssh-option"
+          "-i ${config.settings.system.github_private_key}"
+          "--ssh-option"
+          "-o IdentitiesOnly=yes"
+          "--ssh-option"
+          "-o StrictHostKeyChecking=yes"
+        ];
+    }
+    // lib.optionalAttrs (!isSystemManager) {
+      allowReboot = true;
+      rebootWindow = {
+        lower = "01:00";
+        upper = "05:00";
+      };
       # We override this below, since this option does not accept
       # a list of multiple timings.
       dates = "";
+    }
+    // lib.optionalAttrs isSystemManager {
+      dates = lib.head cfg.nixos_upgrade.startAt;
+      randomizedDelaySec = "45min";
+      fixedRandomDelay = true;
+      persistent = true;
     };
 
     systemd.services = {
-      nixos-upgrade = lib.mkIf cfg.nixos_upgrade.enable {
+      nixos-upgrade = lib.mkIf (!isSystemManager && cfg.nixos_upgrade.enable) {
         wants = [ "tunnel-key-ready.target" ];
         # Set the SSH command for the GH authentication
         environment.GIT_SSH_COMMAND = lib.concatStringsSep " " [
@@ -110,12 +133,20 @@ in
       };
 
       # Dummy service to pull in nixos-upgrade until all usages have been migrated
-      nixos_rebuild_config = lib.mkIf cfg.nixos_upgrade.enable {
+      nixos_rebuild_config = lib.mkIf (!isSystemManager && cfg.nixos_upgrade.enable) {
         serviceConfig = {
           Type = "oneshot";
           ExecStart = "${lib.getBin pkgs.coreutils}/bin/true";
         };
         requires = [ "nixos-upgrade.service" ];
+      };
+
+      system-manager-upgrade = lib.mkIf (isSystemManager && cfg.nixos_upgrade.enable) {
+        wants = [ "tunnel-key-ready.target" ];
+        after = [ "tunnel-key-ready.target" ];
+        serviceConfig = {
+          TimeoutStartSec = "2 days";
+        };
       };
 
       docker_prune_timer = lib.mkIf cfg.docker_prune_timer.enable {
