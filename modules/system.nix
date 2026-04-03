@@ -8,7 +8,6 @@
 
 let
   cfg = config.settings.system;
-  tnl_cfg = config.settings.reverse_tunnel;
   tmux_term = "tmux-256color";
   is2505orlater =
     lib.versionAtLeast config.system.nixos.release "25.05"
@@ -57,12 +56,6 @@ in
 
     assertions = [
       {
-        assertion = lib.hasAttr config.networking.hostName tnl_cfg.tunnels;
-        message =
-          "This host's host name is not present in the tunnel config "
-          + "(${toString cfg.tunnels_json_dir_path}).";
-      }
-      {
         assertion = config.time.timeZone != null;
         message = "The time zone is not set for ${config.networking.hostName}, please set config.time.timeZone.";
       }
@@ -107,23 +100,6 @@ in
     };
 
     settings = {
-      reverse_tunnel = {
-        privateTunnelKey = {
-          path = config.settings.system.private_key;
-          group = config.users.groups.private-key-access.name;
-        };
-        relay = {
-          tunnel.extraGroups = [
-            config.settings.users.ssh-group
-            config.settings.users.rev-tunnel-group
-          ];
-          # The fwd-tunnel-group is required to be able to proxy through the relay
-          tunneller.extraGroups = [
-            config.settings.users.ssh-group
-            config.settings.users.fwd-tunnel-group
-          ];
-        };
-      };
       services.traefik = {
         extraEnvironmentFiles = [
           (cfg.secrets.dest_directory + config.settings.services.traefik.acme.dnsProvider)
@@ -131,12 +107,6 @@ in
         docker.swarm = {
           inherit (config.settings.docker.swarm) enable;
         };
-      };
-    };
-
-    users = {
-      groups = {
-        private-key-access = { };
       };
     };
 
@@ -197,416 +167,303 @@ in
         AllowSuspend=no
         AllowHibernation=no
       '';
-      services =
-        let
-          legacy_key_path = "/etc/nixos/local/id_tunnel";
-        in
-        {
-          set_opt_permissions = {
-            # See https://web.archive.org/web/20121022035645/http://vanemery.com/Linux/ACL/POSIX_ACL_on_Linux.html
-            enable = true;
-            description = "Set the ACLs on /opt.";
-            unitConfig = {
-              RequiresMountsFor = [ "/opt" ];
-            };
-            after = [ "local-fs.target" ];
-            wants = [ "local-fs.target" ];
-            serviceConfig = {
-              User = "root";
-              Type = "oneshot";
-              RemainAfterExit = true;
-            };
-            script =
-              let
-                containerd = "containerd";
-                # The X permission has no effect for default ACLs, it gets converted
-                # into a regular x.
-                # For all users except the file owner, the effective permissions are
-                # still subject to masking, and the default mask does not
-                # contain x for files.
-                # Therefore, in practice, only the file owner gains execute permissions
-                # on all files, and we do not need to worry too much.
-                # We could probably detect this situation and revoke the x permission
-                # from the ACLs on files, but this currently does not seem worth it,
-                # given the additional complexity that this would introduce in this
-                # script.
-                acl = lib.concatStringsSep "," (
-                  [
-                    "u::rwX"
-                    "user:root:rwX"
-                    "d:u::rwx"
-                    "d:g::r-x"
-                    "d:o::---"
-                    "d:user:root:rwx"
-                  ]
-                  ++ lib.concatMap (group: [
-                    "group:${group}:rwX"
-                    "d:group:${group}:rwx"
-                  ]) cfg.opt.allow_groups
-                );
-                # For /opt we use setfacl --set, so we need to define the full ACL
-                opt_acl = lib.concatStringsSep "," [
-                  "g::r-X"
-                  "o::---"
-                  acl
-                ];
-              in
-              ''
-                # Ensure that /opt actually exists
-                if [ ! -d "/opt" ]; then
-                  echo "/opt does not exist, exiting."
-                  exit 0
-                fi
-
-                # Root owns /opt, and we apply the ACL defined above
-                ${pkgs.coreutils}/bin/chown root:root      "/opt/"
-                ${pkgs.coreutils}/bin/chmod u=rwX,g=rwX,o= "/opt/"
-                ${pkgs.acl}/bin/setfacl \
-                  --set "${opt_acl}" \
-                  "/opt/"
-
-                # Special cases
-                if [ -d "/opt/${containerd}" ]; then
-                  ${pkgs.acl}/bin/setfacl --remove-all --remove-default "/opt/${containerd}"
-                  ${pkgs.coreutils}/bin/chown root:root     "/opt/${containerd}"
-                  ${pkgs.coreutils}/bin/chmod u=rwX,g=X,o=X "/opt/${containerd}"
-                fi
-
-                if [ -d "/opt/.docker" ]; then
-                  ${pkgs.acl}/bin/setfacl --remove-all --remove-default "/opt/.docker"
-                  ${pkgs.coreutils}/bin/chown root:root       "/opt/.docker"
-                  ${pkgs.coreutils}/bin/chmod u=rwX,g=rX,o=rX "/opt/.docker"
-                fi
-
-                if [ -d "/opt/.home" ]; then
-                  ${pkgs.acl}/bin/setfacl --remove-all --remove-default "/opt/.home"
-                  ${pkgs.coreutils}/bin/chown root:root       "/opt/.home"
-                  ${pkgs.coreutils}/bin/chmod u=rwX,g=rX,o=rX "/opt/.home"
-                fi
-
-                # We iterate over all directories that are not hidden,
-                # except containerd and lost+found.
-                # Prefix directories with a dot to exclude them.
-                # For each dir we set ownership to root:root and
-                # recursively apply the ACL defined above.
-                for dir in $(ls /opt/); do
-                  if [ -d "/opt/''${dir}" ] && \
-                     [ ! "${containerd}" = "''${dir}" ] && \
-                     [ ! "lost+found"    = "''${dir}" ]; then
-                    ${pkgs.coreutils}/bin/chown root:root      "/opt/''${dir}"
-                    ${pkgs.coreutils}/bin/chmod u=rwX,g=rwX,o= "/opt/''${dir}"
-                    ${pkgs.acl}/bin/setfacl \
-                      --recursive \
-                      --no-mask \
-                      --modify "${acl}" \
-                      "/opt/''${dir}"
-                  fi
-                done
-              '';
+      services = {
+        set_opt_permissions = {
+          # See https://web.archive.org/web/20121022035645/http://vanemery.com/Linux/ACL/POSIX_ACL_on_Linux.html
+          enable = true;
+          description = "Set the ACLs on /opt.";
+          unitConfig = {
+            RequiresMountsFor = [ "/opt" ];
           };
-          tunnel-key-permissions = {
-            enable = !cfg.isISO;
-            serviceConfig = {
-              Type = "oneshot";
-              RemainAfterExit = true;
-            };
-            unitConfig = {
-              RequiresMountsFor = [
-                "/run"
-                "/var/lib"
-              ];
-            };
-            script =
-              let
-                base_files = [
-                  cfg.private_key_source
-                  legacy_key_path
-                ];
-                files = lib.concatStringsSep " " (
-                  lib.unique (
-                    lib.concatMap (f: [
-                      f
-                      "${f}.pub"
-                    ]) base_files
-                  )
-                );
-              in
-              ''
-                for file in ${files}; do
-                  if [ -f ''${file} ]; then
-                    ${pkgs.coreutils}/bin/chown root:root ''${file}
-                    ${pkgs.coreutils}/bin/chmod 0400 ''${file}
-                  fi
-                done
-              '';
+          after = [ "local-fs.target" ];
+          wants = [ "local-fs.target" ];
+          serviceConfig = {
+            User = "root";
+            Type = "oneshot";
+            RemainAfterExit = true;
           };
-          move-legacy-tunnel-key = {
-            enable = !cfg.isISO;
-            wants = [ "tunnel-key-permissions.service" ];
-            after = [ "tunnel-key-permissions.service" ];
-            serviceConfig = {
-              Type = "oneshot";
-              RemainAfterExit = true;
-            };
-            unitConfig = {
-              RequiresMountsFor = [
-                "/run"
-                "/var/lib"
+          script =
+            let
+              containerd = "containerd";
+              # The X permission has no effect for default ACLs, it gets converted
+              # into a regular x.
+              # For all users except the file owner, the effective permissions are
+              # still subject to masking, and the default mask does not
+              # contain x for files.
+              # Therefore, in practice, only the file owner gains execute permissions
+              # on all files, and we do not need to worry too much.
+              # We could probably detect this situation and revoke the x permission
+              # from the ACLs on files, but this currently does not seem worth it,
+              # given the additional complexity that this would introduce in this
+              # script.
+              acl = lib.concatStringsSep "," (
+                [
+                  "u::rwX"
+                  "user:root:rwX"
+                  "d:u::rwx"
+                  "d:g::r-x"
+                  "d:o::---"
+                  "d:user:root:rwx"
+                ]
+                ++ lib.concatMap (group: [
+                  "group:${group}:rwX"
+                  "d:group:${group}:rwx"
+                ]) cfg.opt.allow_groups
+              );
+              # For /opt we use setfacl --set, so we need to define the full ACL
+              opt_acl = lib.concatStringsSep "," [
+                "g::r-X"
+                "o::---"
+                acl
               ];
-            };
-            script = ''
-              if [ ! -f "${cfg.private_key_source}" ] && [ -f "${legacy_key_path}" ]; then
-                echo -n "Moving the private key into the new location..."
-                mkdir --parent "$(dirname "${cfg.private_key_source}")"
-                cp "${legacy_key_path}" "${cfg.private_key_source}"
-                # TODO: enable this line
-                #rm --recursive --force /etc/nixos/
-                echo " done"
+            in
+            ''
+              # Ensure that /opt actually exists
+              if [ ! -d "/opt" ]; then
+                echo "/opt does not exist, exiting."
+                exit 0
               fi
-            '';
-          };
-          copy-tunnel-key = {
-            wants = [ "move-legacy-tunnel-key.service" ];
-            after = [ "move-legacy-tunnel-key.service" ];
-            serviceConfig = {
-              Type = "oneshot";
-              RemainAfterExit = true;
-            };
-            unitConfig = {
-              RequiresMountsFor = [
-                "/run"
-                "/var/lib"
-              ];
-            };
-            script =
-              let
-                install =
-                  {
-                    source,
-                    dest,
-                    perms,
-                  }:
-                  ''
-                    ${pkgs.coreutils}/bin/install \
-                      -o ${config.users.users.root.name} \
-                      -g ${config.users.groups.private-key-access.name} \
-                      -m ${perms} \
-                      "${source}" \
-                      "${dest}"
-                  '';
-              in
-              ''
-                if [ -f "${cfg.private_key_source}" ]; then
-                  ${install {
-                    source = cfg.private_key_source;
-                    dest = cfg.private_key;
-                    perms = "440";
-                  }}
-                  ${install {
-                    source = cfg.private_key_source;
-                    dest = cfg.github_private_key;
-                    perms = "400";
-                  }}
-                else
-                  echo "No private key found, ignoring!"
-                fi
-              '';
-          };
-          ap-uplink-check = lib.mkIf config.settings.services.accessPoint.enable {
-            enable = true;
-            description = "Detect uplink(s) and block AP when online";
-            wantedBy = [ "multi-user.target" ];
-            after = [ "network-online.target" ];
-            wants = [ "network-online.target" ];
-            serviceConfig = {
-              Type = "oneshot";
-            };
-            script = ''
-              set -euo pipefail
-              echo "Checking uplink interfaces..."
-              echo "IPv4 default: $(${pkgs.iproute2}/bin/ip -4 route show default || true)"
-              echo "IPv6 default: $(${pkgs.iproute2}/bin/ip -6 route show default || true)"
 
+              # Root owns /opt, and we apply the ACL defined above
+              ${pkgs.coreutils}/bin/chown root:root      "/opt/"
+              ${pkgs.coreutils}/bin/chmod u=rwX,g=rwX,o= "/opt/"
+              ${pkgs.acl}/bin/setfacl \
+                --set "${opt_acl}" \
+                "/opt/"
 
-              ALLOW="/run/ap-allow"
-              uplink_online="0"
+              # Special cases
+              if [ -d "/opt/${containerd}" ]; then
+                ${pkgs.acl}/bin/setfacl --remove-all --remove-default "/opt/${containerd}"
+                ${pkgs.coreutils}/bin/chown root:root     "/opt/${containerd}"
+                ${pkgs.coreutils}/bin/chmod u=rwX,g=X,o=X "/opt/${containerd}"
+              fi
 
-              #Check default route interface on All Interfaces
-              active_interface="$(${pkgs.iproute2}/bin/ip -4 route show default 2>/dev/null | ${pkgs.gawk}/bin/awk '{print $5}' | head -n1 || true)"
-              echo "Interface with Default Route: $active_interface"
+              if [ -d "/opt/.docker" ]; then
+                ${pkgs.acl}/bin/setfacl --remove-all --remove-default "/opt/.docker"
+                ${pkgs.coreutils}/bin/chown root:root       "/opt/.docker"
+                ${pkgs.coreutils}/bin/chmod u=rwX,g=rX,o=rX "/opt/.docker"
+              fi
 
-              for UPLINK in ${lib.escapeShellArgs config.settings.services.accessPoint.uplink_interfaces}; do
-                echo "Checking uplink interface $UPLINK is in the list of allowed uplinks..."
-                if [ -n "$active_interface" ] && [ "$active_interface" = "$UPLINK" ]; then
-                    echo "$UPLINK is active and has default route"
-                    uplink_online="1"
-                    break
+              if [ -d "/opt/.home" ]; then
+                ${pkgs.acl}/bin/setfacl --remove-all --remove-default "/opt/.home"
+                ${pkgs.coreutils}/bin/chown root:root       "/opt/.home"
+                ${pkgs.coreutils}/bin/chmod u=rwX,g=rX,o=rX "/opt/.home"
+              fi
+
+              # We iterate over all directories that are not hidden,
+              # except containerd and lost+found.
+              # Prefix directories with a dot to exclude them.
+              # For each dir we set ownership to root:root and
+              # recursively apply the ACL defined above.
+              for dir in $(ls /opt/); do
+                if [ -d "/opt/''${dir}" ] && \
+                   [ ! "${containerd}" = "''${dir}" ] && \
+                   [ ! "lost+found"    = "''${dir}" ]; then
+                  ${pkgs.coreutils}/bin/chown root:root      "/opt/''${dir}"
+                  ${pkgs.coreutils}/bin/chmod u=rwX,g=rwX,o= "/opt/''${dir}"
+                  ${pkgs.acl}/bin/setfacl \
+                    --recursive \
+                    --no-mask \
+                    --modify "${acl}" \
+                    "/opt/''${dir}"
                 fi
               done
+            '';
+        };
+        ap-uplink-check = lib.mkIf config.settings.services.accessPoint.enable {
+          enable = true;
+          description = "Detect uplink(s) and block AP when online";
+          wantedBy = [ "multi-user.target" ];
+          after = [ "network-online.target" ];
+          wants = [ "network-online.target" ];
+          serviceConfig = {
+            Type = "oneshot";
+          };
+          script = ''
+            set -euo pipefail
+            echo "Checking uplink interfaces..."
+            echo "IPv4 default: $(${pkgs.iproute2}/bin/ip -4 route show default || true)"
+            echo "IPv6 default: $(${pkgs.iproute2}/bin/ip -6 route show default || true)"
 
-              if [ "$uplink_online" = "1" ]; then
-                echo "Uplink is online, blocking AP from starting"
-                ${pkgs.coreutils}/bin/rm -f "$ALLOW"
-                ${pkgs.systemd}/bin/systemctl stop --no-block hostapd.service ap-iface-address.service || true
-              else
-                echo "No uplink online, allowing AP"
-                ${pkgs.coreutils}/bin/touch "$ALLOW"
-                ${pkgs.systemd}/bin/systemctl start --no-block ap-iface-address.service || true
+
+            ALLOW="/run/ap-allow"
+            uplink_online="0"
+
+            #Check default route interface on All Interfaces
+            active_interface="$(${pkgs.iproute2}/bin/ip -4 route show default 2>/dev/null | ${pkgs.gawk}/bin/awk '{print $5}' | head -n1 || true)"
+            echo "Interface with Default Route: $active_interface"
+
+            for UPLINK in ${lib.escapeShellArgs config.settings.services.accessPoint.uplink_interfaces}; do
+              echo "Checking uplink interface $UPLINK is in the list of allowed uplinks..."
+              if [ -n "$active_interface" ] && [ "$active_interface" = "$UPLINK" ]; then
+                  echo "$UPLINK is active and has default route"
+                  uplink_online="1"
+                  break
               fi
-            '';
+            done
 
+            if [ "$uplink_online" = "1" ]; then
+              echo "Uplink is online, blocking AP from starting"
+              ${pkgs.coreutils}/bin/rm -f "$ALLOW"
+              ${pkgs.systemd}/bin/systemctl stop --no-block hostapd.service ap-iface-address.service || true
+            else
+              echo "No uplink online, allowing AP"
+              ${pkgs.coreutils}/bin/touch "$ALLOW"
+              ${pkgs.systemd}/bin/systemctl start --no-block ap-iface-address.service || true
+            fi
+          '';
+
+        };
+        ap-iface-address = lib.mkIf config.settings.services.accessPoint.enable {
+          enable = true;
+          description = "Configure AP interface address";
+          wantedBy = [ "multi-user.target" ];
+          after = [ "ap-uplink-check.service" ];
+          wants = [ "ap-uplink-check.service" ];
+          unitConfig = {
+            ConditionPathExists = "/run/ap-allow";
+            StartLimitIntervalSec = 0;
           };
-          ap-iface-address = lib.mkIf config.settings.services.accessPoint.enable {
-            enable = true;
-            description = "Configure AP interface address";
-            wantedBy = [ "multi-user.target" ];
-            after = [ "ap-uplink-check.service" ];
-            wants = [ "ap-uplink-check.service" ];
-            unitConfig = {
-              ConditionPathExists = "/run/ap-allow";
-              StartLimitIntervalSec = 0;
-            };
-            serviceConfig = {
-              Type = "oneshot";
-              RemainAfterExit = true;
-              Restart = "on-failure";
-              RestartSec = 3;
-              TimeoutStartSec = 30;
-            };
-            script = ''
-              set -euo pipefail
-              echo "Configuring AP interface address..."
-              iface="${config.settings.services.accessPoint.interface}"
-              [ -d "/sys/class/net/$iface" ] || { echo "$iface missing" >&2; exit 1; }
-              ${pkgs.iproute2}/bin/ip link set "$iface" up || true
-              ${pkgs.iproute2}/bin/ip addr replace ${config.settings.services.accessPoint.dns}/24 dev "$iface"
-            '';
+          serviceConfig = {
+            Type = "oneshot";
+            RemainAfterExit = true;
+            Restart = "on-failure";
+            RestartSec = 3;
+            TimeoutStartSec = 30;
           };
-          hostapd = lib.mkIf config.settings.services.accessPoint.enable {
-            enable = true;
-            bindsTo = lib.mkForce [ ];
-            after = [ "ap-iface-address.service" ];
-            wants = [ "ap-iface-address.service" ];
-            unitConfig = {
-              ConditionPathExists = "/run/ap-allow";
-              StartLimitIntervalSec = 0;
-            };
-            serviceConfig = {
-              RestartSec = 3;
-              TimeoutStartSec = 300;
-            };
+          script = ''
+            set -euo pipefail
+            echo "Configuring AP interface address..."
+            iface="${config.settings.services.accessPoint.interface}"
+            [ -d "/sys/class/net/$iface" ] || { echo "$iface missing" >&2; exit 1; }
+            ${pkgs.iproute2}/bin/ip link set "$iface" up || true
+            ${pkgs.iproute2}/bin/ip addr replace ${config.settings.services.accessPoint.dns}/24 dev "$iface"
+          '';
+        };
+        hostapd = lib.mkIf config.settings.services.accessPoint.enable {
+          enable = true;
+          bindsTo = lib.mkForce [ ];
+          after = [ "ap-iface-address.service" ];
+          wants = [ "ap-iface-address.service" ];
+          unitConfig = {
+            ConditionPathExists = "/run/ap-allow";
+            StartLimitIntervalSec = 0;
           };
-          dnsmasq = lib.mkIf config.settings.services.accessPoint.enable {
-            enable = true;
-            after = [ "hostapd.service" ];
-            wants = [ "hostapd.service" ];
-            unitConfig = {
-              ConditionPathExists = "/run/ap-allow";
-            };
+          serviceConfig = {
+            RestartSec = 3;
+            TimeoutStartSec = 300;
           };
-          decrypt-secrets = {
-            inherit (cfg.secrets) enable;
-            wants = [ "tunnel-key-ready.target" ];
-            after = [ "tunnel-key-ready.target" ];
-            serviceConfig = {
-              Type = "oneshot";
-              RemainAfterExit = true;
-            };
-            unitConfig = {
-              RequiresMountsFor = [
-                "/run"
-                "/var/lib"
-              ];
-            };
-            script =
-              let
-                # We make an ACL with default permissions and add an extra rule
-                # for each group defined as having access
-                acl = lib.concatStringsSep "," (
-                  [ "u::rwX,g::r-X,o::---" ] ++ map (group: "group:${group}:rX") cfg.secrets.allow_groups
-                );
-                mkRemoveOldDir = dir: ''
-                  # Delete the old secrets dir which is not used anymore
-                  # We maintain it as a link for now for backwards compatibility,
-                  # so we test first whether it is still a directory
-                  if [ ! -L "${dir}" ]; then
-                    ${pkgs.coreutils}/bin/rm --one-file-system \
-                                             --recursive \
-                                             --force \
-                                             "${dir}"
-                  fi
-                '';
-              in
-              ''
-                echo "decrypting the server secrets..."
-                ${lib.concatMapStringsSep "\n" mkRemoveOldDir cfg.secrets.old_dest_directories}
-                if [ -e "${cfg.secrets.dest_directory}" ]; then
+        };
+        dnsmasq = lib.mkIf config.settings.services.accessPoint.enable {
+          enable = true;
+          after = [ "hostapd.service" ];
+          wants = [ "hostapd.service" ];
+          unitConfig = {
+            ConditionPathExists = "/run/ap-allow";
+          };
+        };
+        decrypt-secrets = {
+          inherit (cfg.secrets) enable;
+          wants = [ "tunnel-key-ready.target" ];
+          after = [ "tunnel-key-ready.target" ];
+          serviceConfig = {
+            Type = "oneshot";
+            RemainAfterExit = true;
+          };
+          unitConfig = {
+            RequiresMountsFor = [
+              "/run"
+              "/var/lib"
+            ];
+          };
+          script =
+            let
+              # We make an ACL with default permissions and add an extra rule
+              # for each group defined as having access
+              acl = lib.concatStringsSep "," (
+                [ "u::rwX,g::r-X,o::---" ] ++ map (group: "group:${group}:rX") cfg.secrets.allow_groups
+              );
+              mkRemoveOldDir = dir: ''
+                # Delete the old secrets dir which is not used anymore
+                # We maintain it as a link for now for backwards compatibility,
+                # so we test first whether it is still a directory
+                if [ ! -L "${dir}" ]; then
                   ${pkgs.coreutils}/bin/rm --one-file-system \
                                            --recursive \
                                            --force \
-                                           "${cfg.secrets.dest_directory}"
+                                           "${dir}"
                 fi
-                ${pkgs.coreutils}/bin/mkdir --parent "${cfg.secrets.dest_directory}"
-
-                ${pkgs.ocb-nixostools}/bin/decrypt_server_secrets \
-                  --server_name "${config.settings.system.secrets.serverName}" \
-                  --secrets_path "${cfg.secrets.src_file}" \
-                  --output_path "${cfg.secrets.dest_directory}" \
-                  --private_key_file "${cfg.private_key}"
-
-                # The directory is owned by root
-                ${pkgs.coreutils}/bin/chown --recursive root:root "${cfg.secrets.dest_directory}"
-                ${pkgs.coreutils}/bin/chmod --recursive u=rwX,g=,o= "${cfg.secrets.dest_directory}"
-                # Use an ACL to give access to members of the wheel and docker groups
-                ${pkgs.acl}/bin/setfacl \
-                  --recursive \
-                  --set "${acl}" \
-                  "${cfg.secrets.dest_directory}"
-                echo "decrypted the server secrets"
               '';
-          };
-          extract-app-configs = {
-            serviceConfig = {
-              Type = "oneshot";
-              RemainAfterExit = true;
-            };
-            script =
-              let
-                # We make an ACL with default permissions and add an extra rule
-                # for each group defined as having access
-                acl = lib.concatStringsSep "," (
-                  [ "u::rwX,g::r-X,o::---" ] ++ map (group: "group:${group}:rX") cfg.app_configs.allow_groups
-                );
-              in
-              ''
-                echo "extracting the server configs..."
-                if [ -e "${cfg.app_configs.dest_directory}" ]; then
-                  ${pkgs.coreutils}/bin/rm --one-file-system \
-                                          --recursive \
-                                          --force \
-                                          "${cfg.app_configs.dest_directory}"
-                fi
-                ${pkgs.coreutils}/bin/mkdir --parent "${cfg.app_configs.dest_directory}"
+            in
+            ''
+              echo "decrypting the server secrets..."
+              ${lib.concatMapStringsSep "\n" mkRemoveOldDir cfg.secrets.old_dest_directories}
+              if [ -e "${cfg.secrets.dest_directory}" ]; then
+                ${pkgs.coreutils}/bin/rm --one-file-system \
+                                         --recursive \
+                                         --force \
+                                         "${cfg.secrets.dest_directory}"
+              fi
+              ${pkgs.coreutils}/bin/mkdir --parent "${cfg.secrets.dest_directory}"
 
-                ${pkgs.ocb-nixostools}/bin/extract_server_app_configs \
-                  --server_name "${config.networking.hostName}" \
-                  --configs_path "${cfg.app_configs.src_file}" \
-                  --output_path "${cfg.app_configs.dest_directory}"
+              ${pkgs.ocb-nixostools}/bin/decrypt_server_secrets \
+                --server_name "${config.settings.system.secrets.serverName}" \
+                --secrets_path "${cfg.secrets.src_file}" \
+                --output_path "${cfg.secrets.dest_directory}" \
+                --private_key_file "${cfg.private_key}"
 
-                # The directory is owned by root
-                ${pkgs.coreutils}/bin/chown --recursive root:root "${cfg.app_configs.dest_directory}"
-                ${pkgs.coreutils}/bin/chmod --recursive u=rwX,g=,o= "${cfg.app_configs.dest_directory}"
-                # Use an ACL to give access to members of the wheel and docker groups
-                ${pkgs.acl}/bin/setfacl \
-                  --recursive \
-                  --set "${acl}" \
-                  "${cfg.app_configs.dest_directory}"
-                echo "extracted the server configs"
-              '';
-          };
+              # The directory is owned by root
+              ${pkgs.coreutils}/bin/chown --recursive root:root "${cfg.secrets.dest_directory}"
+              ${pkgs.coreutils}/bin/chmod --recursive u=rwX,g=,o= "${cfg.secrets.dest_directory}"
+              # Use an ACL to give access to members of the wheel and docker groups
+              ${pkgs.acl}/bin/setfacl \
+                --recursive \
+                --set "${acl}" \
+                "${cfg.secrets.dest_directory}"
+              echo "decrypted the server secrets"
+            '';
         };
+        extract-app-configs = {
+          serviceConfig = {
+            Type = "oneshot";
+            RemainAfterExit = true;
+          };
+          script =
+            let
+              # We make an ACL with default permissions and add an extra rule
+              # for each group defined as having access
+              acl = lib.concatStringsSep "," (
+                [ "u::rwX,g::r-X,o::---" ] ++ map (group: "group:${group}:rX") cfg.app_configs.allow_groups
+              );
+            in
+            ''
+              echo "extracting the server configs..."
+              if [ -e "${cfg.app_configs.dest_directory}" ]; then
+                ${pkgs.coreutils}/bin/rm --one-file-system \
+                                        --recursive \
+                                        --force \
+                                        "${cfg.app_configs.dest_directory}"
+              fi
+              ${pkgs.coreutils}/bin/mkdir --parent "${cfg.app_configs.dest_directory}"
+
+              ${pkgs.ocb-nixostools}/bin/extract_server_app_configs \
+                --server_name "${config.networking.hostName}" \
+                --configs_path "${cfg.app_configs.src_file}" \
+                --output_path "${cfg.app_configs.dest_directory}"
+
+              # The directory is owned by root
+              ${pkgs.coreutils}/bin/chown --recursive root:root "${cfg.app_configs.dest_directory}"
+              ${pkgs.coreutils}/bin/chmod --recursive u=rwX,g=,o= "${cfg.app_configs.dest_directory}"
+              # Use an ACL to give access to members of the wheel and docker groups
+              ${pkgs.acl}/bin/setfacl \
+                --recursive \
+                --set "${acl}" \
+                "${cfg.app_configs.dest_directory}"
+              echo "extracted the server configs"
+            '';
+        };
+      };
       targets = {
-        tunnel-key-ready.wants = [ "copy-tunnel-key.service" ];
         crypto-mounts-ready = { };
         pre-application-setup.wants = [
           "secrets-ready.target"
