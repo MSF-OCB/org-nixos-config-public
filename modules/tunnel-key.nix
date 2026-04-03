@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  options,
   pkgs,
   ...
 }:
@@ -8,6 +9,7 @@
 let
   cfg = config.settings.system;
   tnl_cfg = config.settings.reverse_tunnel;
+  isSystemManager = options ? system-manager;
 in
 
 {
@@ -83,7 +85,7 @@ in
                 done
               '';
           };
-          move-legacy-tunnel-key = {
+          move-legacy-tunnel-key = lib.mkIf (!isSystemManager) {
             enable = !cfg.isISO;
             wants = [ "tunnel-key-permissions.service" ];
             after = [ "tunnel-key-permissions.service" ];
