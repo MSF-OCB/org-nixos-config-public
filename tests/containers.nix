@@ -45,13 +45,13 @@ let
                   tunnels = {
                     test001 = {
                       name = "tunnel";
-                      public_key = tunnel.publicKey;
+                      public_key = lib.mkForce tunnel.publicKey;
                       # In production we have a very long connect timeout because we have
                       # networks with very high latency.
                       # This makes the test horribly slow though, so we use a very short
                       # timeout here.
                       connectTimeout = 1;
-                      remote_forward_port = 2323;
+                      remote_forward_port = lib.mkForce 2323;
                       reverse_tunnels.ssh = {
                         forwarded_port = 22;
                         prefix = 0;
