@@ -8,8 +8,9 @@
     ./org.nix
     ./org_users.nix
     ./reverse-tunnel.nix
-    ./sudo.nix
     ./sshd.nix
+    ./sudo.nix
+    ./tunnel-key.nix
     ./system-manager.nix
     ./system-options.nix
     ./users.nix

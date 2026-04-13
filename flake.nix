@@ -144,6 +144,7 @@
           formatter = {
             # control the order in which nix formatters/linters are applied to ensure a correct and consistent outcome
             deadnix.priority = 1;
+            shellcheck.options = [ "-x" ];
             statix.priority = 2;
             nixfmt.priority = 3;
 
@@ -247,9 +248,6 @@
         in
         lib.mkSystemManagerConfigurations {
           inherit flakeInputs hosts;
-          extraArgs = {
-            inherit flakeInputs;
-          };
           defaultModules = self.nixosModules.defaultUbuntu;
         };
 
@@ -387,6 +385,7 @@
                 pkgs.xorriso
                 pkgs.nixfmt-rfc-style
                 pkgs.ansible
+                flakeInputs.system-manager.packages.${system}.default
               ];
             env = [
               {

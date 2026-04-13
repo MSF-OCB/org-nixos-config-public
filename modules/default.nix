@@ -20,6 +20,7 @@
     ./sshd.nix
     ./sudo.nix
     ./swap.nix
+    ./tunnel-key.nix
     ./system.nix
     ./syno_vm.nix
     ./traefik.nix
