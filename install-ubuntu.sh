@@ -31,6 +31,12 @@ if ((userelay)); then
 fi
 ssh_opts=("${ssh_common_opts[@]}" -p "${sshport}")
 
+# Build --ssh-option flags for system-manager from ssh_opts
+sm_ssh_opts=()
+for opt in "${ssh_opts[@]}"; do
+  sm_ssh_opts+=(--ssh-option "${opt}")
+done
+
 ssh_target="${username}@${sshname}"
 
 generate_tunnel_key
@@ -54,7 +60,7 @@ ssh "${ssh_opts[@]}" "${ssh_target}" "sudo mv /tmp/id_tunnel /var/lib/org-nix/id
 
 echo
 echo "Deploying system-manager configuration for '${hostname}'..."
-system-manager switch --flake ".#${hostname}" --target-host "${ssh_target}"
+system-manager switch --flake ".#${hostname}" --target-host "${ssh_target}" "${sm_ssh_opts[@]}"
 
 update_tunnels_json
 
