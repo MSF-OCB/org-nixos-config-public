@@ -34,14 +34,9 @@ let
                     type = "ed25519";
                   }
                 ];
-                users.groups.ssh-users = { };
 
                 settings.reverse_tunnel = {
                   enable = true;
-                  privateTunnelKey = {
-                    group = "ssh-users";
-                    path = "${tunnel.privateKey}";
-                  };
                   tunnels = {
                     test001 = {
                       name = "tunnel";
@@ -101,7 +96,11 @@ let
           # For some reason, the ubuntu image is lacking the ssh host key.
           # It's generated as a postinstall hook, so let's run it again.
           machine.succeed("dpkg-reconfigure openssh-server")
-          # Configure by ubuntu. Will mess up with autossh.
+
+          # Provision the tunnel private key where tunnel-key-ready.target expects it
+          machine.succeed("mkdir -p /var/lib/org-nix")
+          machine.succeed("cp ${tunnel.privateKey} /var/lib/org-nix/id_tunnel")
+          machine.succeed("chmod 600 /var/lib/org-nix/id_tunnel")
 
           activation_logs = machine.activate()
           for line in activation_logs.split("\n"):
