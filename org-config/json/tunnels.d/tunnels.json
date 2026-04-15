@@ -47,7 +47,7 @@
       },
       "demo002": {
         "remote_forward_port": 2007,
-        "public_key": ""
+        "public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL1Xg6tp78u2Sq8Y2QFyuonAThJbp6wfe1nXrtHaY5xt"
       },
       "demo-relay-1": {
         "remote_forward_port": 0,
