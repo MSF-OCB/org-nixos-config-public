@@ -34,6 +34,9 @@
       },
       "demo001": {
         "enable_roles": ["devops"]
+      },
+      "demo002": {
+        "enable_roles": ["devops"]
       }
     },
     "roles": {
@@ -81,10 +84,6 @@
       "dhis2_support": {
         "enable_roles": ["devops"]
       }
-    },
-    "expires": {
-      "ian_sollars": "2024-12-25",
-      "sohel_sarder": "2025-09-25"
     }
   }
 }
