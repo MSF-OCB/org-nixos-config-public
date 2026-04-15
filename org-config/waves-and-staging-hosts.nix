@@ -9,6 +9,7 @@ in
     "demo-test-host"
     "rescue-iso"
     "demo001"
+    "demo002"
   ];
   middleWave = [
     "demo-uat-host"
