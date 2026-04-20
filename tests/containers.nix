@@ -119,6 +119,110 @@ let
           assert "tunnel@localhost: Permission denied (publickey)" in res.stdout, "autossh does not seem to be exposing 2323"
         '';
       };
+    zabbixSetup =
+      let
+        toplevel = inputs.system-manager.lib.makeSystemConfig {
+          modules = [
+            ../org-config/hosts/ubuntu/demo001.nix
+            "${inputs.nixpkgs-latest}/nixos/modules/services/monitoring/zabbix-server.nix"
+            "${inputs.nixpkgs-latest}/nixos/modules/services/databases/postgresql.nix"
+            zabbixServerModule
+          ]
+          ++ defaultUbuntuModules;
+          specialArgs = {
+            inherit lib;
+            flakeInputs = inputs;
+          };
+        };
+        zabbixServerModule =
+          { lib, ... }:
+          {
+            # Mocking a few options missing from system-manager to get a zabbix-server to run.
+            # Note: this is not a proper port of the zabbix-server nixpkgs module. We're porting just enough
+            # stuff to test the zabbix agent setup.
+            options = {
+              services.mysql.enable = lib.mkEnableOption "mocked-mysql";
+              services.zabbixWeb.enable = lib.mkEnableOption "mocked-zabbixweb";
+              system.stateVersion = lib.mkOption {
+                type = lib.types.str;
+              };
+            };
+            config = {
+              system.stateVersion = "25.11";
+              # Using the default postgres + nginx setup automagically set up by the
+              # nixpkgs module.
+              services.zabbixServer = {
+                enable = true;
+              };
+              # The nginx + phpfpm + postgres stack takes a while to start. Adding a dependency
+              # to make sure the server is properly booted and  the agent is be able to connect
+              # at initialization without having to wait for the exponantially backed-off retry to be fired.
+              systemd.services.zabbix-agent.after = [ "zabbix-server.service" ];
+            };
+          };
+      in
+      inputs.system-manager.lib.containerTest.makeContainerTest {
+        hostPkgs = pkgs;
+        name = "zabbix";
+        inherit toplevel;
+        skipTypeCheck = true;
+        extraPathsToRegister = [ toplevel ];
+        testScript = ''
+          import time
+          start_all()
+          machine.wait_for_unit("multi-user.target")
+
+          activation_logs = machine.activate()
+          for line in activation_logs.split("\n"):
+              assert "ERROR" not in line, f"Activation error: {line}"
+
+          machine.wait_for_unit("system-manager.target")
+          machine.wait_for_unit("zabbix-server.service")
+          machine.wait_for_unit("zabbix-agent.service")
+
+          # Ok, bear with me on this one. Configuring zabbix-server without its UI
+          # is pretty hard. So, we won't be adding any checks for demo001 to the server.
+          # Instead, we'll just test the agent is polling the checks from the server and the server is
+          # failing to find these checks.
+
+          # Server test
+          machine.wait_for_open_port(10050)
+          # There's a race condition. Sometimes, the agent is faster than the server and won't connect on the first try :/
+          # Trying this out 20 times
+          serverConnected=False
+          i=0
+          while (not serverConnected) and (i < 20):
+            serverLogs=machine.succeed("journalctl -u zabbix-server.service")
+            for line in serverLogs.split("\n"):
+              if "cannot send list of active checks to \"127.0.0.1\": host [demo001] not found" in line:
+                serverConnected=True
+            if not serverConnected:
+              i+=1
+              time.sleep(2)
+              print("INFO: Can't find agent connection in server log line, retrying.")
+          agentLogs=machine.succeed("journalctl -u zabbix-agent.service")
+          assert serverConnected, "Can't find log line proving the server is connected to the agent in zabbix-server journald logs:\n {}\n\n".format(serverLogs)
+
+
+          # Agent test
+          agentConnected=False
+          # There's a race condition. Sometimes, the agent is faster than the server and won't connect on the first try :/
+          # Trying this out 20 times
+          i=0
+          while (not agentConnected) and (i < 20):
+            agentLogs=machine.succeed("journalctl -u zabbix-agent.service")
+            for line in agentLogs.split("\n"):
+               if "no active checks on server [localhost:10051]: host [demo001] not found" in line:
+                 agentConnected=True
+            if not agentConnected:
+              i += 1
+              time.sleep(2)
+              print("INFO: Can't find server connection in agent log line, retrying.")
+          serverLogs=machine.succeed("journalctl -u zabbix-server.service")
+          assert agentConnected, "Can't find log line proving the agent is connected to the server in zabbix-agent journald logs:\n {}\n\n\n{}".format(agentLogs, serverLogs)
+
+        '';
+      };
     demo001 =
       let
         toplevel = inputs.system-manager.lib.makeSystemConfig {
