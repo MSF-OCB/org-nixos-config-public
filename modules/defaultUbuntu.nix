@@ -3,6 +3,7 @@
   imports = [
     "${flakeInputs.nixpkgs-latest}/nixos/modules/services/misc/nix-gc.nix"
     "${flakeInputs.nixpkgs-latest}/nixos/modules/services/security/fail2ban.nix"
+    "${flakeInputs.nixpkgs-latest}/nixos/modules/services/monitoring/zabbix-agent.nix"
     "${flakeInputs.nixpkgs-latest}/nixos/modules/services/security/sshguard.nix"
     ./lib.nix
     ./load_json.nix
@@ -16,5 +17,6 @@
     ./system-manager.nix
     ./system-options.nix
     ./users.nix
+    ./zabbixagent.nix
   ];
 }
