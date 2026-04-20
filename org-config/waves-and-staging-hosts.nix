@@ -10,6 +10,7 @@ in
     "rescue-iso"
     "demo001"
     "demo002"
+    "demo003"
   ];
   middleWave = [
     "demo-uat-host"
