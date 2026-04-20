@@ -163,6 +163,24 @@ let
             for user in ["zimbatm", "ibrahim_balla", "sohel_sarder", "yves_de_voghel"]:
               assert user in wheel.members, f"User {user} should be in wheel group"
 
+          with subtest("auto-upgrade"):
+            timer_unit = demo001.file("/etc/systemd/system/system-manager-upgrade.timer")
+            assert timer_unit.exists, "system-manager-upgrade.timer unit should exist"
+            assert timer_unit.contains("OnCalendar=Tue 03:00"), "Timer should match configured schedule"
+
+            service_unit = demo001.file("/etc/systemd/system/system-manager-upgrade.service")
+            assert service_unit.exists, "system-manager-upgrade.service unit should exist"
+            exec_start_line = [l for l in service_unit.content_string.splitlines() if l.startswith("ExecStart=")][0]
+            script_path = exec_start_line.split("ExecStart=")[1].strip()
+            start_script = demo001.file(script_path)
+            assert start_script.exists, "Service start script should be readable"
+            assert start_script.contains("system-manager switch"), "Service should invoke system-manager switch"
+            assert start_script.contains("--flake git+ssh://git@github.com/MSF-OCB/org-nixos-config-public.git?ref=main"), "Service should reference the correct flake URL"
+            assert start_script.contains("--ssh-option -F /etc/ssh/ssh_config"), "Service should use host SSH config"
+            assert start_script.contains("--ssh-option -o IdentitiesOnly=yes"), "Service should enforce identity-only auth"
+            assert start_script.contains("--ssh-option -o StrictHostKeyChecking=yes"), "Service should enforce strict host key checking"
+            assert start_script.contains("--ssh-option -i"), "Service should specify the SSH private key"
+
           with subtest("ssh relay"):
             known_hosts = demo001.file("/etc/ssh/ssh_known_hosts")
             assert known_hosts.exists, "SSH known_hosts should exist"
