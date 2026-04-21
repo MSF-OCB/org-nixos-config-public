@@ -1,12 +1,14 @@
 { flakeInputs, ... }:
 {
   imports = [
+    "${flakeInputs.nixpkgs-latest}/nixos/modules/config/nix-flakes.nix"
     "${flakeInputs.nixpkgs-latest}/nixos/modules/services/misc/nix-gc.nix"
     "${flakeInputs.nixpkgs-latest}/nixos/modules/services/security/fail2ban.nix"
     "${flakeInputs.nixpkgs-latest}/nixos/modules/services/security/sshguard.nix"
     ./lib.nix
     ./load_json.nix
     ./maintenance.nix
+    ./nix.nix
     ./org.nix
     ./org_users.nix
     ./reverse-tunnel.nix

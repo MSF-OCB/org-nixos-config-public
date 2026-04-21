@@ -191,7 +191,11 @@ let
               (toHostPath ("ubuntu/" + hostname))
               {
                 # Pass the set of all host names as a module input
-                _module.args = { inherit allUbuntuHosts; };
+                # Override system-manager's nixpkgs import with the wave-selected pkgs
+                _module.args = {
+                  inherit allUbuntuHosts;
+                  pkgs = lib.mkForce nixpkgs;
+                };
                 nixpkgs.hostPlatform = "x86_64-linux";
               }
             ]
