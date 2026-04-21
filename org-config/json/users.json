@@ -37,6 +37,9 @@
       },
       "demo002": {
         "enable_roles": ["devops"]
+      },
+      "demo003": {
+        "enable_roles": ["devops"]
       }
     },
     "roles": {
