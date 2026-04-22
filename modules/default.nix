@@ -10,6 +10,7 @@
     ./maintenance.nix
     ./network.nix
     ./nfs.nix
+    ./nix.nix
     ./packages.nix
     ./live_system.nix
     ./load_json.nix

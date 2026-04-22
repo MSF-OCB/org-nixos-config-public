@@ -15,6 +15,8 @@ let
         };
         toplevel = inputs.system-manager.lib.makeSystemConfig {
           modules = [
+            # set pkgs just like evalSystemManagerHost does
+            { _module.args.pkgs = lib.mkForce pkgs; }
             (
               { ... }:
               {
@@ -119,10 +121,116 @@ let
           assert "tunnel@localhost: Permission denied (publickey)" in res.stdout, "autossh does not seem to be exposing 2323"
         '';
       };
+    zabbixSetup =
+      let
+        toplevel = inputs.system-manager.lib.makeSystemConfig {
+          modules = [
+            ../org-config/hosts/ubuntu/demo001.nix
+            "${inputs.nixpkgs-latest}/nixos/modules/services/monitoring/zabbix-server.nix"
+            "${inputs.nixpkgs-latest}/nixos/modules/services/databases/postgresql.nix"
+            zabbixServerModule
+          ]
+          ++ defaultUbuntuModules;
+          specialArgs = {
+            inherit lib;
+            flakeInputs = inputs;
+          };
+        };
+        zabbixServerModule =
+          { lib, ... }:
+          {
+            # Mocking a few options missing from system-manager to get a zabbix-server to run.
+            # Note: this is not a proper port of the zabbix-server nixpkgs module. We're porting just enough
+            # stuff to test the zabbix agent setup.
+            options = {
+              services.mysql.enable = lib.mkEnableOption "mocked-mysql";
+              services.zabbixWeb.enable = lib.mkEnableOption "mocked-zabbixweb";
+              system.stateVersion = lib.mkOption {
+                type = lib.types.str;
+              };
+            };
+            config = {
+              system.stateVersion = "25.11";
+              # Using the default postgres + nginx setup automagically set up by the
+              # nixpkgs module.
+              services.zabbixServer = {
+                enable = true;
+              };
+              # The nginx + phpfpm + postgres stack takes a while to start. Adding a dependency
+              # to make sure the server is properly booted and  the agent is be able to connect
+              # at initialization without having to wait for the exponantially backed-off retry to be fired.
+              systemd.services.zabbix-agent.after = [ "zabbix-server.service" ];
+            };
+          };
+      in
+      inputs.system-manager.lib.containerTest.makeContainerTest {
+        hostPkgs = pkgs;
+        name = "zabbix";
+        inherit toplevel;
+        skipTypeCheck = true;
+        extraPathsToRegister = [ toplevel ];
+        testScript = ''
+          import time
+          start_all()
+          machine.wait_for_unit("multi-user.target")
+
+          activation_logs = machine.activate()
+          for line in activation_logs.split("\n"):
+              assert "ERROR" not in line, f"Activation error: {line}"
+
+          machine.wait_for_unit("system-manager.target")
+          machine.wait_for_unit("zabbix-server.service")
+          machine.wait_for_unit("zabbix-agent.service")
+
+          # Ok, bear with me on this one. Configuring zabbix-server without its UI
+          # is pretty hard. So, we won't be adding any checks for demo001 to the server.
+          # Instead, we'll just test the agent is polling the checks from the server and the server is
+          # failing to find these checks.
+
+          # Server test
+          machine.wait_for_open_port(10050)
+          # There's a race condition. Sometimes, the agent is faster than the server and won't connect on the first try :/
+          # Trying this out 20 times
+          serverConnected=False
+          i=0
+          while (not serverConnected) and (i < 20):
+            serverLogs=machine.succeed("journalctl -u zabbix-server.service")
+            for line in serverLogs.split("\n"):
+              if "cannot send list of active checks to \"127.0.0.1\": host [demo001] not found" in line:
+                serverConnected=True
+            if not serverConnected:
+              i+=1
+              time.sleep(2)
+              print("INFO: Can't find agent connection in server log line, retrying.")
+          agentLogs=machine.succeed("journalctl -u zabbix-agent.service")
+          assert serverConnected, "Can't find log line proving the server is connected to the agent in zabbix-server journald logs:\n {}\n\n".format(serverLogs)
+
+
+          # Agent test
+          agentConnected=False
+          # There's a race condition. Sometimes, the agent is faster than the server and won't connect on the first try :/
+          # Trying this out 20 times
+          i=0
+          while (not agentConnected) and (i < 20):
+            agentLogs=machine.succeed("journalctl -u zabbix-agent.service")
+            for line in agentLogs.split("\n"):
+               if "no active checks on server [localhost:10051]: host [demo001] not found" in line:
+                 agentConnected=True
+            if not agentConnected:
+              i += 1
+              time.sleep(2)
+              print("INFO: Can't find server connection in agent log line, retrying.")
+          serverLogs=machine.succeed("journalctl -u zabbix-server.service")
+          assert agentConnected, "Can't find log line proving the agent is connected to the server in zabbix-agent journald logs:\n {}\n\n\n{}".format(agentLogs, serverLogs)
+
+        '';
+      };
     demo001 =
       let
         toplevel = inputs.system-manager.lib.makeSystemConfig {
           modules = [
+            # set pkgs just like evalSystemManagerHost does
+            { _module.args.pkgs = lib.mkForce pkgs; }
             ../org-config/hosts/ubuntu/demo001.nix
           ]
           ++ defaultUbuntuModules;
@@ -185,6 +293,20 @@ let
             known_hosts = demo001.file("/etc/ssh/ssh_known_hosts")
             assert known_hosts.exists, "SSH known_hosts should exist"
             assert known_hosts.contains("demo-relay-1.ocb.msf.org,108.143.32.245 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINHILWx5iekpGR4s8N8d/Aa37Vgq8ZuxNs+7eT+YvMBU"), "SSH known_hosts should contain demo-relay-1.ocb.msf.org"
+
+          with subtest("nix config"):
+            nix_conf = demo001.file("/etc/nix/nix.conf")
+            assert nix_conf.exists, "Nix config should exist"
+            assert nix_conf.contains("experimental-features = nix-command flakes"), "Nix config should enable nix-command and flakes"
+            assert nix_conf.contains("auto-optimise-store = true"), "Nix config should enable auto-optimise-store"
+            assert nix_conf.contains("builders-use-substitutes = true"), "Nix config should enable builders-use-substitutes"
+            assert nix_conf.contains("fallback = true"), "Nix config should enable fallback"
+            assert nix_conf.contains("flake-registry = "), "Nix config should disable the global flake-registry"
+            assert nix_conf.contains("trusted-users = root @wheel"), "Nix config should trust root and the wheel group"
+
+            registry = demo001.file("/etc/nix/registry.json")
+            assert registry.exists, "Nix registry should exist"
+            assert registry.contains('"id":"nixpkgs"'), "Nix registry should contain a nixpkgs entry"
         '';
       };
   };
