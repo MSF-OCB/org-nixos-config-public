@@ -33,5 +33,8 @@
     ./zabbixagent.nix
     ./wifi_access_point.nix
     ./usb_auto_backup.nix
+    ./s3fs.nix
+    ./rsync-backup.nix
+    ./kiosk/kiosk.nix
   ];
 }

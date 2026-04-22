@@ -57,6 +57,25 @@ in
           When to run the nixos-upgrade service.
         '';
       };
+      rebootWindow = lib.mkOption {
+        type = lib.types.submodule {
+          options = {
+            lower = lib.mkOption {
+              type = lib.types.str;
+              default = "01:00";
+              description = "Start of reboot window (HH:MM)";
+            };
+
+            upper = lib.mkOption {
+              type = lib.types.str;
+              default = "05:00";
+              description = "End of reboot window (HH:MM)";
+            };
+          };
+        };
+        default = { };
+        description = "Time window during which reboots are allowed.";
+      };
     };
 
     docker_prune_timer.enable = lib.mkEnableOption "service to periodically run docker system prune";
@@ -65,6 +84,9 @@ in
   config = lib.mkIf cfg.enable {
     system.autoUpgrade = {
       inherit (cfg.nixos_upgrade) enable;
+      # rebootWindow options only take effect if allowReboot is true, 
+      # which is only for non-system-manager systems (see below).
+      inherit (cfg.nixos_upgrade) rebootWindow;
       flake =
         let
           repo = config.settings.maintenance.config_repo;
@@ -100,10 +122,6 @@ in
     }
     // lib.optionalAttrs (!isSystemManager) {
       allowReboot = true;
-      rebootWindow = {
-        lower = "01:00";
-        upper = "05:00";
-      };
       # We override this below, since this option does not accept
       # a list of multiple timings.
       dates = "";
