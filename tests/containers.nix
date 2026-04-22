@@ -15,6 +15,8 @@ let
         };
         toplevel = inputs.system-manager.lib.makeSystemConfig {
           modules = [
+            # set pkgs just like evalSystemManagerHost does
+            { _module.args.pkgs = lib.mkForce pkgs; }
             (
               { ... }:
               {
@@ -227,6 +229,8 @@ let
       let
         toplevel = inputs.system-manager.lib.makeSystemConfig {
           modules = [
+            # set pkgs just like evalSystemManagerHost does
+            { _module.args.pkgs = lib.mkForce pkgs; }
             ../org-config/hosts/ubuntu/demo001.nix
           ]
           ++ defaultUbuntuModules;
@@ -289,6 +293,20 @@ let
             known_hosts = demo001.file("/etc/ssh/ssh_known_hosts")
             assert known_hosts.exists, "SSH known_hosts should exist"
             assert known_hosts.contains("demo-relay-1.ocb.msf.org,108.143.32.245 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINHILWx5iekpGR4s8N8d/Aa37Vgq8ZuxNs+7eT+YvMBU"), "SSH known_hosts should contain demo-relay-1.ocb.msf.org"
+
+          with subtest("nix config"):
+            nix_conf = demo001.file("/etc/nix/nix.conf")
+            assert nix_conf.exists, "Nix config should exist"
+            assert nix_conf.contains("experimental-features = nix-command flakes"), "Nix config should enable nix-command and flakes"
+            assert nix_conf.contains("auto-optimise-store = true"), "Nix config should enable auto-optimise-store"
+            assert nix_conf.contains("builders-use-substitutes = true"), "Nix config should enable builders-use-substitutes"
+            assert nix_conf.contains("fallback = true"), "Nix config should enable fallback"
+            assert nix_conf.contains("flake-registry = "), "Nix config should disable the global flake-registry"
+            assert nix_conf.contains("trusted-users = root @wheel"), "Nix config should trust root and the wheel group"
+
+            registry = demo001.file("/etc/nix/registry.json")
+            assert registry.exists, "Nix registry should exist"
+            assert registry.contains('"id":"nixpkgs"'), "Nix registry should contain a nixpkgs entry"
         '';
       };
   };
