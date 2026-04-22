@@ -6,6 +6,13 @@
   ...
 }:
 let
+  # Add pkgs to top-level module.
+  _update_modules_default_args =
+    attrs: attrs // { modules = attrs.modules ++ [ { _module.args.pkgs = lib.mkForce pkgs; } ]; };
+  # Overriding system-manager makeSystemConfig to inject the extra nixpkgs top-level
+  # module argument usually injected by `evalSystemManagerHost`
+  makeSystemManagerConfig =
+    attrs: inputs.system-manager.lib.makeSystemConfig (_update_modules_default_args attrs);
   ubuntuTests = {
     reverseTunnel =
       let
@@ -13,10 +20,8 @@ let
           publicKey = lib.trim (lib.readFile ./data/id_tunnel.pub);
           privateKey = ./data/id_tunnel;
         };
-        toplevel = inputs.system-manager.lib.makeSystemConfig {
+        toplevel = makeSystemManagerConfig {
           modules = [
-            # set pkgs just like evalSystemManagerHost does
-            { _module.args.pkgs = lib.mkForce pkgs; }
             (
               { ... }:
               {
@@ -123,7 +128,7 @@ let
       };
     zabbixSetup =
       let
-        toplevel = inputs.system-manager.lib.makeSystemConfig {
+        toplevel = makeSystemManagerConfig {
           modules = [
             ../org-config/hosts/ubuntu/demo001.nix
             "${inputs.nixpkgs-latest}/nixos/modules/services/monitoring/zabbix-server.nix"
@@ -227,10 +232,8 @@ let
       };
     demo001 =
       let
-        toplevel = inputs.system-manager.lib.makeSystemConfig {
+        toplevel = makeSystemManagerConfig {
           modules = [
-            # set pkgs just like evalSystemManagerHost does
-            { _module.args.pkgs = lib.mkForce pkgs; }
             ../org-config/hosts/ubuntu/demo001.nix
           ]
           ++ defaultUbuntuModules;
