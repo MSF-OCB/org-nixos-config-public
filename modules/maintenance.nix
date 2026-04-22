@@ -84,7 +84,7 @@ in
   config = lib.mkIf cfg.enable {
     system.autoUpgrade = {
       inherit (cfg.nixos_upgrade) enable;
-      # rebootWindow options only take effect if allowReboot is true, 
+      # rebootWindow options only take effect if allowReboot is true,
       # which is only for non-system-manager systems (see below).
       inherit (cfg.nixos_upgrade) rebootWindow;
       flake =
