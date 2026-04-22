@@ -8,6 +8,7 @@
       enable = true;
       nixos_upgrade.enable = true;
     };
+    services.zabbixAgent.enable = true;
   };
   networking.hostName = "demo001";
 }
