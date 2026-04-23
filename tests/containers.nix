@@ -133,7 +133,7 @@ let
             ../org-config/hosts/ubuntu/demo001.nix
             "${inputs.nixpkgs-latest}/nixos/modules/services/monitoring/zabbix-server.nix"
             "${inputs.nixpkgs-latest}/nixos/modules/services/databases/postgresql.nix"
-            zabbixServerModule
+            testModule
           ]
           ++ defaultUbuntuModules;
           specialArgs = {
@@ -141,7 +141,7 @@ let
             flakeInputs = inputs;
           };
         };
-        zabbixServerModule =
+        testModule =
           { lib, ... }:
           {
             # Mocking a few options missing from system-manager to get a zabbix-server to run.
@@ -165,6 +165,10 @@ let
               # to make sure the server is properly booted and  the agent is be able to connect
               # at initialization without having to wait for the exponantially backed-off retry to be fired.
               systemd.services.zabbix-agent.after = [ "zabbix-server.service" ];
+
+              # Override the content of zabbix-hosts.json
+              services.zabbixAgent.server = lib.mkForce "localhost";
+              services.zabbixAgent.settings.ServerActive = lib.mkForce "localhost";
             };
           };
       in
@@ -208,7 +212,7 @@ let
               time.sleep(2)
               print("INFO: Can't find agent connection in server log line, retrying.")
           agentLogs=machine.succeed("journalctl -u zabbix-agent.service")
-          assert serverConnected, "Can't find log line proving the server is connected to the agent in zabbix-server journald logs:\n {}\n\n".format(serverLogs)
+          assert serverConnected, "Can't find log line proving the server is connected to the agent in zabbix-server journald logs:\n {}\n\n{}".format(serverLogs, agentLogs)
 
 
           # Agent test
