@@ -265,7 +265,7 @@ let
           with subtest("sudoers"):
             sudoers = demo001.file("/etc/sudoers")
             assert sudoers.exists, "Sudoers file should exist"
-            assert sudoers.contains("robot     ALL=(root)    SETENV:NOPASSWD: !ALL, SETENV:NOPASSWD: /run/current-system/sw/bin/systemctl --system start nixos-upgrade, SETENV:NOPASSWD: /run/current-system/sw/bin/systemctl --system start nixos-upgrade.service, SETENV:NOPASSWD: /run/current-system/sw/bin/systemctl --system start nixos_rebuild_config, SETENV:NOPASSWD: /run/current-system/sw/bin/systemctl --system start nixos_rebuild_config.service"), "Robot user should have whitelisted systemctl commands"
+            assert sudoers.contains("robot     ALL=(root)    SETENV:NOPASSWD: !ALL, SETENV:NOPASSWD: /usr/bin/systemctl --system start nixos-upgrade, SETENV:NOPASSWD: /usr/bin/systemctl --system start nixos-upgrade.service, SETENV:NOPASSWD: /usr/bin/systemctl --system start nixos_rebuild_config, SETENV:NOPASSWD: /usr/bin/systemctl --system start nixos_rebuild_config.service"), "Robot user should have whitelisted systemctl commands"
             assert sudoers.contains("%wheel  ALL=(ALL:ALL)    NOPASSWD:SETENV: ALL"), "Wheel group should have passwordless sudo"
 
           with subtest("wheel group"):
@@ -291,6 +291,10 @@ let
             assert start_script.contains("--ssh-option -o IdentitiesOnly=yes"), "Service should enforce identity-only auth"
             assert start_script.contains("--ssh-option -o StrictHostKeyChecking=yes"), "Service should enforce strict host key checking"
             assert start_script.contains("--ssh-option -i"), "Service should specify the SSH private key"
+
+            alias_unit = demo001.file("/etc/systemd/system/nixos-upgrade.service")
+            assert alias_unit.is_symlink, "nixos-upgrade.service should be a symlink"
+            assert alias_unit.linked_to.endswith("/system-manager-upgrade.service"), "nixos-upgrade.service should resolve to the system-manager-upgrade.service unit file"
 
           with subtest("ssh relay"):
             known_hosts = demo001.file("/etc/ssh/ssh_known_hosts")

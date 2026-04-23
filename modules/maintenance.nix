@@ -172,5 +172,16 @@ in
         options = "--delete-older-than 30d";
       };
     };
+
+    # Expose system-manager-upgrade under the NixOS name so that deploy
+    # tooling which hard-codes `nixos-upgrade.service` (the GitHub Actions
+    # workflow, the robot sudoers whitelist) works on system-manager hosts.
+    # systemd-level aliases cannot be used here — see
+    # https://github.com/numtide/system-manager/pull/464.
+    environment.etc = lib.mkIf (isSystemManager && cfg.nixos_upgrade.enable) {
+      "systemd/system/nixos-upgrade.service".source = "${
+        config.systemd.units."system-manager-upgrade.service".unit
+      }/system-manager-upgrade.service";
+    };
   };
 }
