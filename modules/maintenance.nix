@@ -160,6 +160,13 @@ in
       };
 
       system-manager-upgrade = lib.mkIf (isSystemManager && cfg.nixos_upgrade.enable) {
+        path = with pkgs; [
+          xz.bin
+          gzip
+          config.nix.package.out
+          config.programs.ssh.package
+        ];
+
         wants = [ "tunnel-key-ready.target" ];
         after = [ "tunnel-key-ready.target" ];
         serviceConfig = {
