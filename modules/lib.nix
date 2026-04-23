@@ -1,11 +1,16 @@
 {
   config,
   lib,
+  options,
   pkgs,
   ...
 }:
 
 let
+  isSystemManager = options ? system-manager;
+  systemctlPath =
+    if isSystemManager then "/usr/bin/systemctl" else "/run/current-system/sw/bin/systemctl";
+
   mkSudoStartServiceCmds =
     {
       serviceName,
@@ -13,7 +18,7 @@ let
     }:
     let
       optsStr = lib.concatStringsSep " " extraOpts;
-      mkStartCmd = service: "/run/current-system/sw/bin/systemctl ${optsStr} start ${service}";
+      mkStartCmd = service: "${systemctlPath} ${optsStr} start ${service}";
     in
     [
       (mkStartCmd serviceName)
