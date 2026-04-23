@@ -306,10 +306,10 @@ let
             assert start_script.exists, "Service start script should be readable"
             assert start_script.contains("system-manager switch"), "Service should invoke system-manager switch"
             assert start_script.contains("--flake git+ssh://git@github.com/MSF-OCB/org-nixos-config-public.git?ref=main"), "Service should reference the correct flake URL"
-            assert start_script.contains("--ssh-option -F /etc/ssh/ssh_config"), "Service should use host SSH config"
-            assert start_script.contains("--ssh-option -o IdentitiesOnly=yes"), "Service should enforce identity-only auth"
-            assert start_script.contains("--ssh-option -o StrictHostKeyChecking=yes"), "Service should enforce strict host key checking"
-            assert start_script.contains("--ssh-option -i"), "Service should specify the SSH private key"
+            assert start_script.contains("--ssh-option \"-F /etc/ssh/ssh_config\""), "Service should use host SSH config"
+            assert start_script.contains("--ssh-option \"-o IdentitiesOnly=yes\""), "Service should enforce identity-only auth"
+            assert start_script.contains("--ssh-option \"-o StrictHostKeyChecking=yes\""), "Service should enforce strict host key checking"
+            assert start_script.contains("--ssh-option \"-i "), "Service should specify the SSH private key"
 
             alias_unit = demo001.file("/etc/systemd/system/nixos-upgrade.service")
             assert alias_unit.is_symlink, "nixos-upgrade.service should be a symlink"
