@@ -13,6 +13,21 @@ let
   # module argument usually injected by `evalSystemManagerHost`
   makeSystemManagerConfig =
     attrs: inputs.system-manager.lib.makeSystemConfig (_update_modules_default_args attrs);
+  defaultUbuntuModule =
+    { ... }:
+    {
+      nixpkgs.hostPlatform = "x86_64-linux";
+      settings = {
+        network.host_name = "demo001";
+        reverse_tunnel.enable = true;
+        maintenance = {
+          enable = true;
+          nixos_upgrade.enable = true;
+        };
+        services.zabbixAgent.enable = true;
+      };
+      networking.hostName = "demo001";
+    };
   ubuntuTests = {
     reverseTunnel =
       let
@@ -130,10 +145,10 @@ let
       let
         toplevel = makeSystemManagerConfig {
           modules = [
-            ../org-config/hosts/ubuntu/demo001.nix
+            defaultUbuntuModule
             "${inputs.nixpkgs-latest}/nixos/modules/services/monitoring/zabbix-server.nix"
             "${inputs.nixpkgs-latest}/nixos/modules/services/databases/postgresql.nix"
-            zabbixServerModule
+            testModule
           ]
           ++ defaultUbuntuModules;
           specialArgs = {
@@ -141,7 +156,7 @@ let
             flakeInputs = inputs;
           };
         };
-        zabbixServerModule =
+        testModule =
           { lib, ... }:
           {
             # Mocking a few options missing from system-manager to get a zabbix-server to run.
@@ -165,6 +180,10 @@ let
               # to make sure the server is properly booted and  the agent is be able to connect
               # at initialization without having to wait for the exponantially backed-off retry to be fired.
               systemd.services.zabbix-agent.after = [ "zabbix-server.service" ];
+
+              # Override the content of zabbix-hosts.json
+              services.zabbixAgent.server = lib.mkForce "localhost";
+              services.zabbixAgent.settings.ServerActive = lib.mkForce "localhost";
             };
           };
       in
@@ -208,7 +227,7 @@ let
               time.sleep(2)
               print("INFO: Can't find agent connection in server log line, retrying.")
           agentLogs=machine.succeed("journalctl -u zabbix-agent.service")
-          assert serverConnected, "Can't find log line proving the server is connected to the agent in zabbix-server journald logs:\n {}\n\n".format(serverLogs)
+          assert serverConnected, "Can't find log line proving the server is connected to the agent in zabbix-server journald logs:\n {}\n\n{}".format(serverLogs, agentLogs)
 
 
           # Agent test
@@ -234,7 +253,7 @@ let
       let
         toplevel = makeSystemManagerConfig {
           modules = [
-            ../org-config/hosts/ubuntu/demo001.nix
+            defaultUbuntuModule
           ]
           ++ defaultUbuntuModules;
           specialArgs = {
@@ -265,7 +284,7 @@ let
           with subtest("sudoers"):
             sudoers = demo001.file("/etc/sudoers")
             assert sudoers.exists, "Sudoers file should exist"
-            assert sudoers.contains("robot     ALL=(root)    SETENV:NOPASSWD: !ALL, SETENV:NOPASSWD: /run/current-system/sw/bin/systemctl --system start nixos-upgrade, SETENV:NOPASSWD: /run/current-system/sw/bin/systemctl --system start nixos-upgrade.service, SETENV:NOPASSWD: /run/current-system/sw/bin/systemctl --system start nixos_rebuild_config, SETENV:NOPASSWD: /run/current-system/sw/bin/systemctl --system start nixos_rebuild_config.service"), "Robot user should have whitelisted systemctl commands"
+            assert sudoers.contains("robot     ALL=(root)    SETENV:NOPASSWD: !ALL, SETENV:NOPASSWD: /usr/bin/systemctl --system start nixos-upgrade, SETENV:NOPASSWD: /usr/bin/systemctl --system start nixos-upgrade.service, SETENV:NOPASSWD: /usr/bin/systemctl --system start nixos_rebuild_config, SETENV:NOPASSWD: /usr/bin/systemctl --system start nixos_rebuild_config.service"), "Robot user should have whitelisted systemctl commands"
             assert sudoers.contains("%wheel  ALL=(ALL:ALL)    NOPASSWD:SETENV: ALL"), "Wheel group should have passwordless sudo"
 
           with subtest("wheel group"):
@@ -291,6 +310,10 @@ let
             assert start_script.contains("--ssh-option -o IdentitiesOnly=yes"), "Service should enforce identity-only auth"
             assert start_script.contains("--ssh-option -o StrictHostKeyChecking=yes"), "Service should enforce strict host key checking"
             assert start_script.contains("--ssh-option -i"), "Service should specify the SSH private key"
+
+            alias_unit = demo001.file("/etc/systemd/system/nixos-upgrade.service")
+            assert alias_unit.is_symlink, "nixos-upgrade.service should be a symlink"
+            assert alias_unit.linked_to.endswith("/system-manager-upgrade.service"), "nixos-upgrade.service should resolve to the system-manager-upgrade.service unit file"
 
           with subtest("ssh relay"):
             known_hosts = demo001.file("/etc/ssh/ssh_known_hosts")
