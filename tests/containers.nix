@@ -13,6 +13,21 @@ let
   # module argument usually injected by `evalSystemManagerHost`
   makeSystemManagerConfig =
     attrs: inputs.system-manager.lib.makeSystemConfig (_update_modules_default_args attrs);
+  defaultUbuntuModule =
+    { ... }:
+    {
+      nixpkgs.hostPlatform = "x86_64-linux";
+      settings = {
+        network.host_name = "demo001";
+        reverse_tunnel.enable = true;
+        maintenance = {
+          enable = true;
+          nixos_upgrade.enable = true;
+        };
+        services.zabbixAgent.enable = true;
+      };
+      networking.hostName = "demo001";
+    };
   ubuntuTests = {
     reverseTunnel =
       let
@@ -130,7 +145,7 @@ let
       let
         toplevel = makeSystemManagerConfig {
           modules = [
-            ../org-config/hosts/ubuntu/demo001.nix
+            defaultUbuntuModule
             "${inputs.nixpkgs-latest}/nixos/modules/services/monitoring/zabbix-server.nix"
             "${inputs.nixpkgs-latest}/nixos/modules/services/databases/postgresql.nix"
             testModule
@@ -238,7 +253,7 @@ let
       let
         toplevel = makeSystemManagerConfig {
           modules = [
-            ../org-config/hosts/ubuntu/demo001.nix
+            defaultUbuntuModule
           ]
           ++ defaultUbuntuModules;
           specialArgs = {
