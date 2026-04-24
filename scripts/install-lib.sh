@@ -4,13 +4,16 @@ umask 077
 
 function print_usage() {
   echo "Usage:"
-  echo "./$(basename "${0}") -H <hostname of target> -u <SSH username> -s <SSH name> [-p <SSH port>] [-r] [-S]"
+  echo "./$(basename "${0}") -H <hostname of target> -u <SSH username> -s <SSH name> [-p <SSH port>] [-r] [-S] [-w]"
   echo "Optional arguments:"
   echo "  -s: the SSH name, as specified in your SSH config, or IP address of the target machine"
   echo "      (this option is mandatory unless -r is specified)"
   echo "  -p: the SSH port, will use port 22 unless specified"
   echo "  -r: use the SSH relay to connect to the target machine"
   echo "  -S: don't attempt to add the new disk encryption secrets to the secrets mechanism"
+  echo "  -w: the target's sudo requires a password. Prompts password once to install a"
+  echo "      temporary NOPASSWD sudoers fragment so subsequent sudo calls are"
+  echo "      silent. The fragment is removed on exit."
 }
 
 function exit_usage() {
@@ -48,8 +51,9 @@ function parse_opts() {
   sshport=""
   declare -gi userelay=0
   declare -gi addsecrets=1
+  declare -gi sudopassword=0
 
-  while getopts ':u:H:s:p:rhS' flag; do
+  while getopts ':u:H:s:p:rhSw' flag; do
     case "${flag}" in
     u)
       if [[ ${OPTARG} =~ ^-. ]]; then
@@ -92,6 +96,9 @@ function parse_opts() {
     S)
       addsecrets=0
       ;;
+    w)
+      sudopassword=1
+      ;;
     :)
       echo
       echo "ERROR: invalid command-line option(s)"
@@ -118,8 +125,8 @@ function parse_opts() {
   fi
 
   # shellcheck disable=SC2034
-  readonly username hostname sshname sshport userelay addsecrets
-  export username hostname sshname sshport userelay addsecrets
+  readonly username hostname sshname sshport userelay addsecrets sudopassword
+  export username hostname sshname sshport userelay addsecrets sudopassword
 
   if [[ -z ${hostname} || -z ${username} || -z ${sshname} || -z ${sshport} ]]; then
     echo
