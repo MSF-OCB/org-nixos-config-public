@@ -54,7 +54,7 @@ in
 
       version = lib.mkOption {
         type = lib.types.str;
-        default = "3.3";
+        default = "3.6.14";
       };
 
       image = lib.mkOption {

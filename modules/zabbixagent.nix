@@ -8,7 +8,7 @@
 
 let
   cfg = config.settings.services.zabbixAgent;
-  platform = if options ? system-manager then "none" else config.config.settings.hardwarePlatform;
+  platform = if options ? system-manager then "none" else config.settings.hardwarePlatform;
   # Read JSON file and parse into an attrset
   servers = lib.importJSON ../org-config/json/zabbix-servers.json;
 in
