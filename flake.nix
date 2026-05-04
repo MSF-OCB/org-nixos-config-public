@@ -89,6 +89,7 @@
       nix-index-database,
       devshell,
       treefmt-nix,
+      home-manager,
       pre-commit-hooks,
       nix-github-actions,
       ...
@@ -200,6 +201,7 @@
       nixosModules.default = [
         ./modules
         ./org-config
+        home-manager.nixosModules.home-manager
         flakeInputs.disko.nixosModules.default
         (
           { pkgs, ... }:
