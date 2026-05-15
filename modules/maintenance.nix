@@ -111,13 +111,13 @@ in
             ]
         ++ lib.optionals isSystemManager [
           "--ssh-option"
-          "-F /etc/ssh/ssh_config"
+          "\"-F /etc/ssh/ssh_config\""
           "--ssh-option"
-          "-i ${config.settings.system.github_private_key}"
+          "\"-i ${config.settings.system.github_private_key}\""
           "--ssh-option"
-          "-o IdentitiesOnly=yes"
+          "\"-o IdentitiesOnly=yes\""
           "--ssh-option"
-          "-o StrictHostKeyChecking=yes"
+          "\"-o StrictHostKeyChecking=yes\""
         ];
     }
     // lib.optionalAttrs (!isSystemManager) {
@@ -160,6 +160,13 @@ in
       };
 
       system-manager-upgrade = lib.mkIf (isSystemManager && cfg.nixos_upgrade.enable) {
+        path = with pkgs; [
+          xz.bin
+          gzip
+          config.nix.package.out
+          config.programs.ssh.package
+        ];
+
         wants = [ "tunnel-key-ready.target" ];
         after = [ "tunnel-key-ready.target" ];
         serviceConfig = {
