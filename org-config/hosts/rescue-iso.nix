@@ -21,6 +21,10 @@ in
     hardwarePlatform = config.settings.hardwarePlatforms.none;
     live_system.enable = true;
     network.host_name = "rescue-iso";
+
+    users.users.root = {
+      enable = true;
+    };
   };
 
   networking.networkmanager.enable = lib.mkForce false;
@@ -60,14 +64,20 @@ in
     };
   };
 
-  boot.supportedFilesystems = lib.mkOverride 10 [
-    "vfat"
-    "tmpfs"
-    "auto"
-    "squashfs"
-    "tmpfs"
-    "overlay"
-  ];
+  boot = {
+    supportedFilesystems = lib.mkOverride 10 [
+      "vfat"
+      "tmpfs"
+      "auto"
+      "squashfs"
+      "tmpfs"
+      "overlay"
+    ];
+    initrd.systemd.managerEnvironment = {
+      SYSTEMD_SULOGIN_FORCE = "1";
+      SYSTEMD_LOG_LEVEL = "debug";
+    };
+  };
 
   image = {
     fileName = lib.mkForce (
