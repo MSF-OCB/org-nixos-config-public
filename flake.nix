@@ -16,8 +16,8 @@
       url = "github:edolstra/flake-compat";
     };
 
-    nixpkgs-legacy.url = "github:NixOS/nixpkgs/nixos-25.05-small";
-    nixpkgs-latest.url = "github:NixOS/nixpkgs/nixos-25.11-small";
+    nixpkgs-legacy.url = "github:NixOS/nixpkgs/nixos-25.11-small";
+    nixpkgs-latest.url = "github:NixOS/nixpkgs/nixos-26.05-small";
 
     disko = {
       url = "github:nix-community/disko";
@@ -43,14 +43,14 @@
       inputs.nixpkgs.follows = "nixpkgs-latest";
     };
     nixos-wsl = {
-      url = "github:nix-community/NixOS-WSL";
+      url = "github:nix-community/NixOS-WSL/release-26.05";
       inputs = {
         nixpkgs.follows = "nixpkgs-latest";
         flake-compat.follows = "flake-compat";
       };
     };
     home-manager = {
-      url = "github:nix-community/home-manager/release-25.11";
+      url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs-latest";
     };
     pre-commit-hooks = {
@@ -65,7 +65,7 @@
       inputs.nixpkgs.follows = "nixpkgs-latest";
     };
     server-lock = {
-      url = "github:msf-ocb/nixos_server_lock";
+      url = "github:msf-ocb/nixos_server_lock/v20260606a";
       inputs = {
         systems.follows = "systems";
         flake-utils.follows = "flake-utils";
@@ -78,7 +78,8 @@
       inputs.nixpkgs.follows = "nixpkgs-latest";
     };
     system-manager = {
-      url = "github:numtide/system-manager";
+      url = "github:numtide/system-manager/release-26.05";
+      inputs.nixpkgs.follows = "nixpkgs-latest";
     };
   };
 

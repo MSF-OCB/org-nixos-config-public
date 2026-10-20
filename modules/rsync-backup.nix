@@ -11,10 +11,11 @@ let
   cfg = config.services.rsyncBackup;
 
   jumpKey = if cfg.jumpPrivateKey != null then cfg.jumpPrivateKey else cfg.privateKey;
+  usesPassword = cfg.authentication == "password";
 
   proxyCommand =
     "${pkgs.openssh}/bin/ssh "
-    + "-i ${jumpKey} "
+    + "-i ${escapeShellArg jumpKey} "
     + "-o IdentitiesOnly=yes "
     + "-o BatchMode=yes "
     + "-o ServerAliveInterval=60 "
@@ -27,16 +28,25 @@ let
   sshCommand = concatStringsSep " " (
     [
       "${pkgs.openssh}/bin/ssh"
-      "-i ${cfg.privateKey}"
       "-p ${toString cfg.port}"
-      "-o IdentitiesOnly=yes"
-      "-o BatchMode=yes"
       "-o ServerAliveInterval=60"
       "-o StrictHostKeyChecking=${if cfg.strictHostKeyChecking then "yes" else "no"}"
+    ]
+    ++ optionals (!usesPassword) [
+      "-i ${escapeShellArg cfg.privateKey}"
+      "-o IdentitiesOnly=yes"
+      "-o BatchMode=yes"
+    ]
+    ++ optionals usesPassword [
+      "-o PreferredAuthentications=password"
+      "-o PubkeyAuthentication=no"
+      "-o NumberOfPasswordPrompts=1"
     ]
     ++ optional (!cfg.strictHostKeyChecking) "-o UserKnownHostsFile=/dev/null"
     ++ optional (cfg.jumpHost != null) "-o ProxyCommand=${escapeShellArg proxyCommand}"
   );
+
+  passwordCommand = optionalString usesPassword "${pkgs.sshpass}/bin/sshpass -f ${escapeShellArg cfg.passwordFile} ";
 
   excludeArgs = concatStringsSep " " (
     map (pattern: "--exclude=${escapeShellArg pattern}") cfg.excludes
@@ -47,7 +57,7 @@ let
   ) "--rsync-path=${escapeShellArg cfg.remoteRsyncPath}";
 
   rsyncCommand = ''
-    ${pkgs.rsync}/bin/rsync \
+    ${passwordCommand}${pkgs.rsync}/bin/rsync \
       ${concatStringsSep " " cfg.rsyncOptions} \
       ${excludeArgs} \
       ${rsyncPathArg} \
@@ -104,13 +114,31 @@ in
       description = "Remote destination path.";
     };
 
+    authentication = mkOption {
+      type = types.enum [
+        "key"
+        "password"
+      ];
+      default = "key";
+      description = "SSH authentication method for the remote rsync host.";
+    };
+
     privateKey = mkOption {
-      type = types.path;
-      description = "SSH private key path.";
+      type = types.nullOr types.path;
+      default = null;
+      description = "SSH private key path. Required when authentication is key.";
+    };
+
+    passwordFile = mkOption {
+      type = types.nullOr types.str;
+      default = null;
+      example = "/run/secrets/password";
+      description = "File containing the SSH password. Required when authentication is password; use a runtime secret outside the Nix store.";
     };
 
     jumpPrivateKey = mkOption {
       type = types.nullOr types.path;
+      default = null;
       description = "Optional SSH private key for the jump host. Falls back to privateKey if null.";
     };
 
@@ -121,7 +149,7 @@ in
     };
 
     jumpUser = mkOption {
-      type = types.str;
+      type = types.nullOr types.str;
       default = null;
       description = "SSH user for the jump host.";
     };
@@ -134,6 +162,7 @@ in
 
     remoteRsyncPath = mkOption {
       type = types.nullOr types.str;
+      default = null;
       description = "Optional remote rsync binary/path, e.g. sudo rsync.";
     };
 
@@ -188,6 +217,25 @@ in
 
   config = mkIf cfg.enable (mkMerge [
     {
+      assertions = [
+        {
+          assertion = usesPassword || cfg.privateKey != null;
+          message = "services.rsyncBackup.privateKey is required when authentication is key.";
+        }
+        {
+          assertion = !usesPassword || cfg.passwordFile != null;
+          message = "services.rsyncBackup.passwordFile is required when authentication is password.";
+        }
+        {
+          assertion = cfg.jumpHost == null || jumpKey != null;
+          message = "services.rsyncBackup.jumpPrivateKey is required for a jump host when password authentication is used for the remote host.";
+        }
+        {
+          assertion = cfg.jumpHost == null || cfg.jumpUser != null;
+          message = "services.rsyncBackup.jumpUser is required when jumpHost is configured.";
+        }
+      ];
+
       systemd.services.rsync-backup = {
         description = "Rsync backup service";
         after = [ "network-online.target" ];
@@ -196,12 +244,11 @@ in
         path = [
           pkgs.rsync
           pkgs.openssh
-        ];
+        ]
+        ++ optional usesPassword pkgs.sshpass;
 
         serviceConfig = {
-          ExecStartPre = [
-            "${pkgs.coreutils}/bin/chmod 600 ${cfg.privateKey}"
-          ];
+          ExecStartPre = optional (!usesPassword) "${pkgs.coreutils}/bin/chmod 600 ${cfg.privateKey}";
           Type = "oneshot";
           User = cfg.user;
           Group = cfg.group;
