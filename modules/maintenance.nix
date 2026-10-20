@@ -82,6 +82,32 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    programs.ssh = {
+      startAgent = false;
+      # We do not have GUIs
+      setXAuthLocation = false;
+      hostKeyAlgorithms = [
+        "ssh-ed25519"
+        "ssh-rsa"
+      ];
+      knownHosts.github = {
+        hostNames = [
+          "github.com"
+          "ssh.github.com"
+        ];
+        publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl";
+      };
+      extraConfig = ''
+        # Some internet providers block port 22,
+        # so we connect to GitHub using port 443
+        Host github.com
+          HostName ssh.github.com
+          User git
+          Port 443
+          UserKnownHostsFile /dev/null
+          IdentityFile ${config.settings.system.private_key_source}
+      '';
+    };
     system.autoUpgrade = {
       inherit (cfg.nixos_upgrade) enable;
       # rebootWindow options only take effect if allowReboot is true,
@@ -165,6 +191,7 @@ in
           gzip
           config.nix.package.out
           config.programs.ssh.package
+          sudo
         ];
 
         wants = [ "tunnel-key-ready.target" ];

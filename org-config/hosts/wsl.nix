@@ -32,13 +32,13 @@
       { src = "${gnutar}/bin/tar"; }
       { src = "${gzip}/bin/gzip"; }
       { src = "${findutils}/bin/find"; }
-      { src = "${nodejs_20}/bin/node"; }
+      { src = "${nodejs}/bin/node"; }
     ];
   };
 
   environment.systemPackages = [
     pkgs.wget
-    pkgs.nodejs_20
+    pkgs.nodejs
   ];
 
   virtualisation.docker.enable = true;

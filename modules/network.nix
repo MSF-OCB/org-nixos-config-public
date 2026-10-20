@@ -37,7 +37,9 @@ let
         };
 
         gateway = lib.mkOption {
-          type = lib.types.str;
+          type = lib.types.nullOr lib.types.str;
+          default = null;
+          description = "Optional default gateway for this interface";
         };
 
         nameservers = lib.mkOption {
@@ -107,11 +109,16 @@ in
                 format_name_servers = lib.concatStringsSep " ";
                 mkConfig =
                   _: conf:
+                  let
+                    routerConfig = lib.optionalString (conf.gateway != null) ''
+                      static routers=${conf.gateway}
+                    '';
+                  in
                   if conf.fallback then
                     ''
                       profile static_${conf.iface}
                       static ip_address=${conf.address}/${toString conf.prefix_length}
-                      static routers=${conf.gateway}
+                      ${routerConfig}
                       static domain_name_servers=${format_name_servers conf.nameservers}
 
                       # fallback to static profile on ${conf.iface}
@@ -122,7 +129,7 @@ in
                     ''
                       interface ${conf.iface}
                       static ip_address=${conf.address}/${toString conf.prefix_length}
-                      static routers=${conf.gateway}
+                      ${routerConfig}
                       static domain_name_servers=${format_name_servers conf.nameservers}
                     '';
                 mkConfigs = lib.compose [
@@ -131,7 +138,10 @@ in
                   lib.filterEnabled
                 ];
               in
-              mkConfigs cfg.static_ifaces;
+              ''
+                noipv4ll
+              ''
+              + mkConfigs cfg.static_ifaces;
           }
           (
             if (config.system.nixos.release != "24.11") then
