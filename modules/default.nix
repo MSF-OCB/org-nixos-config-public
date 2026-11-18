@@ -37,5 +37,6 @@
     ./s3fs.nix
     ./rsync-backup.nix
     ./kiosk/kiosk.nix
+    ./wazuh-rsyslog.nix
   ];
 }

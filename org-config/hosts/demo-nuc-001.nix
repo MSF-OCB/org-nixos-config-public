@@ -1,9 +1,6 @@
-{ config, pkgs, ... }:
+{ config, ... }:
 {
   time.timeZone = "Europe/Brussels";
-  environment.systemPackages = [
-    pkgs.nodejs_20
-  ];
   settings = {
     hardwarePlatform = config.settings.hardwarePlatforms.nuc;
     disko.diskDevice = "/dev/disk/by-id/nvme-TS512GMTE510T_F145120155";

@@ -9,9 +9,8 @@
 let
   cfg = config.settings.system;
   tmux_term = "tmux-256color";
-  is2505orlater =
-    lib.versionAtLeast config.system.nixos.release "25.05"
-    && lib.versionOlder config.system.nixos.release "25.06";
+  is2605orlater = lib.versionAtLeast config.system.nixos.release "26.05";
+  #&& lib.versionOlder config.system.nixos.release "26.06";
 in
 
 {
@@ -131,7 +130,7 @@ in
       "nixpkgs"
       (lib.substring 0 8 config.nixpkgs.pkgs.lastModifiedDate or "unknown")
       (config.nixpkgs.pkgs.shortRev or "dirty")
-      "msfocb"
+      "orgnix"
       (lib.substring 0 8 flakeInputs.self.lastModifiedDate or "unknown")
       (flakeInputs.self.shortRev or "dirty")
     ];
@@ -163,10 +162,22 @@ in
         };
       };
 
-      sleep.extraConfig = ''
-        AllowSuspend=no
-        AllowHibernation=no
-      '';
+      sleep =
+        if is2605orlater then
+          {
+            settings.Sleep = {
+              AllowSuspend = "no";
+              AllowHibernation = "no";
+            };
+          }
+        else
+          {
+            extraConfig = ''
+              AllowSuspend=no
+              AllowHibernation=no
+            '';
+          };
+
       services = {
         set_opt_permissions = {
           # See https://web.archive.org/web/20121022035645/http://vanemery.com/Linux/ACL/POSIX_ACL_on_Linux.html
@@ -488,85 +499,27 @@ in
         '';
         wantedBy = [ "default.target" ];
       };
-    }
-    // (
-      if !is2505orlater then
-        {
-          settings.Manager = {
-            # systemd will send a signal to the hardware watchdog at half
-            # the interval defined here, so every 10s.
-            # If the hardware watchdog does not get a signal for 20s,
-            # it will forcefully reboot the system.
-            RuntimeWatchdogSec = 20;
-            # Forcefully reboot if the final stage of the reboot
-            # hangs without progress for more than 30s.
-            # For more info, see:
-            #   https://utcc.utoronto.ca/~cks/space/blog/linux/SystemdShutdownWatchdog
-            RebootWatchdogSec = 30;
-          };
-        }
-      else
-        {
-          # For more detail, see:
-          #   https://0pointer.de/blog/projects/watchdog.html
-          watchdog = {
-            # systemd will send a signal to the hardware watchdog at half
-            # the interval defined here, so every 10s.
-            # If the hardware watchdog does not get a signal for 20s,
-            # it will forcefully reboot the system.
-            runtimeTime = "20s";
-            # Forcefully reboot if the final stage of the reboot
-            # hangs without progress for more than 30s.
-            # For more info, see:
-            #   https://utcc.utoronto.ca/~cks/space/blog/linux/SystemdShutdownWatchdog
-            rebootTime = "30s";
-          };
-        }
-    );
+
+      settings.Manager = {
+        WatchdogDevice = "/dev/watchdog";
+        # systemd will send a signal to the hardware watchdog at half
+        # the interval defined here, so every 10s.
+        # If the hardware watchdog does not get a signal for 20s,
+        # it will forcefully reboot the system.
+        RuntimeWatchdogSec = "20s";
+        # Forcefully reboot if the final stage of the reboot
+        # hangs without progress for more than 30s.
+        # For more info, see:
+        #   https://utcc.utoronto.ca/~cks/space/blog/linux/SystemdShutdownWatchdog
+        RebootWatchdogSec = "30s";
+      };
+    };
 
     # No fonts needed on a headless system
     fonts.fontconfig.enable = lib.mkForce false;
 
     programs = {
-      bash = {
-      }
-      // (
-        if is2505orlater then
-          {
-            enableCompletion = true;
-          }
-        else
-          {
-            completion.enable = true;
-          }
-      );
-
-      ssh = {
-        startAgent = false;
-        # We do not have GUIs
-        setXAuthLocation = false;
-        hostKeyAlgorithms = [
-          "ssh-ed25519"
-          "ssh-rsa"
-        ];
-        knownHosts.github = {
-          hostNames = [
-            "github.com"
-            "ssh.github.com"
-          ];
-          publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl";
-        };
-        extraConfig = ''
-          # Some internet providers block port 22,
-          # so we connect to GitHub using port 443
-          Host github.com
-            HostName ssh.github.com
-            User git
-            Port 443
-            UserKnownHostsFile /dev/null
-            IdentityFile ${cfg.private_key_source}
-        '';
-      };
+      bash.completion.enable = true;
 
       tmux = {
         enable = true;
@@ -627,22 +580,10 @@ in
       };
 
       # See man logind.conf
-      logind =
-        if is2505orlater then
-          {
-            extraConfig = ''
-              HandlePowerKey=poweroff
-              PowerKeyIgnoreInhibited=yes
-            '';
-          }
-        else
-          {
-            settings.Login = {
-              HandlePowerKey = "poweroff";
-              PowerKeyIgnoreInhibited = true;
-            };
-
-          };
+      logind.settings.Login = {
+        HandlePowerKey = "poweroff";
+        PowerKeyIgnoreInhibited = true;
+      };
 
       avahi = {
         enable = true;
@@ -655,17 +596,8 @@ in
           addresses = true;
           workstation = true;
         };
-      }
-      // (
-        if is2505orlater then
-          {
-            nssmdns = true;
-          }
-        else
-          {
-            nssmdns4 = true;
-          }
-      );
+        nssmdns4 = true;
+      };
     };
 
     hardware = {

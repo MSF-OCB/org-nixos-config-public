@@ -28,13 +28,13 @@ let
       export XAUTHORITY=/var/run/lightdm/root/:0
 
       if [ "${action}" = "off" ]; then
-        ${pkgs.xorg.xset}/bin/xset dpms force off
+        ${pkgs.xset}/bin/xset dpms force off
       else
-        ${pkgs.xorg.xset}/bin/xset dpms force on
-        ${pkgs.xorg.xset}/bin/xset s reset
-        ${pkgs.xorg.xset}/bin/xset dpms 0 0 0
-        ${pkgs.xorg.xset}/bin/xset -dpms
-        ${pkgs.xorg.xset}/bin/xset s noblank
+        ${pkgs.xset}/bin/xset dpms force on
+        ${pkgs.xset}/bin/xset s reset
+        ${pkgs.xset}/bin/xset dpms 0 0 0
+        ${pkgs.xset}/bin/xset -dpms
+        ${pkgs.xset}/bin/xset s noblank
       fi
     '';
 in
@@ -120,31 +120,35 @@ in
       users.${cfg.user} = import (flakeInputs.self + /modules/kiosk/kiosk_user.nix);
     };
 
-    services.xserver = {
-      enable = true;
-      inherit (cfg) videoDrivers;
-
-      displayManager.sessionCommands = ''
-        ${pkgs.xorg.xset}/bin/xset s off
-        ${pkgs.xorg.xset}/bin/xset dpms 0 0 0
-        ${pkgs.xorg.xset}/bin/xset -dpms
-        ${pkgs.xorg.xset}/bin/xset s noblank
-      '';
-
-      displayManager.lightdm = {
+    services = {
+      displayManager = {
         enable = true;
         autoLogin = {
           enable = true;
           inherit (cfg) user;
         };
-      };
 
-      displayManager.defaultSession = "none+openbox";
-      windowManager.openbox.enable = true;
-      desktopManager.xterm.enable = false;
+        defaultSession = "none+openbox";
+      };
 
       libinput.enable = true;
       libinput.touchpad.disableWhileTyping = true;
+
+    };
+
+    services.xserver = {
+      enable = true;
+      inherit (cfg) videoDrivers;
+
+      displayManager.sessionCommands = ''
+        ${pkgs.xset}/bin/xset s off
+        ${pkgs.xset}/bin/xset dpms 0 0 0
+        ${pkgs.xset}/bin/xset -dpms
+        ${pkgs.xset}/bin/xset s noblank
+      '';
+
+      windowManager.openbox.enable = true;
+      desktopManager.xterm.enable = false;
 
       inherit (cfg) monitorSection;
       inherit (cfg) screenSection;
@@ -194,13 +198,13 @@ in
     environment.systemPackages =
       with pkgs;
       [
-        firefox
+        firefox-bin
         openbox
         autorandr
-        xorg.xrandr
-        xorg.xset
-        xorg.xsetroot
-        xorg.xinit
+        xrandr
+        xset
+        xsetroot
+        xinit
         xdotool
         unclutter-xfixes
       ]

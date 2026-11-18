@@ -20,5 +20,6 @@
     ./system-options.nix
     ./users.nix
     ./zabbixagent.nix
+    ./mcc-lego-certs.nix
   ];
 }

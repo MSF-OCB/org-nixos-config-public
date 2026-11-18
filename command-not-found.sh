@@ -3,6 +3,7 @@
 # for bash 4
 # this will be called when a command is entered
 # but not found in the user’s path + environment
+###
 command_not_found_handle() {
 
   # TODO: use "command not found" gettext translations
